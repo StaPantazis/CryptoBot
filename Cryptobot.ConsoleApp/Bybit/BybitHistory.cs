@@ -11,7 +11,7 @@ public static class BybitHistory
 
     public static async Task Download(HistoryRequest historyRequest)
     {
-        Console.WriteLine($"Downloadnig intervals of {(int)historyRequest.Interval} minutes...\n");
+        Console.WriteLine($"Downloadig intervals of {(int)historyRequest.Interval} minutes...\n");
 
         var resourcesPath = PathHelper.GetHistoryPath(historyRequest);
         var http = new HttpClient();
@@ -45,8 +45,10 @@ public static class BybitHistory
 
             var allDailyCandles = new List<BybitCandlestick>();
 
-            foreach (var url in urls)
+            for (var i = 0; i < urls.Length; i++)
             {
+                var url = urls[i];
+
                 var json = await http.GetStringAsync(url);
                 var resp = JsonConvert.DeserializeObject<KlineResponse>(json);
 
@@ -55,9 +57,12 @@ public static class BybitHistory
                     continue;
                 }
 
-                resp.Result.List.Reverse();
                 allDailyCandles.AddRange(BybitCandlestick.FromResponse(resp));
-                await Task.Delay(200); // avoid hitting rate limit
+
+                if (i < urls.Length - 1)
+                {
+                    await Task.Delay(200); // avoid hitting rate limit
+                }
             }
 
             // Deduplicate & order
@@ -88,19 +93,20 @@ public static class BybitHistory
 
     private static string[] GetUrlsByInterval(HistoryRequest historyRequest, DateTime day)
     {
+        var dayStart = new DateTimeOffset(day).ToUnixTimeMilliseconds();
+        var dayEnd = new DateTimeOffset(day.AddDays(1)).ToUnixTimeMilliseconds();
+
         switch (historyRequest.Interval)
         {
             case CandlestickInterval.One_Minute:
-                var dayStart = new DateTimeOffset(day).ToUnixTimeMilliseconds();
                 var noon = new DateTimeOffset(day.AddHours(12)).ToUnixTimeMilliseconds();
-                var dayEnd = new DateTimeOffset(day.AddDays(1)).ToUnixTimeMilliseconds();
 
                 return [
                     $"{_endpoint}?category={historyRequest.MarketCategory}&symbol={historyRequest.Symbol}&interval={(int)historyRequest.Interval}&start={dayStart}&end={noon}&limit=1000",
                     $"{_endpoint}?category={historyRequest.MarketCategory}&symbol={historyRequest.Symbol}&interval={(int)historyRequest.Interval}&start={noon}&end={dayEnd}&limit=1000"
                 ];
             case CandlestickInterval.Five_Minutes:
-                return [];
+                return [$"{_endpoint}?category={historyRequest.MarketCategory}&symbol={historyRequest.Symbol}&interval={(int)historyRequest.Interval}&start={dayStart}&end={dayEnd}&limit=1000"];
             default:
                 throw new NotImplementedException();
         }
