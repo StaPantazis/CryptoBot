@@ -37,8 +37,6 @@ public static class BinanceHistory
 
                 if (IsDataValid(filePath))
                 {
-
-
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("Check!");
                 }

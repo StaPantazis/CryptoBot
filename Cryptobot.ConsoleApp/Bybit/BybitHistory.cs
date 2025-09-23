@@ -18,38 +18,80 @@ public static class BybitHistory
         var http = new HttpClient();
 
         // Start from 2020-01-01 UTC
-        var startDate = new DateTime(2020, 03, 25, 0, 0, 0, DateTimeKind.Utc);
+        var startDate = new DateTime(2020, 03, 26, 0, 0, 0, DateTimeKind.Utc);
         var today = DateTime.UtcNow.Date;
 
         for (var day = startDate; day < today; day = day.AddDays(1))
         {
-            var startMs = new DateTimeOffset(day).ToUnixTimeMilliseconds();
-            var endMs = new DateTimeOffset(day.AddDays(1)).ToUnixTimeMilliseconds();
+            Console.ForegroundColor = ConsoleColor.White;
 
-            var url = $"{_endpoint}?category={category}&symbol={symbol}&interval={interval}&start={startMs}&end={endMs}&limit=5";
+            Console.Write("Checking ");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write($"{day:dd/MM/yyyy}");
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.Write("... ");
 
-            var json = await http.GetStringAsync(url);
-            var resp = JsonConvert.DeserializeObject<KlineResponse>(json);
+            var filename = $"{resourcesPath}\\{symbol}-1m-{day:yyyy-MM-dd}.json";
 
-            if (resp?.Result?.List == null || resp.Result.List.Count == 0)
+            if (File.Exists(filename))
             {
-                Console.WriteLine($"No data for {day:yyyy-MM-dd}");
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine($"Already farmed!");
                 continue;
             }
 
-            // Bybit returns reverse chronological → fix order
-            resp.Result.List.Reverse();
+            Console.Write("Downloading... ");
 
-            var candlesticks = BybitCandlestick.FromResponse(resp);
-            var output = JsonConvert.SerializeObject(candlesticks);
+            var dayStart = new DateTimeOffset(day).ToUnixTimeMilliseconds();
+            var noon = new DateTimeOffset(day.AddHours(12)).ToUnixTimeMilliseconds();
+            var dayEnd = new DateTimeOffset(day.AddDays(1)).ToUnixTimeMilliseconds();
 
-            var filename = $"{resourcesPath}\\{symbol}-1m-{day:yyyy-MM-dd}.json";
+            var urls = new[]
+            {
+                $"{_endpoint}?category={category}&symbol={symbol}&interval={interval}&start={dayStart}&end={noon}&limit=1000",
+                $"{_endpoint}?category={category}&symbol={symbol}&interval={interval}&start={noon}&end={dayEnd}&limit=1000"
+            };
+
+            var allDailyCandles = new List<BybitCandlestick>();
+
+            foreach (var url in urls)
+            {
+                var json = await http.GetStringAsync(url);
+                var resp = JsonConvert.DeserializeObject<KlineResponse>(json);
+
+                if (resp?.Result?.List == null || resp.Result.List.Count == 0)
+                {
+                    continue;
+                }
+
+                resp.Result.List.Reverse();
+                allDailyCandles.AddRange(BybitCandlestick.FromResponse(resp));
+                await Task.Delay(200); // avoid hitting rate limit
+            }
+
+            // Deduplicate & order
+            var merged = allDailyCandles
+                .Where(c => c.OpenTime < day.AddDays(1)) // drop next-day candle
+                .GroupBy(c => c.OpenTime)
+                .Select(g => g.First())
+                .OrderBy(c => c.OpenTime)
+                .ToList();
+
+            if (merged.Count != 1440)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"\nWrong data for file {day}, found {merged.Count} records!");
+            }
+
+            var output = JsonConvert.SerializeObject(merged, Formatting.None);
             await File.WriteAllTextAsync(filename, output);
 
-            Console.WriteLine($"Saved {resp.Result.List.Count} candles to {filename}");
-            await Task.Delay(200); // avoid rate limit
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Check!");
         }
 
-        Console.WriteLine("Done.");
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine($"Finished!");
+        Console.ForegroundColor = ConsoleColor.White;
     }
 }
