@@ -168,10 +168,10 @@ public static class BinanceHistory
         }
     }
 
-    private static BinanceCandlestick[] ReadRawData(string[] rows)
+    private static BinanceCandle[] ReadRawData(string[] rows)
     {
         return rows
-            .Select(x => x.Split(',', StringSplitOptions.RemoveEmptyEntries) is string[] arr ? new BinanceCandlestick()
+            .Select(x => x.Split(',', StringSplitOptions.RemoveEmptyEntries) is string[] arr ? new BinanceCandle()
             {
                 OpenTime = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(arr[0])).UtcDateTime,
                 OpenPrice = double.Parse(arr[1]),

@@ -16,7 +16,7 @@ public static class BybitHistory
         var resourcesPath = PathHelper.GetHistoryPath(historyRequest);
         var http = new HttpClient();
 
-        // Start from 2020-01-01 UTC
+        // Start from 2020-03-26 UTC
         var startDate = new DateTime(2020, 03, 26, 0, 0, 0, DateTimeKind.Utc);
         var today = DateTime.UtcNow.Date;
 
@@ -43,7 +43,7 @@ public static class BybitHistory
 
             var urls = GetUrlsByInterval(historyRequest, day);
 
-            var allDailyCandles = new List<BybitCandlestick>();
+            var allDailyCandles = new List<BybitCandle>();
 
             for (var i = 0; i < urls.Length; i++)
             {
@@ -57,7 +57,7 @@ public static class BybitHistory
                     continue;
                 }
 
-                allDailyCandles.AddRange(BybitCandlestick.FromResponse(resp));
+                allDailyCandles.AddRange(BybitCandle.FromResponse(resp));
 
                 if (i < urls.Length - 1)
                 {
@@ -98,14 +98,14 @@ public static class BybitHistory
 
         switch (historyRequest.Interval)
         {
-            case CandlestickInterval.One_Minute:
+            case CandleInterval.One_Minute:
                 var noon = new DateTimeOffset(day.AddHours(12)).ToUnixTimeMilliseconds();
 
                 return [
                     $"{_endpoint}?category={historyRequest.MarketCategory}&symbol={historyRequest.Symbol}&interval={(int)historyRequest.Interval}&start={dayStart}&end={noon}&limit=1000",
                     $"{_endpoint}?category={historyRequest.MarketCategory}&symbol={historyRequest.Symbol}&interval={(int)historyRequest.Interval}&start={noon}&end={dayEnd}&limit=1000"
                 ];
-            case CandlestickInterval.Five_Minutes:
+            case CandleInterval.Five_Minutes:
                 return [$"{_endpoint}?category={historyRequest.MarketCategory}&symbol={historyRequest.Symbol}&interval={(int)historyRequest.Interval}&start={dayStart}&end={dayEnd}&limit=1000"];
             default:
                 throw new NotImplementedException();

@@ -3,7 +3,7 @@ using Cryptobot.ConsoleApp.Utils;
 
 namespace Cryptobot.ConsoleApp.Bybit.Models;
 
-public record HistoryRequest(CandlestickInterval Interval, string Symbol, string MarketCategory)
+public record HistoryRequest(CandleInterval Interval, string Symbol, string MarketCategory)
 {
     public string SymbolDescribed => Symbol switch
     {
@@ -22,15 +22,15 @@ public record HistoryRequest(CandlestickInterval Interval, string Symbol, string
 
     public string IntervalShortString => Interval switch
     {
-        CandlestickInterval.One_Minute => "1m",
-        CandlestickInterval.Five_Minutes => "5m",
+        CandleInterval.One_Minute => "1m",
+        CandleInterval.Five_Minutes => "5m",
         _ => throw new NotImplementedException(),
     };
 
     public int CandlesticksDailyCount => Interval switch
     {
-        CandlestickInterval.One_Minute => 1440,
-        CandlestickInterval.Five_Minutes => 288,
+        CandleInterval.One_Minute => 1440,
+        CandleInterval.Five_Minutes => 288,
         _ => throw new NotImplementedException()
     };
 }

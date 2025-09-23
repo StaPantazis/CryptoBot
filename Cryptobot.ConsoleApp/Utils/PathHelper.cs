@@ -4,19 +4,19 @@ namespace Cryptobot.ConsoleApp.Utils;
 
 public class PathHelper
 {
+    public static string GetBacktestingOutputPath()
+    {
+        var outputDir = @"Cryptobot.ConsoleApp\Backtesting\Output";
+        var outputPath = Path.Combine(GetParentDir().FullName, outputDir);
+
+        CreateDirectoryNonexistent(outputPath);
+        return outputPath;
+    }
+
     public static string GetResourcesPath()
     {
         var resourcesDir = @"Cryptobot.ConsoleApp\Resources";
-
-        var current = Directory.GetCurrentDirectory();
-        var parentDir = Directory.GetParent(current);
-
-        while (parentDir!.Name != "Cryptobot")
-        {
-            parentDir = parentDir.Parent;
-        }
-
-        var resourcesPath = Path.Combine(parentDir.FullName, resourcesDir);
+        var resourcesPath = Path.Combine(GetParentDir().FullName, resourcesDir);
 
         CreateDirectoryNonexistent(resourcesPath);
         return resourcesPath;
@@ -44,5 +44,18 @@ public class PathHelper
         {
             Directory.CreateDirectory(dirPath);
         }
+    }
+
+    private static DirectoryInfo GetParentDir()
+    {
+        var current = Directory.GetCurrentDirectory();
+        var parentDir = Directory.GetParent(current);
+
+        while (parentDir!.Name != "Cryptobot")
+        {
+            parentDir = parentDir.Parent;
+        }
+
+        return parentDir;
     }
 }

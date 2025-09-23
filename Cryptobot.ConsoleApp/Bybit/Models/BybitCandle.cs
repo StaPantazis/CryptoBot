@@ -1,6 +1,6 @@
 ﻿namespace Cryptobot.ConsoleApp.Bybit.Models;
 
-public class BybitCandlestick
+public class BybitCandle
 {
     public DateTime OpenTime { get; set; }
     public DateTime CloseTime { get; set; }
@@ -21,17 +21,17 @@ public class BybitCandlestick
 
     public override string ToString() => $"{OpenTime:dd/MM HH:mm}| {Math.Round(OpenPrice, 2)} / {Math.Round(ClosePrice, 2)}  ({PriceDifPercentage})";
 
-    public static List<BybitCandlestick> FromResponse(KlineResponse klineResponse)
+    public static List<BybitCandle> FromResponse(KlineResponse klineResponse)
     {
         var list = klineResponse.Result.List;
-        var candlesticks = new List<BybitCandlestick>();
+        var candlesticks = new List<BybitCandle>();
 
         foreach (var item in list)
         {
             var ts = long.Parse(item[0]);
             var openTime = DateTimeOffset.FromUnixTimeMilliseconds(ts).UtcDateTime;
 
-            candlesticks.Add(new BybitCandlestick
+            candlesticks.Add(new BybitCandle
             {
                 OpenTime = openTime,
                 CloseTime = openTime.AddMinutes(1),

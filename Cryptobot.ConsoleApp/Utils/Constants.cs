@@ -8,4 +8,6 @@ public static class Constants
     public const string MARKET_OPTIONS = "option";
 
     public const string SYMBOL_BTCUSDT = "BTCUSDT";
+
+    public const double TRADE_FEE = 0.00055;
 }

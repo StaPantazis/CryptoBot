@@ -1,6 +1,6 @@
 ﻿namespace Cryptobot.ConsoleApp.Binance;
 
-public class BinanceCandlestick
+public class BinanceCandle
 {
     public DateTime OpenTime { get; set; }
     public DateTime CloseTime { get; set; }
