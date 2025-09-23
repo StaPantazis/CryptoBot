@@ -1,4 +1,6 @@
-﻿namespace Cryptobot.ConsoleApp.Utils;
+﻿using Cryptobot.ConsoleApp.Bybit.Models;
+
+namespace Cryptobot.ConsoleApp.Utils;
 
 public class PathHelper
 {
@@ -18,6 +20,22 @@ public class PathHelper
 
         CreateDirectoryNonexistent(resourcesPath);
         return resourcesPath;
+    }
+
+    /// <summary>
+    /// First Symbol --> Then Category --> Then Interval
+    /// </summary>
+    public static string GetHistoryPath(HistoryRequest historyRequest)
+    {
+        var resourcesPath = GetResourcesPath();
+        var finalPath = Path.Combine(
+            resourcesPath,
+            historyRequest.MarketCategoryDescribed,
+            historyRequest.SymbolDescribed,
+            historyRequest.IntervalShortString);
+
+        CreateDirectoryNonexistent(finalPath);
+        return finalPath;
     }
 
     private static void CreateDirectoryNonexistent(string dirPath)

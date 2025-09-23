@@ -9,12 +9,11 @@ public static class BybitHistory
 {
     private const string _endpoint = "https://api.bybit.com/v5/market/kline";
 
-    public static async Task Download(CandlestickInterval interval)
+    public static async Task Download(HistoryRequest historyRequest)
     {
-        var symbol = "BTCUSDT";
-        var category = "linear"; // USDT perpetual
+        Console.WriteLine($"Downloadnig intervals of {(int)historyRequest.Interval} minutes...\n");
 
-        var resourcesPath = PathHelper.GetResourcesPath();
+        var resourcesPath = PathHelper.GetHistoryPath(historyRequest);
         var http = new HttpClient();
 
         // Start from 2020-01-01 UTC
@@ -31,26 +30,18 @@ public static class BybitHistory
             Console.ForegroundColor = ConsoleColor.White;
             Console.Write("... ");
 
-            var filename = $"{resourcesPath}\\{symbol}-1m-{day:yyyy-MM-dd}.json";
+            var filename = $"{resourcesPath}\\{historyRequest.Symbol}-{historyRequest.IntervalShortString}-{day:yyyy-MM-dd}.json";
 
             if (File.Exists(filename))
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"Already farmed!");
+                Console.WriteLine($"Already downloaded!");
                 continue;
             }
 
             Console.Write("Downloading... ");
 
-            var dayStart = new DateTimeOffset(day).ToUnixTimeMilliseconds();
-            var noon = new DateTimeOffset(day.AddHours(12)).ToUnixTimeMilliseconds();
-            var dayEnd = new DateTimeOffset(day.AddDays(1)).ToUnixTimeMilliseconds();
-
-            var urls = new[]
-            {
-                $"{_endpoint}?category={category}&symbol={symbol}&interval={(int)interval}&start={dayStart}&end={noon}&limit=1000",
-                $"{_endpoint}?category={category}&symbol={symbol}&interval={(int)interval}&start={noon}&end={dayEnd}&limit=1000"
-            };
+            var urls = GetUrlsByInterval(historyRequest, day);
 
             var allDailyCandles = new List<BybitCandlestick>();
 
@@ -77,7 +68,7 @@ public static class BybitHistory
                 .OrderBy(c => c.OpenTime)
                 .ToList();
 
-            if (merged.Count != 1440)
+            if (merged.Count != historyRequest.CandlesticksDailyCount)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"\nWrong data for file {day}, found {merged.Count} records!");
@@ -93,5 +84,25 @@ public static class BybitHistory
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine($"Finished!");
         Console.ForegroundColor = ConsoleColor.White;
+    }
+
+    private static string[] GetUrlsByInterval(HistoryRequest historyRequest, DateTime day)
+    {
+        switch (historyRequest.Interval)
+        {
+            case CandlestickInterval.One_Minute:
+                var dayStart = new DateTimeOffset(day).ToUnixTimeMilliseconds();
+                var noon = new DateTimeOffset(day.AddHours(12)).ToUnixTimeMilliseconds();
+                var dayEnd = new DateTimeOffset(day.AddDays(1)).ToUnixTimeMilliseconds();
+
+                return [
+                    $"{_endpoint}?category={historyRequest.MarketCategory}&symbol={historyRequest.Symbol}&interval={(int)historyRequest.Interval}&start={dayStart}&end={noon}&limit=1000",
+                    $"{_endpoint}?category={historyRequest.MarketCategory}&symbol={historyRequest.Symbol}&interval={(int)historyRequest.Interval}&start={noon}&end={dayEnd}&limit=1000"
+                ];
+            case CandlestickInterval.Five_Minutes:
+                return [];
+            default:
+                throw new NotImplementedException();
+        }
     }
 }
