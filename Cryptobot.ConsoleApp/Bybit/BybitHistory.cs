@@ -1,4 +1,5 @@
-﻿using Cryptobot.ConsoleApp.Bybit.Models;
+﻿using Cryptobot.ConsoleApp.Bybit.Enums;
+using Cryptobot.ConsoleApp.Bybit.Models;
 using Cryptobot.ConsoleApp.Utils;
 using Newtonsoft.Json;
 
@@ -8,11 +9,10 @@ public static class BybitHistory
 {
     private const string _endpoint = "https://api.bybit.com/v5/market/kline";
 
-    public static async Task Download()
+    public static async Task Download(CandlestickInterval interval)
     {
         var symbol = "BTCUSDT";
         var category = "linear"; // USDT perpetual
-        var interval = "1";      // 1-minute candles
 
         var resourcesPath = PathHelper.GetResourcesPath();
         var http = new HttpClient();
@@ -48,8 +48,8 @@ public static class BybitHistory
 
             var urls = new[]
             {
-                $"{_endpoint}?category={category}&symbol={symbol}&interval={interval}&start={dayStart}&end={noon}&limit=1000",
-                $"{_endpoint}?category={category}&symbol={symbol}&interval={interval}&start={noon}&end={dayEnd}&limit=1000"
+                $"{_endpoint}?category={category}&symbol={symbol}&interval={(int)interval}&start={dayStart}&end={noon}&limit=1000",
+                $"{_endpoint}?category={category}&symbol={symbol}&interval={(int)interval}&start={noon}&end={dayEnd}&limit=1000"
             };
 
             var allDailyCandles = new List<BybitCandlestick>();
