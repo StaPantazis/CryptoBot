@@ -2,11 +2,8 @@
 
 namespace Cryptobot.ConsoleApp.Backtesting.TradeStrategies;
 
-public abstract class TradeStrategy
+public abstract class TradeStrategy : StrategyBase
 {
-    public abstract string Name { get; }
-    public Spot Spot { get; set; }
-
     public virtual bool ShouldOpenTrade<T>(List<T> candles, int currentCandleIndex) where T : Candle
         => Spot.Budget > 10;
 

@@ -9,7 +9,7 @@ namespace Cryptobot.ConsoleApp.Backtesting;
 
 public static class Backtester
 {
-    public static async Task Test(HistoryRequest historyRequest)
+    public static async Task Run(HistoryRequest historyRequest)
     {
         var sw = new Stopwatch();
         sw.Start();
@@ -17,7 +17,7 @@ public static class Backtester
         var outputPath = PathHelper.GetBacktestingOutputPath();
         var candles = GetCandlesticks(historyRequest);
 
-        var spot = Run(candles);
+        var spot = Backtest(candles);
 
         Printer.BacktesterResult(spot, sw);
         sw.Stop();
@@ -26,7 +26,7 @@ public static class Backtester
 
         for (var i = 1; i < spot.Trades.Count + 1; i++)
         {
-            var trade = spot.Trades[i];
+            var trade = spot.Trades[i - 1];
 
             var entryCandle = outputCandles.Single(x => x.Id == trade.EntryCandleId);
             var exitCandle = outputCandles.SingleOrDefault(x => x.Id == trade.ExitCandleId);
@@ -53,9 +53,9 @@ public static class Backtester
         Printer.Done();
     }
 
-    public static Spot Run(List<BybitCandle> candles)
+    private static Spot Backtest(List<BybitCandle> candles)
     {
-        var spot = new Spot(10000, new TradeStrategy_EveryFiveCandles(), new BudgetStrategy_OnePercent());
+        var spot = new Spot(10000, new TS_EveryFiveCandles(), new BS_OnePercent());
         Printer.BacktesterStrategies(spot);
 
         for (var i = 0; i < candles.Count; i++)

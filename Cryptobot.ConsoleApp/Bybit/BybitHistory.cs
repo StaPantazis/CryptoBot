@@ -93,7 +93,7 @@ public static class BybitHistory
                     $"{_endpoint}?category={historyRequest.MarketCategory}&symbol={historyRequest.Symbol}&interval={(int)historyRequest.Interval}&start={dayStart}&end={noon}&limit=1000",
                     $"{_endpoint}?category={historyRequest.MarketCategory}&symbol={historyRequest.Symbol}&interval={(int)historyRequest.Interval}&start={noon}&end={dayEnd}&limit=1000"
                 ];
-            case CandleInterval.Five_Minutes:
+            case CandleInterval.Three_Minutes or CandleInterval.Five_Minutes or CandleInterval.Fifteen_Minutes:
                 return [$"{_endpoint}?category={historyRequest.MarketCategory}&symbol={historyRequest.Symbol}&interval={(int)historyRequest.Interval}&start={dayStart}&end={dayEnd}&limit=1000"];
             default:
                 throw new NotImplementedException();

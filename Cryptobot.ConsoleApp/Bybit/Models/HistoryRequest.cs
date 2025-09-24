@@ -1,9 +1,10 @@
-﻿using Cryptobot.ConsoleApp.Bybit.Enums;
+﻿using Cryptobot.ConsoleApp.Backtesting;
+using Cryptobot.ConsoleApp.Bybit.Enums;
 using Cryptobot.ConsoleApp.Utils;
 
 namespace Cryptobot.ConsoleApp.Bybit.Models;
 
-public record HistoryRequest(CandleInterval Interval, string Symbol, string MarketCategory)
+public record HistoryRequest(CandleInterval Interval, string Symbol, string MarketCategory, params StrategyBundleBase[] Strategies)
 {
     public string SymbolDescribed => Symbol switch
     {
@@ -23,14 +24,18 @@ public record HistoryRequest(CandleInterval Interval, string Symbol, string Mark
     public string IntervalShortString => Interval switch
     {
         CandleInterval.One_Minute => "1m",
+        CandleInterval.Three_Minutes => "3m",
         CandleInterval.Five_Minutes => "5m",
+        CandleInterval.Fifteen_Minutes => "15m",
         _ => throw new NotImplementedException(),
     };
 
     public int CandlesticksDailyCount => Interval switch
     {
         CandleInterval.One_Minute => 1440,
+        CandleInterval.Three_Minutes => 480,
         CandleInterval.Five_Minutes => 288,
+        CandleInterval.Fifteen_Minutes => 96,
         _ => throw new NotImplementedException()
     };
 }
