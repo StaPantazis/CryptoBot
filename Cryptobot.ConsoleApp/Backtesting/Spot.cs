@@ -1,6 +1,6 @@
 ﻿using Cryptobot.ConsoleApp.Backtesting.BudgetStrategies;
 using Cryptobot.ConsoleApp.Backtesting.TradeStrategies;
-using Cryptobot.ConsoleApp.Bybit.Models;
+using Cryptobot.ConsoleApp.Models;
 using Cryptobot.ConsoleApp.Utils;
 
 namespace Cryptobot.ConsoleApp.Backtesting;
@@ -9,6 +9,7 @@ public class Spot
 {
     public TradeStrategy TradeStrategy { get; }
     public BudgetStrategy BudgetStrategy { get; }
+    public double InitialBudget { get; private set; }
     public double Budget { get; private set; }
     public List<Trade> Trades { get; } = [];
 
@@ -20,10 +21,11 @@ public class Spot
         BudgetStrategy = budgetStrategy;
         BudgetStrategy.Spot = this;
 
+        InitialBudget = budget;
         Budget = budget;
     }
 
-    public void OpenTrade(BybitCandle candle)
+    public void OpenTrade<T>(T candle) where T : Candle
     {
         var tradeSize = BudgetStrategy.DefineTradeSize();
 
@@ -37,6 +39,7 @@ public class Spot
         {
             EntryTime = candle.OpenTime,
             EntryPrice = entryPrice,
+            EntryCandleId = candle.Id,
             StopLoss = entryPrice * 0.95,
             TakeProfit = entryPrice * 1.05,
             Quantity = quantity,
@@ -48,7 +51,7 @@ public class Spot
         });
     }
 
-    public void CheckCloseTrades(List<BybitCandle> candles, int currentCandleIndex)
+    public void CheckCloseTrades<T>(List<T> candles, int currentCandleIndex) where T : Candle
     {
         var openTrades = Trades.Where(t => !t.IsClosed).ToArray();
 
@@ -87,6 +90,7 @@ public class Spot
 
                 Budget += trade.TradeSize + trade.PnL.Value;
                 trade.BudgetAfterClosed = Budget;
+                trade.ExitCandleId = candle.Id;
             }
         }
     }

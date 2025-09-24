@@ -11,7 +11,7 @@ public static class BybitHistory
 
     public static async Task Download(HistoryRequest historyRequest)
     {
-        Console.WriteLine($"Downloadig intervals of {(int)historyRequest.Interval} minutes...\n");
+        Printer.HistoryDownloadTitle(historyRequest);
 
         var resourcesPath = PathHelper.GetHistoryPath(historyRequest);
         var http = new HttpClient();
@@ -22,27 +22,19 @@ public static class BybitHistory
 
         for (var day = startDate; day < today; day = day.AddDays(1))
         {
-            Console.ForegroundColor = ConsoleColor.White;
-
-            Console.Write("Checking ");
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.Write($"{day:dd/MM/yyyy}");
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.Write("... ");
+            Printer.CheckingHistory(day);
 
             var filename = $"{resourcesPath}\\{historyRequest.Symbol}-{historyRequest.IntervalShortString}-{day:yyyy-MM-dd}.json";
 
             if (File.Exists(filename))
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"Already downloaded!");
+                Printer.AlreadyDownloaded();
                 continue;
             }
 
-            Console.Write("Downloading... ");
+            Printer.Downloading();
 
             var urls = GetUrlsByInterval(historyRequest, day);
-
             var allDailyCandles = new List<BybitCandle>();
 
             for (var i = 0; i < urls.Length; i++)
@@ -75,20 +67,16 @@ public static class BybitHistory
 
             if (merged.Count != historyRequest.CandlesticksDailyCount)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"\nWrong data for file {day}, found {merged.Count} records!");
+                Printer.WrongHistory(day, merged.Count);
             }
 
             var output = JsonConvert.SerializeObject(merged, Formatting.None);
             await File.WriteAllTextAsync(filename, output);
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Check!");
+            Printer.Done();
         }
 
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine($"Finished!");
-        Console.ForegroundColor = ConsoleColor.White;
+        Printer.Finished();
     }
 
     private static string[] GetUrlsByInterval(HistoryRequest historyRequest, DateTime day)

@@ -1,11 +1,13 @@
-﻿using Cryptobot.ConsoleApp.Bybit.Models;
-
-namespace Cryptobot.ConsoleApp.Backtesting.TradeStrategies;
+﻿namespace Cryptobot.ConsoleApp.Backtesting.TradeStrategies;
 
 public class TradeStrategy_EveryFiveCandles : TradeStrategy
 {
-    public override bool ShouldOpenTrade(List<BybitCandle> candles, int currentCandleIndex)
-        => currentCandleIndex % 5 == 0
-        && Spot.Trades.Count < 100 &&
-        base.ShouldOpenTrade(candles, currentCandleIndex);
+    public override string Name { get; } = "Trade every 5 candles";
+
+    public override bool ShouldOpenTrade<T>(List<T> candles, int currentCandleIndex)
+    {
+        return currentCandleIndex % 5 == 0
+            //&& Spot.Trades.Count < 100
+            && base.ShouldOpenTrade(candles, currentCandleIndex);
+    }
 }

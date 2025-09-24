@@ -9,47 +9,37 @@ public static class BinanceHistory
 
     public static async Task DownloadHistory()
     {
-        Console.ForegroundColor = ConsoleColor.White;
         var date = Convert.ToDateTime("01/01/2020");
 
         while (date < DateTime.Now.AddDays(-1))
         {
-            Console.ForegroundColor = ConsoleColor.White;
             var url = _futuresUrl.Replace("[date]", date.ToString("yyyy-MM-dd"));
-            Console.Write("Checking ");
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.Write($"{date:dd/MM/yyyy}");
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.Write("... ");
+            Printer.CheckingHistory(date);
 
             if (!FileExists(url, out var filePath))
             {
-                Console.Write("Downloading... ");
+                Printer.Downloading();
 
                 if (!await DownloadFile(url))
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Write("Could not download . ");
+                    Printer.CouldNotDownload();
                     continue;
                 }
 
-                Console.Write("Validating file... ");
+                Printer.ValidatingFile();
 
                 if (IsDataValid(filePath))
                 {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Check!");
+                    Printer.Done();
                 }
                 else
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"\nWrong data for file {filePath}!");
+                    Printer.WrongHistory(filePath);
                 }
             }
             else
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"Already farmed!");
+                Printer.AlreadyDownloaded();
             }
 
             date = date.AddDays(1);
@@ -64,8 +54,7 @@ public static class BinanceHistory
         var success = 0;
         var fails = new List<string>();
 
-        Console.ForegroundColor = ConsoleColor.White;
-        Console.WriteLine("Validating data...");
+        Printer.ValidatingData();
         Console.ForegroundColor = ConsoleColor.Green;
 
         foreach (var filePath in filePaths)

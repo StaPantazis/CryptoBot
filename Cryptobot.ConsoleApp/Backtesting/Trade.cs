@@ -6,6 +6,7 @@ public class Trade
 {
     public DateTime EntryTime { get; set; }
     public double EntryPrice { get; set; }
+    public string EntryCandleId { get; set; }
 
     public double StopLoss { get; set; }
     public double TakeProfit { get; set; }
@@ -16,6 +17,7 @@ public class Trade
 
     public DateTime? ExitTime { get; set; }
     public double? ExitPrice { get; set; }
+    public string? ExitCandleId { get; set; }
     public double? PnL { get; set; }
 
     public double BudgetBeforePlaced { get; set; }
