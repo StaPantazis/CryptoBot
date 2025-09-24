@@ -3,7 +3,6 @@
 namespace Cryptobot.ConsoleApp.Models;
 public abstract class Candle
 {
-    [JsonIgnore]
     public string Id { get; protected set; } = Guid.NewGuid().ToString();
     public DateTime OpenTime { get; set; }
     public DateTime CloseTime { get; set; }

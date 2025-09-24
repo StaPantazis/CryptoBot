@@ -25,8 +25,9 @@ public class Spot
         Budget = budget;
     }
 
-    public void OpenTrade<T>(T candle) where T : Candle
+    public void OpenTrade<T>(List<T> candles, int currentCandleIndex) where T : Candle
     {
+        var candle = candles[currentCandleIndex];
         var tradeSize = BudgetStrategy.DefineTradeSize();
 
         var entryPrice = candle.OpenPrice;
@@ -40,8 +41,8 @@ public class Spot
             EntryTime = candle.OpenTime,
             EntryPrice = entryPrice,
             EntryCandleId = candle.Id,
-            StopLoss = entryPrice * 0.95,
-            TakeProfit = entryPrice * 1.05,
+            StopLoss = entryPrice * TradeStrategy.StopLoss(candles, currentCandleIndex),
+            TakeProfit = entryPrice * TradeStrategy.TakeProfit(candles, currentCandleIndex),
             Quantity = quantity,
             TradeSize = tradeSize,
             TradeFees = entryFees,

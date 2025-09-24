@@ -1,4 +1,5 @@
 ﻿using Cryptobot.ConsoleApp.Bybit.Models;
+using Cryptobot.ConsoleApp.Extensions;
 
 namespace Cryptobot.ConsoleApp.Backtesting;
 
@@ -20,12 +21,12 @@ public class BybitOutputCandle : BybitCandle
             Id = candle.Id,
             OpenTime = candle.OpenTime,
             CloseTime = candle.CloseTime,
-            OpenPrice = candle.OpenPrice,
-            ClosePrice = candle.ClosePrice,
-            HighPrice = candle.HighPrice,
-            LowPrice = candle.LowPrice,
-            Volume = candle.Volume,
-            QuoteVolume = candle.QuoteVolume,
+            OpenPrice = candle.OpenPrice.Round(1),
+            ClosePrice = candle.ClosePrice.Round(1),
+            HighPrice = candle.HighPrice.Round(1),
+            LowPrice = candle.LowPrice.Round(1),
+            Volume = candle.Volume.Round(1),
+            QuoteVolume = candle.QuoteVolume.Round(1),
         };
     }
 }

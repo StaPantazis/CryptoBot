@@ -4,6 +4,9 @@ namespace Cryptobot.ConsoleApp.Backtesting.TradeStrategies;
 
 public abstract class TradeStrategy : StrategyBase
 {
+    public abstract double StopLoss<T>(List<T> candles, int currentCandleIndex) where T : Candle;
+    public abstract double TakeProfit<T>(List<T> candles, int currentCandleIndex) where T : Candle;
+
     public virtual bool ShouldOpenTrade<T>(List<T> candles, int currentCandleIndex) where T : Candle
         => Spot.Budget > 10;
 

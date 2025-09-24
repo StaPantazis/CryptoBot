@@ -1,4 +1,4 @@
-﻿using Cryptobot.ConsoleApp.Bybit.Models;
+﻿using Cryptobot.ConsoleApp.Backtesting;
 
 namespace Cryptobot.ConsoleApp.Utils;
 
@@ -25,14 +25,14 @@ public class PathHelper
     /// <summary>
     /// First Symbol --> Then Category --> Then Interval
     /// </summary>
-    public static string GetHistoryPath(HistoryRequest historyRequest)
+    public static string GetHistoryPath(BacktestingDetails details)
     {
         var resourcesPath = GetResourcesPath();
         var finalPath = Path.Combine(
             resourcesPath,
-            historyRequest.MarketCategoryDescribed,
-            historyRequest.SymbolDescribed,
-            historyRequest.IntervalShortString);
+            details.MarketCategoryDescribed,
+            details.SymbolDescribed,
+            details.IntervalShortString);
 
         CreateDirectoryNonexistent(finalPath);
         return finalPath;

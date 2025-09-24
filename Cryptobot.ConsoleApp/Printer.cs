@@ -1,5 +1,4 @@
 ﻿using Cryptobot.ConsoleApp.Backtesting;
-using Cryptobot.ConsoleApp.Bybit.Models;
 using Cryptobot.ConsoleApp.Extensions;
 using System.Diagnostics;
 
@@ -8,7 +7,7 @@ namespace Cryptobot.ConsoleApp;
 public static class Printer
 {
     // History
-    public static void HistoryDownloadTitle(HistoryRequest historyRequest) => WriteLine($"Downloadig intervals of {(int)historyRequest.Interval} minutes...\n", White);
+    public static void HistoryDownloadTitle(BacktestingDetails details) => WriteLine($"Downloadig intervals of {(int)details.Interval} minutes...\n", White);
 
     public static void CheckingHistory(DateTime day)
     {
@@ -32,9 +31,9 @@ public static class Printer
     public static void CouldNotDownload() => Write($"Could not download.", Red);
 
     // Backtesting
-    public static void BacktesterStrategies(Spot spot)
+    public static void BacktesterInitialization(Spot spot)
     {
-        WriteLine("Backtesting...", Blue);
+        WriteLine("_Backtesting_", Blue);
 
         Write("Trading Strategy: ", White);
         WriteLine(spot.TradeStrategy.Name, Yellow);
@@ -43,10 +42,25 @@ public static class Printer
         WriteLine(spot.BudgetStrategy.Name, Yellow);
     }
 
+    public static void CalculatingCandles(int candleCount, int totalCandles)
+    {
+        if (candleCount == 0)
+        {
+            candleCount = 1;
+        }
+        else if (candleCount % 1000 != 0)
+        {
+            return;
+        }
+
+        Write($"\rCalculating {candleCount}/{totalCandles}...", Yellow);
+    }
+
     public static void BacktesterResult(Spot spot, Stopwatch sw)
     {
         var trades = spot.Trades;
 
+        EraseLineContent();
         WriteLine("\n_Result_", Blue);
 
         Write("Total Trades: ", White);
@@ -79,14 +93,31 @@ public static class Printer
             WriteLine($"{totalPnL.Euro(plusIfPositive: true)}", totalPnL >= 0 ? Green : Red);
         }
 
+        Write("Backtesting Runtime: ", White);
+        WriteLine(sw.ElapsedMilliseconds.MillisecondsToFormattedTime(), Yellow);
+    }
 
-        Write("Runtime: ", White);
+    public static void BacktesterOutputStart() => WriteLine("\n_Saving Output_", Blue);
+
+    public static void BacktesterOutputEnd(int candlesCount, Stopwatch sw)
+    {
+        Write("Total Candles: ", White);
+        WriteLine(candlesCount, Yellow);
+
+        Write("Saving Runtime: ", White);
+        WriteLine(sw.ElapsedMilliseconds.MillisecondsToFormattedTime(), Yellow);
+    }
+
+    public static void BacktesterTotalRuntime(Stopwatch sw)
+    {
+        Write("Total Runtime: ", White);
         WriteLine(sw.ElapsedMilliseconds.MillisecondsToFormattedTime(), Yellow);
     }
 
     // General
-    public static void Done() => WriteLine("Done!", Green);
+    public static void Done(string? prefix = null) => WriteLine($"{prefix ?? string.Empty}Done!", Green);
     public static void Finished() => WriteLine("Finished!", Green);
+    public static void Divider() => WriteLine("\n-----------------------------------------\n", Red);
 
     #region Privates
     private static void Write(object message, ConsoleColor color)
@@ -102,6 +133,8 @@ public static class Printer
         Console.WriteLine(message);
         Console.ForegroundColor = White;
     }
+
+    private static void EraseLineContent() => Console.Write("\r                                          \r");
 
     private static ConsoleColor Yellow => ConsoleColor.Yellow;
     private static ConsoleColor Blue => ConsoleColor.Cyan;

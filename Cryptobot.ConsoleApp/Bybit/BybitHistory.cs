@@ -1,4 +1,5 @@
-﻿using Cryptobot.ConsoleApp.Bybit.Enums;
+﻿using Cryptobot.ConsoleApp.Backtesting;
+using Cryptobot.ConsoleApp.Bybit.Enums;
 using Cryptobot.ConsoleApp.Bybit.Models;
 using Cryptobot.ConsoleApp.Utils;
 using Newtonsoft.Json;
@@ -9,11 +10,11 @@ public static class BybitHistory
 {
     private const string _endpoint = "https://api.bybit.com/v5/market/kline";
 
-    public static async Task Download(HistoryRequest historyRequest)
+    public static async Task Download(BacktestingDetails details)
     {
-        Printer.HistoryDownloadTitle(historyRequest);
+        Printer.HistoryDownloadTitle(details);
 
-        var resourcesPath = PathHelper.GetHistoryPath(historyRequest);
+        var resourcesPath = PathHelper.GetHistoryPath(details);
         var http = new HttpClient();
 
         // Start from 2020-03-26 UTC
@@ -24,7 +25,7 @@ public static class BybitHistory
         {
             Printer.CheckingHistory(day);
 
-            var filename = $"{resourcesPath}\\{historyRequest.Symbol}-{historyRequest.IntervalShortString}-{day:yyyy-MM-dd}.json";
+            var filename = $"{resourcesPath}\\{details.Symbol}-{details.IntervalShortString}-{day:yyyy-MM-dd}.json";
 
             if (File.Exists(filename))
             {
@@ -34,7 +35,7 @@ public static class BybitHistory
 
             Printer.Downloading();
 
-            var urls = GetUrlsByInterval(historyRequest, day);
+            var urls = GetUrlsByInterval(details, day);
             var allDailyCandles = new List<BybitCandle>();
 
             for (var i = 0; i < urls.Length; i++)
@@ -65,7 +66,7 @@ public static class BybitHistory
                 .OrderBy(c => c.OpenTime)
                 .ToList();
 
-            if (merged.Count != historyRequest.CandlesticksDailyCount)
+            if (merged.Count != details.CandlesticksDailyCount)
             {
                 Printer.WrongHistory(day, merged.Count);
             }
@@ -79,22 +80,22 @@ public static class BybitHistory
         Printer.Finished();
     }
 
-    private static string[] GetUrlsByInterval(HistoryRequest historyRequest, DateTime day)
+    private static string[] GetUrlsByInterval(BacktestingDetails details, DateTime day)
     {
         var dayStart = new DateTimeOffset(day).ToUnixTimeMilliseconds();
         var dayEnd = new DateTimeOffset(day.AddDays(1)).ToUnixTimeMilliseconds();
 
-        switch (historyRequest.Interval)
+        switch (details.Interval)
         {
             case CandleInterval.One_Minute:
                 var noon = new DateTimeOffset(day.AddHours(12)).ToUnixTimeMilliseconds();
 
                 return [
-                    $"{_endpoint}?category={historyRequest.MarketCategory}&symbol={historyRequest.Symbol}&interval={(int)historyRequest.Interval}&start={dayStart}&end={noon}&limit=1000",
-                    $"{_endpoint}?category={historyRequest.MarketCategory}&symbol={historyRequest.Symbol}&interval={(int)historyRequest.Interval}&start={noon}&end={dayEnd}&limit=1000"
+                    $"{_endpoint}?category={details.MarketCategory}&symbol={details.Symbol}&interval={(int)details.Interval}&start={dayStart}&end={noon}&limit=1000",
+                    $"{_endpoint}?category={details.MarketCategory}&symbol={details.Symbol}&interval={(int)details.Interval}&start={noon}&end={dayEnd}&limit=1000"
                 ];
             case CandleInterval.Three_Minutes or CandleInterval.Five_Minutes or CandleInterval.Fifteen_Minutes:
-                return [$"{_endpoint}?category={historyRequest.MarketCategory}&symbol={historyRequest.Symbol}&interval={(int)historyRequest.Interval}&start={dayStart}&end={dayEnd}&limit=1000"];
+                return [$"{_endpoint}?category={details.MarketCategory}&symbol={details.Symbol}&interval={(int)details.Interval}&start={dayStart}&end={dayEnd}&limit=1000"];
             default:
                 throw new NotImplementedException();
         }

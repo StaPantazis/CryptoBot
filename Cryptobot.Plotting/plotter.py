@@ -5,6 +5,8 @@ import matplotlib.dates as mdates
 
 
 def plot_candlestick(json_file):
+    print("Preparing plot...")
+
     # Load JSON file
     with open(json_file, "r") as f:
         data = json.load(f)

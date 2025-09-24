@@ -12,9 +12,10 @@ public class StrategyBundle<TTradeStrategy, TBudgetStrategy> : StrategyBundleBas
         TradeStrategy = Activator.CreateInstance<TTradeStrategy>()!;
         BudgetStrategy = Activator.CreateInstance<TBudgetStrategy>()!;
     }
+}
 
+public abstract class StrategyBundleBase
+{
     public TradeStrategy TradeStrategy { get; init; }
     public BudgetStrategy BudgetStrategy { get; init; }
 }
-
-public abstract class StrategyBundleBase;
