@@ -1,5 +1,5 @@
-﻿using Cryptobot.ConsoleApp.Backtesting.BudgetStrategies;
-using Cryptobot.ConsoleApp.Backtesting.TradeStrategies;
+﻿using Cryptobot.ConsoleApp.Backtesting.Strategies.BudgetStrategies;
+using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
 using Cryptobot.ConsoleApp.Models;
 using Cryptobot.ConsoleApp.Utils;
 
@@ -7,13 +7,15 @@ namespace Cryptobot.ConsoleApp.Backtesting;
 
 public class Spot
 {
+    private readonly double _slippage_multiplier = 0;
+
     public TradeStrategy TradeStrategy { get; }
     public BudgetStrategy BudgetStrategy { get; }
     public double InitialBudget { get; private set; }
     public double Budget { get; private set; }
     public List<Trade> Trades { get; } = [];
 
-    public Spot(double budget, TradeStrategy tradeStrategy, BudgetStrategy budgetStrategy)
+    public Spot(double budget, TradeStrategy tradeStrategy, BudgetStrategy budgetStrategy, string symbol)
     {
         TradeStrategy = tradeStrategy;
         tradeStrategy.Spot = this;
@@ -23,6 +25,12 @@ public class Spot
 
         InitialBudget = budget;
         Budget = budget;
+
+        _slippage_multiplier = symbol switch
+        {
+            Constants.SYMBOL_BTCUSDT => Constants.SLIPPAGE_MULTIPLIER_BTC,
+            _ => throw new NotImplementedException()
+        };
     }
 
     public void OpenTrade<T>(List<T> candles, int currentCandleIndex) where T : Candle
@@ -30,11 +38,14 @@ public class Spot
         var candle = candles[currentCandleIndex];
         var tradeSize = BudgetStrategy.DefineTradeSize();
 
-        var entryPrice = candle.OpenPrice;
+        var rawEntryPrice = candle.OpenPrice;
+        var entryPrice = rawEntryPrice * (1 + _slippage_multiplier);
         var quantity = tradeSize / entryPrice;
+        var slippageCosts = (entryPrice - rawEntryPrice) * quantity;
         var entryFees = tradeSize * Constants.TRADE_FEE;
 
-        Budget -= tradeSize + entryFees;
+        var budgetBeforePlaced = Budget;
+        Budget -= tradeSize + entryFees + slippageCosts;
 
         Trades.Add(new Trade
         {
@@ -46,9 +57,10 @@ public class Spot
             Quantity = quantity,
             TradeSize = tradeSize,
             TradeFees = entryFees,
+            SlippageCosts = slippageCosts,
             IsClosed = false,
             BudgetAfterPlaced = Budget,
-            BudgetBeforePlaced = Budget + tradeSize
+            BudgetBeforePlaced = budgetBeforePlaced
         });
     }
 
@@ -71,10 +83,16 @@ public class Spot
 
                 trade.IsClosed = true;
                 trade.ExitTime = candle.OpenTime;
+                trade.ExitCandleId = candle.Id;
+
+                double exitSlippage = 0;
 
                 if (candle.LowPrice <= trade.StopLoss)
                 {
-                    trade.ExitPrice = trade.StopLoss;
+                    var rawExitPrice = trade.StopLoss;
+                    trade.ExitPrice = rawExitPrice * (1 - _slippage_multiplier);
+
+                    exitSlippage = (rawExitPrice - trade.ExitPrice.Value) * trade.Quantity;
                 }
                 else if (candle.HighPrice >= trade.TakeProfit)
                 {
@@ -86,12 +104,12 @@ public class Spot
                     throw new NotImplementedException();
                 }
 
-                trade.PnL = (trade.ExitPrice!.Value * trade.Quantity) - trade.TradeSize - exitFees;
+                trade.PnL = (trade.ExitPrice.Value * trade.Quantity) - trade.TradeSize - exitFees - exitSlippage;
+                trade.SlippageCosts += exitSlippage;
                 trade.TradeFees = exitFees;
 
                 Budget += trade.TradeSize + trade.PnL.Value;
                 trade.BudgetAfterClosed = Budget;
-                trade.ExitCandleId = candle.Id;
             }
         }
     }

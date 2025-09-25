@@ -13,6 +13,7 @@ public class Trade
     public double Quantity { get; set; }
     public double TradeSize { get; set; }
     public double TradeFees { get; set; }
+    public double SlippageCosts { get; set; }
     public bool IsClosed { get; set; } = false;
 
     public DateTime? ExitTime { get; set; }

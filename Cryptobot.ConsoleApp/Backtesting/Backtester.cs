@@ -20,7 +20,7 @@ public static class Backtester
             var sw = new Stopwatch();
             sw.Start();
 
-            var spot = new Spot(details.Budget, strategy.TradeStrategy, strategy.BudgetStrategy);
+            var spot = new Spot(details.Budget, strategy.TradeStrategy, strategy.BudgetStrategy, details.Symbol);
             Printer.BacktesterInitialization(spot);
 
             spot = Backtest(spot, candles);

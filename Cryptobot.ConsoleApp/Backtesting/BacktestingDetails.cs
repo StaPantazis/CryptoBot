@@ -1,4 +1,5 @@
-﻿using Cryptobot.ConsoleApp.Bybit.Enums;
+﻿using Cryptobot.ConsoleApp.Backtesting.Strategies;
+using Cryptobot.ConsoleApp.Bybit.Enums;
 using Cryptobot.ConsoleApp.Utils;
 
 namespace Cryptobot.ConsoleApp.Backtesting;
