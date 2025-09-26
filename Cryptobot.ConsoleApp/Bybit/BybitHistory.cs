@@ -1,6 +1,6 @@
 ﻿using Cryptobot.ConsoleApp.Backtesting;
-using Cryptobot.ConsoleApp.Bybit.Enums;
 using Cryptobot.ConsoleApp.Bybit.Models;
+using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Utils;
 using Newtonsoft.Json;
 

@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.36414.22
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cryptobot.ConsoleApp", "Cryptobot.ConsoleApp\Cryptobot.ConsoleApp.csproj", "{866FD0FF-4C8E-427F-A14A-2210700140FE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cryptobot.Tests", "Cryptobot.Tests\Cryptobot.Tests.csproj", "{8E986C4B-1181-4BA2-9F03-A5510787B7A4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{866FD0FF-4C8E-427F-A14A-2210700140FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{866FD0FF-4C8E-427F-A14A-2210700140FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{866FD0FF-4C8E-427F-A14A-2210700140FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E986C4B-1181-4BA2-9F03-A5510787B7A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E986C4B-1181-4BA2-9F03-A5510787B7A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E986C4B-1181-4BA2-9F03-A5510787B7A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E986C4B-1181-4BA2-9F03-A5510787B7A4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

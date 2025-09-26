@@ -2,7 +2,7 @@
 using Cryptobot.ConsoleApp.Backtesting.Strategies;
 using Cryptobot.ConsoleApp.Backtesting.Strategies.BudgetStrategies;
 using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
-using Cryptobot.ConsoleApp.Bybit.Enums;
+using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Utils;
 using System.Text;
 
@@ -14,7 +14,6 @@ var backtestingDetails = new BacktestingDetails(
     MarketCategory: Constants.MARKET_PERPETUAL_FUTURES,
     Strategies: [
         new StrategyBundle<TS_Every100Candles_SL5_TP5, BS_OnePercent>(),
-        //new StrategyBundle<TS_Every200Candles_SL5_TP8, BS_OnePercent>(),
         ]);
 
 //await BybitHistory.Download(request);

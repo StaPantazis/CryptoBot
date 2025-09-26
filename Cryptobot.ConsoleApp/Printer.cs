@@ -1,5 +1,6 @@
 ﻿using Cryptobot.ConsoleApp.Backtesting;
 using Cryptobot.ConsoleApp.Backtesting.Metrics;
+using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.Extensions;
 using System.Diagnostics;
 

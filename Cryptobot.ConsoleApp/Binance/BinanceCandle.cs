@@ -1,4 +1,4 @@
-﻿using Cryptobot.ConsoleApp.Models;
+﻿using Cryptobot.ConsoleApp.EngineDir.Models;
 
 namespace Cryptobot.ConsoleApp.Binance;
 

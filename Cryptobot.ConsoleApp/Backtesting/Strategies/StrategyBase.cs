@@ -1,4 +1,6 @@
-﻿namespace Cryptobot.ConsoleApp.Backtesting.Strategies;
+﻿using Cryptobot.ConsoleApp.EngineDir.Models;
+
+namespace Cryptobot.ConsoleApp.Backtesting.Strategies;
 
 public abstract class StrategyBase
 {

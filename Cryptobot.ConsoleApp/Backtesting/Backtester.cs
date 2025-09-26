@@ -1,4 +1,6 @@
 ﻿using Cryptobot.ConsoleApp.Bybit.Models;
+using Cryptobot.ConsoleApp.EngineDir;
+using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.Extensions;
 using Cryptobot.ConsoleApp.Utils;
 using Newtonsoft.Json;
@@ -20,7 +22,8 @@ public static class Backtester
             var sw = new Stopwatch();
             sw.Start();
 
-            var spot = new Spot(details.Budget, strategy.TradeStrategy, strategy.BudgetStrategy, details.Symbol);
+            var user = new User("Xatzias");
+            var spot = new Spot(user, details.Budget, strategy.TradeStrategy, strategy.BudgetStrategy, details.Symbol);
             Printer.BacktesterInitialization(spot);
 
             spot = Backtest(spot, candles);
@@ -29,6 +32,7 @@ public static class Backtester
             sw.Restart();
             Printer.BacktesterOutputStart();
 
+            candles = candles.Take(1000).ToList();
             var outputCandles = SaveBacktest(candles, spot);
 
             Printer.BacktesterOutputEnd(outputCandles.Length, sw);
@@ -45,20 +49,13 @@ public static class Backtester
 
     private static Spot Backtest(Spot spot, List<BybitCandle> candles)
     {
+        var engine = new Engine(spot);
         var totalCandles = candles.Count;
 
         for (var i = 0; i < totalCandles; i++)
         {
             Printer.CalculatingCandles(i, totalCandles);
-
-            var candle = candles[i];
-
-            if (spot.TradeStrategy.ShouldOpenTrade(candles, i))
-            {
-                spot.OpenTrade(candles, i);
-            }
-
-            spot.CheckCloseTrades(candles, i);
+            engine.CheckNewCandle(candles, i);
         }
 
         return spot;
