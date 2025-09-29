@@ -1,6 +1,7 @@
 ﻿using Cryptobot.ConsoleApp.Backtesting.Strategies.BudgetStrategies;
 using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
+using Cryptobot.ConsoleApp.Extensions;
 using Cryptobot.ConsoleApp.Utils;
 
 namespace Cryptobot.ConsoleApp.EngineDir.Models;
@@ -40,18 +41,19 @@ public class Spot
         var candle = candles[currentCandleIndex];
         var tradeSize = BudgetStrategy.DefineTradeSize();
 
-        var rawEntryPrice = candle.OpenPrice;
+        var rawEntryPrice = candle.OpenPrice.Round(5);
+        var entrySlippage = (rawEntryPrice * _slippage_multiplier).Round(5);
 
-        var entryPrice = position == PositionSide.Long
-            ? rawEntryPrice * (1 + _slippage_multiplier)  // pay up when buying
-            : rawEntryPrice * (1 - _slippage_multiplier); // sell a bit worse when shorting
+        var entryPrice = (position == PositionSide.Long
+                ? rawEntryPrice + entrySlippage  // pay up when buying
+                : rawEntryPrice - entrySlippage) // sell a bit worse when shorting
+            .Round(5);
 
-        var quantity = tradeSize / entryPrice;
-        var entryFees = tradeSize * Constants.TRADE_FEE;
-        var entrySlippage = Math.Abs(entryPrice - rawEntryPrice) * quantity;
+        var quantity = (tradeSize / entryPrice).Round(5);
+        var entryFees = (tradeSize * Constants.TRADE_FEE).Round(5);
 
         var budgetBeforePlaced = Budget;
-        Budget -= tradeSize + entryFees + entrySlippage;
+        Budget = (Budget - tradeSize - entryFees - entrySlippage).Round(5);
 
         var stopLossMultiplier = TradeStrategy.StopLoss(candles, currentCandleIndex);
         var takeProfitMultiplier = TradeStrategy.TakeProfit(candles, currentCandleIndex);
@@ -59,14 +61,14 @@ public class Spot
         double stopLoss, takeProfit;
         if (position is PositionSide.Long)
         {
-            stopLoss = entryPrice * stopLossMultiplier;
-            takeProfit = entryPrice * takeProfitMultiplier;
+            stopLoss = (entryPrice * stopLossMultiplier).Round(5);
+            takeProfit = (entryPrice * takeProfitMultiplier).Round(5);
         }
         else
         {
             // mirror for short: SL above, TP below
-            stopLoss = entryPrice * (2 - stopLossMultiplier);      // if slMult=0.95 → 1.05
-            takeProfit = entryPrice * (2 - takeProfitMultiplier);  // if tpMult=1.05 → 0.95
+            stopLoss = (entryPrice * (2 - stopLossMultiplier)).Round(5);      // if slMult=0.95 → 1.05
+            takeProfit = (entryPrice * (2 - takeProfitMultiplier)).Round(5);  // if tpMult=1.05 → 0.95
         }
 
         Trades.Add(new Trade
@@ -82,8 +84,8 @@ public class Spot
             TradeFees = entryFees,
             SlippageCosts = entrySlippage,
             IsClosed = false,
-            BudgetAfterPlaced = Budget,
-            BudgetBeforePlaced = budgetBeforePlaced
+            BudgetBeforePlaced = budgetBeforePlaced,
+            BudgetAfterEntry = Budget,
         });
     }
 
@@ -105,7 +107,7 @@ public class Spot
                 continue;
             }
 
-            var exitFees = trade.TradeSize * Constants.TRADE_FEE;
+            var exitFees = (trade.TradeSize * Constants.TRADE_FEE).Round(5);
 
             trade.IsClosed = true;
             trade.ExitTime = candle.OpenTime;
@@ -118,52 +120,57 @@ public class Spot
                 if (candle.LowPrice <= trade.StopLoss)
                 {
                     rawExitPrice = trade.StopLoss;
-                    exitPrice = rawExitPrice * (1 - _slippage_multiplier);
-                    exitSlip = (rawExitPrice - exitPrice) * trade.Quantity;
+                    exitSlip = (rawExitPrice * trade.Quantity * _slippage_multiplier).Round(5);
+                    exitPrice = (rawExitPrice * (1 - _slippage_multiplier)).Round(5);
                 }
                 else if (candle.HighPrice >= trade.TakeProfit)
                 {
-                    rawExitPrice = trade.TakeProfit;
-                    exitPrice = rawExitPrice;
+                    exitPrice = trade.TakeProfit;
                 }
                 else
                 {
                     throw new NotImplementedException();
                 }
 
-                trade.ExitPrice = exitPrice;
-                trade.PnL = (exitPrice * trade.Quantity) - trade.TradeSize - exitFees - exitSlip;
+                trade.PnL = (exitPrice * trade.Quantity) - trade.TradeSize;
             }
             else if (trade.PositionSide is PositionSide.Short)
             {
                 if (candle.HighPrice >= trade.StopLoss)
                 {
                     rawExitPrice = trade.StopLoss;
-                    exitPrice = rawExitPrice * (1 + _slippage_multiplier);
-                    exitSlip = (exitPrice - rawExitPrice) * trade.Quantity;
+                    exitSlip = (rawExitPrice * trade.Quantity * _slippage_multiplier).Round(5);
+                    exitPrice = (rawExitPrice * (1 + _slippage_multiplier)).Round(5);
                 }
                 else if (candle.LowPrice <= trade.TakeProfit)
                 {
-                    rawExitPrice = trade.TakeProfit;
-                    exitPrice = rawExitPrice;
+                    exitPrice = trade.TakeProfit;
                 }
                 else
                 {
                     throw new NotImplementedException();
                 }
 
-                trade.ExitPrice = exitPrice;
-                trade.PnL = ((trade.EntryPrice - exitPrice) * trade.Quantity) - exitFees - exitSlip;
+                trade.PnL = trade.TradeSize - (exitPrice * trade.Quantity);
             }
             else
             {
                 throw new NotImplementedException();
             }
 
-            trade.SlippageCosts += exitSlip;
-            trade.TradeFees += exitFees;
-            Budget += trade.TradeSize + trade.PnL.Value;
-            trade.BudgetAfterClosed = Budget;
+            trade.ExitPrice = exitPrice;
+
+            var initialSlippage = trade.SlippageCosts;
+            var initialTradeFees = trade.TradeFees;
+
+            trade.SlippageCosts = (trade.SlippageCosts + exitSlip).Round(5);
+            trade.TradeFees = (trade.TradeFees + exitFees).Round(5);
+            trade.PnL = (trade.PnL!.Value - trade.SlippageCosts - trade.TradeFees).Round(5);
+
+            // Add here the initial Slippage & Fees because if we don't, they will be calculated twice in the PnL
+            Budget = (Budget + trade.TradeSize + trade.PnL.Value + initialSlippage + initialTradeFees).Round(5);
+
+            trade.BudgetAfterExit = Budget;
         }
     }
 }

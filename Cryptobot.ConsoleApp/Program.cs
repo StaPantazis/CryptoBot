@@ -17,6 +17,6 @@ var backtestingDetails = new BacktestingDetails(
         ]);
 
 //await BybitHistory.Download(request);
-Backtester.Run(backtestingDetails);
+await Backtester.Run(backtestingDetails);
 
 Console.ReadLine();

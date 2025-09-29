@@ -6,15 +6,10 @@ import matplotlib.dates as mdates
 import constants as CONST
 
 
-def plot_candlestick(json_gz_file):
+def plot_candlestick(parquet_file):
     print("Preparing plot...")
 
-    # Load gzipped JSON file
-    with gzip.open(json_gz_file, "rt", encoding="utf-8") as f:
-        data = json.load(f)
-
-    # Convert JSON to DataFrame
-    df = pd.DataFrame(data)
+    df = pd.read_parquet("candles.parquet")
 
     # Ensure proper types
     df[CONST.OPEN_TIME] = pd.to_datetime(df[CONST.OPEN_TIME])
@@ -43,7 +38,7 @@ def plot_candlestick(json_gz_file):
             t, row[CONST.OPEN_PRICE], row[CONST.CLOSE_PRICE], color=color, linewidth=6
         )
 
-    ax.set_title(f"BTC/USDT 1m Candlesticks (from {json_gz_file})")
+    ax.set_title(f"BTC/USDT 1m Candlesticks (from {parquet_file})")
     ax.set_xlabel("Time of day")
     ax.set_ylabel("Price (USDT)")
     ax.xaxis.set_major_locator(mdates.HourLocator(interval=2))

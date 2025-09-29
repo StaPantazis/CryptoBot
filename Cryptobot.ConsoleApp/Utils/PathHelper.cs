@@ -38,6 +38,17 @@ public class PathHelper
         return finalPath;
     }
 
+    public static void DeleteFileIfExisting(string filepath)
+    {
+        if (File.Exists(filepath))
+        {
+            File.Delete(filepath);
+        }
+    }
+
+    public static void CheckFixFilepathExtensions(ref string filepath, string extension)
+        => filepath = filepath.Contains(extension) ? filepath : $"{filepath}.{extension}";
+
     private static void CreateDirectoryNonexistent(string dirPath)
     {
         if (!Directory.Exists(dirPath))

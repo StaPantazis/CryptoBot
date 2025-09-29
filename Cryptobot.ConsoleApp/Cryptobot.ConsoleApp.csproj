@@ -8,15 +8,16 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <NoWarn>1701;1702;CS8618;IDE0305</NoWarn>
+    <NoWarn>1701;1702;CS8618;IDE0045;IDE0305</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <NoWarn>1701;1702;CS8618;IDE0305</NoWarn>
+    <NoWarn>1701;1702;CS8618;IDE0045;IDE0305</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="Parquet.Net" Version="5.2.0" />
   </ItemGroup>
 
   <ItemGroup>

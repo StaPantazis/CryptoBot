@@ -1,4 +1,5 @@
-﻿using Cryptobot.ConsoleApp.Bybit.Models;
+﻿using Cryptobot.ConsoleApp.Backtesting.OutputModels;
+using Cryptobot.ConsoleApp.Bybit.Models;
 using Cryptobot.ConsoleApp.EngineDir;
 using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.Extensions;
@@ -10,12 +11,13 @@ namespace Cryptobot.ConsoleApp.Backtesting;
 
 public static class Backtester
 {
-    public static void Run(BacktestingDetails details)
+    public static async Task Run(BacktestingDetails details)
     {
         var swMain = new Stopwatch();
         swMain.Start();
 
         var candles = GetCandlesticks(details);
+        //candles = candles.Take(1440).ToList();
 
         foreach (var strategy in details.Strategies)
         {
@@ -32,10 +34,9 @@ public static class Backtester
             sw.Restart();
             Printer.BacktesterOutputStart();
 
-            candles = candles.Take(1000).ToList();
-            var outputCandles = SaveBacktest(candles, spot);
+            await SaveBacktest(candles, spot);
 
-            Printer.BacktesterOutputEnd(outputCandles.Length, sw);
+            Printer.BacktesterOutputEnd(candles.Count, sw);
             Printer.Divider();
         }
 
@@ -82,10 +83,14 @@ public static class Backtester
         return allCandles;
     }
 
-    private static BybitOutputCandle[] SaveBacktest(List<BybitCandle> candles, Spot spot)
+    private static async Task SaveBacktest(List<BybitCandle> candles, Spot spot)
     {
+        var outputPath = PathHelper.GetBacktestingOutputPath();
+
+        // Candles
         var outputCandles = candles.Select(BybitOutputCandle.FromBybitCandle).ToArray();
         var candleMap = outputCandles.ToDictionary(x => x.Id);
+        double totalPnL = 0;
 
         for (var i = 1; i < spot.Trades.Count + 1; i++)
         {
@@ -96,34 +101,66 @@ public static class Backtester
             entryCandle.EntryPrice = trade.EntryPrice.Round(1);
             entryCandle.StopLoss = trade.StopLoss.Round(1);
             entryCandle.TakeProfit = trade.TakeProfit.Round(1);
-            entryCandle.TradeSize = trade.TradeSize.Round(1);
+            entryCandle.EntryTradeSize = trade.TradeSize.Round(1);
+            entryCandle.BudgetAfterEntry = trade.BudgetAfterEntry.Round(1);
 
             if (trade.ExitCandleId != null && candleMap.TryGetValue(trade.ExitCandleId, out var exitCandle))
             {
                 exitCandle.TradeIndex = i;
                 exitCandle.ExitPrice = trade.ExitPrice?.Round(1);
+                entryCandle.ExitTradeSize = trade.TradeSize.Round(1);
                 exitCandle.PnL = trade.PnL?.Round(1);
                 exitCandle.IsProfit = trade.PnL >= 0;
+                exitCandle.BudgetAfterExit = trade.BudgetAfterExit!.Value.Round(1);
+
+                totalPnL += exitCandle.PnL!.Value.Round(1);
+                exitCandle.TotalPnL = totalPnL;
             }
         }
 
         outputCandles = outputCandles.OrderBy(x => x.OpenTime).ToArray();
 
-        var output = JsonConvert.SerializeObject(
-            outputCandles,
-            Formatting.None,
-            new JsonSerializerSettings
+        // Linear Graph
+        var linearGraphNodes = new List<LinearGraphNode>() { new(0, 0, spot.Budget, true) };
+        var tradedCandles = outputCandles.Where(x => x.EntryPrice != null || x.ExitPrice != null).ToArray();
+
+        for (var i = 0; i < tradedCandles.Length; i++)
+        {
+            var candle = tradedCandles[i];
+
+            if (candle.ExitPrice != null)
             {
-                ContractResolver = new ShortNameContractResolver(),
-                NullValueHandling = NullValueHandling.Ignore,
-                Formatting = Formatting.None
-            });
+                linearGraphNodes.Add(new(i + 1, candle.PnL, candle.BudgetAfterExit!.Value, candle.PnL!.Value >= 0));
+            }
 
-        var outputPath = PathHelper.GetBacktestingOutputPath();
-        var filename = $"{outputPath}\\{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}.json";
+            if (candle.EntryPrice != null)
+            {
+                linearGraphNodes.Add(new(i + 1, null, candle.BudgetAfterEntry!.Value, null));
+            }
+        }
 
-        ZipCompressor.CompressToGzip(output, filename);
+        //var output = JsonConvert.SerializeObject(
+        //    outputCandles,
+        //    Formatting.None,
+        //    new JsonSerializerSettings
+        //    {
+        //        ContractResolver = new ShortNameContractResolver(),
+        //        NullValueHandling = NullValueHandling.Ignore,
+        //        Formatting = Formatting.None
+        //    });
 
-        return outputCandles;
+        //var outputPath = PathHelper.GetBacktestingOutputPath();
+        //var filename = $"{outputPath}\\{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}.json";
+
+        //ZipCompressor.CompressToGzip(output, filename);
+
+        var candlesFilepath = $"{outputPath}\\candles-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}.{Constants.PARQUET}";
+        await ParquetManager.SaveCandlesAsync(outputCandles, candlesFilepath);
+
+        var linearFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\linear-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}.{Constants.PARQUET}";
+        await ParquetManager.SaveLinearGraph(linearGraphNodes, linearFilepath);
+
+        var zipFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}__{totalPnL.Euro(digits: 1, plusIfPositive: true)}.{Constants.ZIP}";
+        ZipHelper.BundleFiles(zipFilepath, candlesFilepath, linearFilepath);
     }
 }

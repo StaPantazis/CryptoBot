@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-
-namespace Cryptobot.ConsoleApp.EngineDir.Models;
+﻿namespace Cryptobot.ConsoleApp.EngineDir.Models;
 
 public abstract class Candle
 {
@@ -20,7 +18,6 @@ public abstract class Candle
     /// </summary>
     public double QuoteVolume { get; set; }
 
-    [JsonIgnore]
     public double PriceDif => Math.Round(ClosePrice - OpenPrice, 2);
 
     public override string ToString() => $"{OpenTime:dd/MM HH:mm}| {Math.Round(OpenPrice, 2)} / {Math.Round(ClosePrice, 2)}  ({PriceDif})";

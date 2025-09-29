@@ -1,4 +1,4 @@
-﻿using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
+using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 
 namespace Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
 
@@ -15,10 +15,7 @@ public class TS_Every100Candles_SL5_TP5 : TradeStrategy
         return baseShouldTrade && currentCandleIndex % 100 == 0;
     }
 
-    protected override bool ShouldShort<T>(List<T> candles, int currentCandleIndex)
-        => currentCandleIndex % 400 == 0;
+    protected override bool ShouldShort<T>(List<T> candles, int currentCandleIndex) => currentCandleIndex % 400 == 0;
 
-    protected
-        override bool ShouldLong<T>(List<T> candles, int currentCandleIndex)
-        => currentCandleIndex % 400 != 0;
+    protected override bool ShouldLong<T>(List<T> candles, int currentCandleIndex) => currentCandleIndex % 400 != 0;
 }

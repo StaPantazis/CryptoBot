@@ -20,7 +20,8 @@ public abstract class TradeStrategy : StrategyBase
     public virtual bool ShouldCloseTrade<T>(List<T> candles, int currentCandleIndex, Trade trade) where T : Candle
     {
         var candle = candles[currentCandleIndex];
-        return candle.LowPrice <= trade.StopLoss || candle.HighPrice >= trade.TakeProfit;
+        return (trade.PositionSide is PositionSide.Long && (candle.LowPrice <= trade.StopLoss || candle.HighPrice >= trade.TakeProfit))
+            || (trade.PositionSide is PositionSide.Short && (candle.HighPrice >= trade.StopLoss || candle.LowPrice <= trade.TakeProfit));
     }
 
     protected abstract bool ShouldShort<T>(List<T> candles, int currentCandleIndex) where T : Candle;

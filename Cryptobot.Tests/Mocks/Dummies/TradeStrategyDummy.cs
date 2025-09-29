@@ -1,13 +1,17 @@
 ﻿using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
+using Cryptobot.ConsoleApp.EngineDir.Models;
+using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 
 namespace Cryptobot.Tests.Mocks.Dummies;
-internal class TradeStrategyDummy : TradeStrategy
+internal class TradeStrategyDummy(PositionSide position) : TradeStrategy
 {
+    private readonly PositionSide _position = position;
     public override string Name { get; } = "Trade Dummy";
     public override string NameOf { get; } = nameof(TradeStrategyDummy);
 
-    public override double StopLoss<T>(List<T> candles, int currentCandleIndex) => throw new NotImplementedException();
-    public override double TakeProfit<T>(List<T> candles, int currentCandleIndex) => throw new NotImplementedException();
-    protected override bool ShouldLong<T>(List<T> candles, int currentCandleIndex) => throw new NotImplementedException();
-    protected override bool ShouldShort<T>(List<T> candles, int currentCandleIndex) => throw new NotImplementedException();
+    public override double StopLoss<T>(List<T> candles, int i) => 0.95;
+    public override double TakeProfit<T>(List<T> candles, int i) => 1.05;
+    public override bool ShouldCloseTrade<T>(List<T> candles, int i, Trade trade) => true;
+    protected override bool ShouldLong<T>(List<T> candles, int currentCandleIndex) => _position is PositionSide.Long;
+    protected override bool ShouldShort<T>(List<T> candles, int currentCandleIndex) => _position is PositionSide.Short;
 }
