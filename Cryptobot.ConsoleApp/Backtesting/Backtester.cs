@@ -16,7 +16,6 @@ public static class Backtester
         swMain.Start();
 
         var candles = await GetCandlesticks(details);
-        //candles = candles.Take(1440).ToList();
 
         foreach (var strategy in details.Strategies)
         {
@@ -137,28 +136,16 @@ public static class Backtester
             }
         }
 
-        //var output = JsonConvert.SerializeObject(
-        //    outputCandles,
-        //    Formatting.None,
-        //    new JsonSerializerSettings
-        //    {
-        //        ContractResolver = new ShortNameContractResolver(),
-        //        NullValueHandling = NullValueHandling.Ignore,
-        //        Formatting = Formatting.None
-        //    });
+        var candlesFilepath = $"{outputPath}\\candles-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}{Constants.PARQUET}";
+        await ParquetManager.SaveCandlesAsync(outputCandles, candlesFilepath);
 
-        //var outputPath = PathHelper.GetBacktestingOutputPath();
-        //var filename = $"{outputPath}\\{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}.json";
+        var linearFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\linear-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}{Constants.PARQUET}";
+        await ParquetManager.SaveLinearGraph(linearGraphNodes, linearFilepath);
 
-        //ZipCompressor.CompressToGzip(output, filename);
+        var zipFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}__{totalPnL.Euro(digits: 1, plusIfPositive: true)}{Constants.ZIP}";
+        ZipHelper.BundleFiles(zipFilepath, candlesFilepath, linearFilepath);
 
-        //var candlesFilepath = $"{outputPath}\\candles-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}.{Constants.PARQUET}";
-        //await ParquetManager.SaveCandlesAsync(outputCandles, candlesFilepath);
-
-        //var linearFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\linear-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}.{Constants.PARQUET}";
-        //await ParquetManager.SaveLinearGraph(linearGraphNodes, linearFilepath);
-
-        //var zipFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}__{totalPnL.Euro(digits: 1, plusIfPositive: true)}.{Constants.ZIP}";
-        //ZipHelper.BundleFiles(zipFilepath, candlesFilepath, linearFilepath);
+        File.Delete(candlesFilepath);
+        File.Delete(linearFilepath);
     }
 }

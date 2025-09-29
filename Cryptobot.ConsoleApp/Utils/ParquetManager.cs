@@ -51,6 +51,7 @@ public static class ParquetManager
             new DataField<double?>(nameof(BybitOutputCandle.PnL)),
             new DataField<double?>(nameof(BybitOutputCandle.TotalPnL)),
             new DataField<bool?>(nameof(BybitOutputCandle.IsProfit)),
+            new DataField<DateTime>(nameof(BybitOutputCandle.OpenTime)),
             new DataField<DateTime>(nameof(BybitOutputCandle.CloseTime)),
             new DataField<double>(nameof(BybitOutputCandle.OpenPrice)),
             new DataField<double>(nameof(BybitOutputCandle.ClosePrice)),
@@ -70,12 +71,13 @@ public static class ParquetManager
         await groupWriter.WriteColumnAsync(new DataColumn((DataField<double?>)schema[5], candles.Select(x => x.PnL).ToArray()));
         await groupWriter.WriteColumnAsync(new DataColumn((DataField<double?>)schema[6], candles.Select(x => x.TotalPnL).ToArray()));
         await groupWriter.WriteColumnAsync(new DataColumn((DataField<bool?>)schema[7], candles.Select(x => x.IsProfit).ToArray()));
-        await groupWriter.WriteColumnAsync(new DataColumn((DataField<DateTime>)schema[8], candles.Select(x => x.CloseTime).ToArray()));
-        await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[9], candles.Select(x => x.OpenPrice).ToArray()));
-        await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[10], candles.Select(x => x.ClosePrice).ToArray()));
-        await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[11], candles.Select(x => x.HighPrice).ToArray()));
-        await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[12], candles.Select(x => x.LowPrice).ToArray()));
-        await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[13], candles.Select(x => x.Volume).ToArray()));
+        await groupWriter.WriteColumnAsync(new DataColumn((DataField<DateTime>)schema[8], candles.Select(x => x.OpenTime).ToArray()));
+        await groupWriter.WriteColumnAsync(new DataColumn((DataField<DateTime>)schema[9], candles.Select(x => x.CloseTime).ToArray()));
+        await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[10], candles.Select(x => x.OpenPrice).ToArray()));
+        await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[11], candles.Select(x => x.ClosePrice).ToArray()));
+        await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[12], candles.Select(x => x.HighPrice).ToArray()));
+        await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[13], candles.Select(x => x.LowPrice).ToArray()));
+        await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[14], candles.Select(x => x.Volume).ToArray()));
     }
 
     public static async Task SaveLinearGraph(List<LinearGraphNode> nodes, string filepath)
