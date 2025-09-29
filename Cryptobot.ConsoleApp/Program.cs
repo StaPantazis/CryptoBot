@@ -16,7 +16,7 @@ var backtestingDetails = new BacktestingDetails(
         new StrategyBundle<TS_Every100Candles_SL5_TP5, BS_OnePercent>(),
         ]);
 
-//await BybitHistory.Download(request);
+//await BybitHistory.Download(backtestingDetails);
 await Backtester.Run(backtestingDetails);
 
 Console.ReadLine();

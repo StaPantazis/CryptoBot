@@ -4,7 +4,6 @@ using Cryptobot.ConsoleApp.EngineDir;
 using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.Extensions;
 using Cryptobot.ConsoleApp.Utils;
-using Newtonsoft.Json;
 using System.Diagnostics;
 
 namespace Cryptobot.ConsoleApp.Backtesting;
@@ -16,7 +15,7 @@ public static class Backtester
         var swMain = new Stopwatch();
         swMain.Start();
 
-        var candles = GetCandlesticks(details);
+        var candles = await GetCandlesticks(details);
         //candles = candles.Take(1440).ToList();
 
         foreach (var strategy in details.Strategies)
@@ -62,17 +61,16 @@ public static class Backtester
         return spot;
     }
 
-    private static List<BybitCandle> GetCandlesticks(BacktestingDetails details)
+    private static async Task<List<BybitCandle>> GetCandlesticks(BacktestingDetails details)
     {
         var resourcesPath = PathHelper.GetHistoryPath(details);
-        var files = Directory.GetFiles(resourcesPath, "*.json").OrderBy(f => f);
+        var files = Directory.GetFiles(resourcesPath, "*.parquet").OrderBy(f => f);
 
         var allCandles = new List<BybitCandle>();
 
-        foreach (var file in files)
+        foreach (var filepath in files)
         {
-            var json = File.ReadAllText(file);
-            var candles = JsonConvert.DeserializeObject<List<BybitCandle>>(json);
+            var candles = await ParquetManager.LoadCandlesAsync(filepath);
 
             if (candles != null)
             {
@@ -154,13 +152,13 @@ public static class Backtester
 
         //ZipCompressor.CompressToGzip(output, filename);
 
-        var candlesFilepath = $"{outputPath}\\candles-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}.{Constants.PARQUET}";
-        await ParquetManager.SaveCandlesAsync(outputCandles, candlesFilepath);
+        //var candlesFilepath = $"{outputPath}\\candles-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}.{Constants.PARQUET}";
+        //await ParquetManager.SaveCandlesAsync(outputCandles, candlesFilepath);
 
-        var linearFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\linear-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}.{Constants.PARQUET}";
-        await ParquetManager.SaveLinearGraph(linearGraphNodes, linearFilepath);
+        //var linearFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\linear-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}.{Constants.PARQUET}";
+        //await ParquetManager.SaveLinearGraph(linearGraphNodes, linearFilepath);
 
-        var zipFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}__{totalPnL.Euro(digits: 1, plusIfPositive: true)}.{Constants.ZIP}";
-        ZipHelper.BundleFiles(zipFilepath, candlesFilepath, linearFilepath);
+        //var zipFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}__{totalPnL.Euro(digits: 1, plusIfPositive: true)}.{Constants.ZIP}";
+        //ZipHelper.BundleFiles(zipFilepath, candlesFilepath, linearFilepath);
     }
 }

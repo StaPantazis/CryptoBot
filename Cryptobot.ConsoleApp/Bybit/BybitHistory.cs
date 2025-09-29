@@ -25,7 +25,7 @@ public static class BybitHistory
         {
             Printer.CheckingHistory(day);
 
-            var filename = $"{resourcesPath}\\{details.Symbol}-{details.IntervalShortString}-{day:yyyy-MM-dd}.json";
+            var filename = $"{resourcesPath}\\{details.Symbol}-{details.IntervalShortString}-{day:yyyy-MM-dd}{Constants.PARQUET}";
 
             if (File.Exists(filename))
             {
@@ -71,8 +71,7 @@ public static class BybitHistory
                 Printer.WrongHistory(day, merged.Count);
             }
 
-            var output = JsonConvert.SerializeObject(merged, Formatting.None);
-            await File.WriteAllTextAsync(filename, output);
+            await ParquetManager.SaveBybitCandles(merged, filename);
 
             Printer.Done();
         }
