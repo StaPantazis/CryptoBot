@@ -16,8 +16,8 @@ public class TS_Every100Candles_SL5_TP5 : TradeStrategy
     protected override double StopLossLong<T>(List<T> candles, int currentCandleIndex) => 0.95;
     protected override double TakeProfitLong<T>(List<T> candles, int currentCandleIndex) => 1.05;
 
-    protected override double StopLossShort<T>(List<T> candles, int currentCandleIndex) => 1.05;
-    protected override double TakeProfitShort<T>(List<T> candles, int currentCandleIndex) => 0.95;
+    protected override double StopLossShort<T>(List<T> candles, int currentCandleIndex) => 1.08;
+    protected override double TakeProfitShort<T>(List<T> candles, int currentCandleIndex) => 0.93;
 
     protected override bool ShouldShort<T>(List<T> candles, int currentCandleIndex) => currentCandleIndex % 400 == 0;
 

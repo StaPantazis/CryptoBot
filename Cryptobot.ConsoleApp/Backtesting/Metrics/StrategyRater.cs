@@ -3,17 +3,18 @@
 public static class StrategyScorer
 {
     // Weights must sum to 1.0
-    private const double _weight_AVGRETURN = 0.14;
-    private const double _weight_WINRATE = 0.10;
-    private const double _weight_PAYOFF = 0.12;
-    private const double _weight_EXPECT = 0.16;
-    private const double _weight_SHARPE = 0.16;
-    private const double _weight_SORTINO = 0.10;
-    private const double _weight_STDDEV = 0.08;
-    private const double _weight_LONGWIN = 0.04;
-    private const double _weight_LONGLOSE = 0.06;
-    private const double _weight_DEVWIN = 0.02;
+    private const double _weight_AVGRETURN = 0.13;
+    private const double _weight_WINRATE = 0.09;
+    private const double _weight_PAYOFF = 0.11;
+    private const double _weight_EXPECT = 0.15;
+    private const double _weight_SHARPE = 0.14;
+    private const double _weight_SORTINO = 0.08;
+    private const double _weight_STDDEV = 0.07;
+    private const double _weight_LONGWIN = 0.03;
+    private const double _weight_LONGLOSE = 0.05;
+    private const double _weight_DEVWIN = 0.01;
     private const double _weight_DEVLOSE = 0.02;
+    private const double _weight_MAXDD = 0.12;
     private static readonly double[] _bandScores = [0, 30, 50, 65, 80, 90, 100];
 
     public static (double score, Grade grade) Compute(BacktestMetrics m)
@@ -28,6 +29,7 @@ public static class StrategyScorer
         var sSharpe = Score_Sharpe(m.SharpeRatio.Value);
         var sSortino = Score_Sortino(m.SortinoRatio.Value);
         var sStdDev = Score_PnLStdDev(m.StandardDeviation.Value);  // lower is better
+        var sMaxDD = Score_MaximumDrawdown(m.MaximumDrawdown.Value);
 
         var sLongWin = Score_LongestWinStreak(m.Streaks.LongestWinStreak.Value);
         var sLongLose = Score_LongestLoseStreak(m.Streaks.LongestLoseStreak.Value); // lower is better
@@ -44,7 +46,8 @@ public static class StrategyScorer
             + (_weight_LONGWIN * sLongWin)
             + (_weight_LONGLOSE * sLongLose)
             + (_weight_DEVWIN * sDevWin)
-            + (_weight_DEVLOSE * sDevLose);
+            + (_weight_DEVLOSE * sDevLose)
+            + (_weight_MAXDD * sMaxDD);
 
         var overall = Math.Round(score, 2);
         var letter = GradeFromScore(overall);
@@ -75,6 +78,8 @@ public static class StrategyScorer
 
     private static double Score_Sortino(double v) => PiecewiseHigher(v, [0.0, 0.5, 1.0, 1.5, 2.0, 3.0]);
 
+    private static double Score_MaximumDrawdown(double v) => PiecewiseLower(v, [0.40, 0.30, 0.20, 0.15, 0.10, 0.05]);
+
     // Lower is better
     private static double Score_PnLStdDev(double eur) => PiecewiseLower(eur, [12.0, 8.0, 5.0, 3.0, 2.0, 1.0]);
 
@@ -87,71 +92,78 @@ public static class StrategyScorer
     // ---------- Generic piecewise mappers ----------
     // Thresholds are 6 cut points for the 7 grade bands (F..A+).
     // We map linearly within bands to scores {0,30,50,65,80,90,100}.
-    private static double PiecewiseHigher(double v, double[] t) => InterpBands(v, t, higherIsBetter: true); // t ascending
+    private static double PiecewiseHigher(double v, double[] t) => InterpHigher(v, t); // t ascending
+    private static double PiecewiseLower(double v, double[] t) => InterpLower(v, t);   // t descending
 
-    private static double PiecewiseLower(double v, double[] t) => InterpBands(v, t, higherIsBetter: false); // t descending quality (i.e., larger is worse)
-
-    private static double InterpBands(double v, double[] t, bool higherIsBetter)
+    private static double InterpHigher(double v, double[] t)
     {
-        // t has 6 thresholds that split the 7 bands.
-        // For "higherIsBetter", bands are:
-        // [ -inf .. t0 ), [t0..t1), [t1..t2), [t2..t3), [t3..t4), [t4..t5), [t5.. +inf )
-        // For "lowerIsBetter", we just flip interpretation (so smaller value maps to higher score).
+        // t has 6 ascending cutoffs splitting 7 bands; scores = [0,30,50,65,80,90,100]
         if (double.IsNaN(v) || double.IsInfinity(v))
         {
-            return 50; // neutral if undefined
+            return 50;
         }
-
-        if (higherIsBetter)
+        else if (t is null || t.Length != 6)
         {
-            if (v < t[0])
-            {
-                return _bandScores[0];
-            }
-            else if (v >= t[^1])
-            {
-                return _bandScores[^1];
-            }
-
-            for (var i = 0; i < t.Length - 1; i++)
-            {
-                if (v >= t[i] && v < t[i + 1])
-                {
-                    return Lerp(t[i], _bandScores[i + 1 - 1], t[i + 1], _bandScores[i + 1], v); // between scores[i] and scores[i+1]
-                }
-            }
-
-            // between t[4]..t[5]
-            return Lerp(t[^2], _bandScores[^2], t[^1], _bandScores[^1], v);
+            throw new ArgumentException("t must have 6 ascending thresholds.", nameof(t));
         }
-        else
+        else if (v < t[0])
         {
-            // lower is better → invert thresholds by checking from best band downwards
-            if (v <= t[^1])
-            {
-                return _bandScores[^1]; // <= best (A+)
-            }
-            else if (v > t[0])
-            {
-                return _bandScores[0]; // worse than worst cutoff (F)
-            }
-
-            for (var i = t.Length - 1; i > 0; i--)
-            {
-                if (v > t[i - 1] && v <= t[i])
-                {
-                    return Lerp(t[i], _bandScores[t.Length - i], t[i - 1], _bandScores[t.Length - i + 1], v);
-                }
-            }
-            return _bandScores[0];
+            return _bandScores[0];   // F band
         }
+        else if (v >= t[^1])
+        {
+            return _bandScores[^1]; // A+ band
+        }
+
+        // Map [t[i], t[i+1]) -> scores[i+1]..scores[i+2]
+        for (var i = 0; i < t.Length - 1; i++)
+        {
+            if (v >= t[i] && v < t[i + 1])
+            {
+                return Lerp(t[i], _bandScores[i + 1], t[i + 1], _bandScores[i + 2], v);
+            }
+        }
+
+        return _bandScores[^1]; // shouldn't hit
+    }
+
+    private static double InterpLower(double v, double[] t)
+    {
+        // t has 6 *descending* cutoffs (worst→best); scores = [0,30,50,65,80,90,100]
+        if (double.IsNaN(v) || double.IsInfinity(v))
+        {
+            return 50;
+        }
+        else if (t is null || t.Length != 6)
+        {
+            throw new ArgumentException("t must have 6 descending thresholds.", nameof(t));
+        }
+        else if (v <= t[^1])
+        {
+            return _bandScores[^1]; // A+ band (best or better)
+        }
+        else if (v > t[0])
+        {
+            return _bandScores[0];  // F band (worse than worst cutoff)
+        }
+
+        // Map (t[i], t[i-1]] -> scores[i]..scores[i+1]
+        for (var i = 1; i < t.Length; i++)
+        {
+            if (v <= t[i - 1] && v > t[i])
+            {
+                return Lerp(t[i - 1], _bandScores[i], t[i], _bandScores[i + 1], v);
+            }
+        }
+
+        return _bandScores[0];
     }
 
     private static double Lerp(double x0, double y0, double x1, double y1, double x)
     {
         if (Math.Abs(x1 - x0) < 1e-12)
         {
-            return (y0 + y1) * 0.5;
+            return 0.5 * (y0 + y1);
         }
 
         var t = (x - x0) / (x1 - x0);

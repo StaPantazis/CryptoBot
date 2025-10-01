@@ -59,18 +59,8 @@ public class Spot
         var stopLossMultiplier = TradeStrategy.StopLoss(candles, currentCandleIndex, position);
         var takeProfitMultiplier = TradeStrategy.TakeProfit(candles, currentCandleIndex, position);
 
-        double stopLoss, takeProfit;
-        if (position is PositionSide.Long)
-        {
-            stopLoss = (entryPrice * stopLossMultiplier).Round(5);
-            takeProfit = (entryPrice * takeProfitMultiplier).Round(5);
-        }
-        else
-        {
-            // mirror for short: SL above, TP below
-            stopLoss = (entryPrice * (2 - stopLossMultiplier)).Round(5);      // if slMult=0.95 → 1.05
-            takeProfit = (entryPrice * (2 - takeProfitMultiplier)).Round(5);  // if tpMult=1.05 → 0.95
-        }
+        var stopLoss = (entryPrice * stopLossMultiplier).Round(5);
+        var takeProfit = (entryPrice * takeProfitMultiplier).Round(5);
 
         Trades.Add(new Trade
         {
@@ -133,7 +123,7 @@ public class Spot
                     throw new NotImplementedException();
                 }
 
-                trade.PnL = (exitPrice * trade.Quantity) - trade.TradeSize;
+                trade.PnL = ((exitPrice - trade.EntryPrice) * trade.Quantity).Round(5);
             }
             else if (trade.PositionSide is PositionSide.Short)
             {
@@ -152,7 +142,7 @@ public class Spot
                     throw new NotImplementedException();
                 }
 
-                trade.PnL = trade.TradeSize - (exitPrice * trade.Quantity);
+                trade.PnL = ((trade.EntryPrice - exitPrice) * trade.Quantity).Round(5);
             }
             else
             {

@@ -11,6 +11,7 @@ public static class MetricGrader
         GradeStandardDeviation(metrics.StandardDeviation);
         GradeSharpeRatio(metrics.SharpeRatio);
         GradeSortinoRatio(metrics.SortinoRatio);
+        GradeMaximumDrawdown(metrics.MaximumDrawdown);
 
         GradeWinStreak(metrics.Streaks.LongestWinStreak);
         GradeLoseStreak(metrics.Streaks.LongestLoseStreak);
@@ -43,7 +44,7 @@ public static class MetricGrader
 
     private static Grade GradePayoffRatio<T>(GradedMetric<T> metric) => metric.Grade = metric.Value switch
     {
-        > 2.0 => Grade.APlus,
+        > 2.0 or _ when metric.Value is double val && double.IsNaN(val) => Grade.APlus,
         > 1.5 => Grade.A,
         > 1.2 => Grade.B,
         > 1.0 => Grade.C,
@@ -94,6 +95,17 @@ public static class MetricGrader
         > 1.0 => Grade.C,
         > 0.5 => Grade.D,
         > 0.0 => Grade.E,
+        _ => Grade.F
+    };
+
+    private static Grade GradeMaximumDrawdown<T>(GradedMetric<T> metric) => metric.Grade = metric.Value switch
+    {
+        <= 5.0 => Grade.APlus,
+        <= 10.0 => Grade.A,
+        <= 15.0 => Grade.B,
+        <= 20.0 => Grade.C,
+        <= 30.0 => Grade.D,
+        <= 40.0 => Grade.E,
         _ => Grade.F
     };
 

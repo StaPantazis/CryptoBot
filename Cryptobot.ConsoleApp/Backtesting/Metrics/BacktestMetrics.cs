@@ -5,22 +5,23 @@ namespace Cryptobot.ConsoleApp.Backtesting.Metrics;
 
 public class BacktestMetrics
 {
-    public BacktestMetrics(Spot spot)
+    public string Title { get; }
+
+    public BacktestMetrics(List<Trade> trades, Spot spot, string title)
     {
-        var trades = spot.Trades;
+        Title = title;
 
         var openTrades = trades.Where(x => !x.IsClosed).ToArray();
         var closedTrades = trades.Where(x => x.IsClosed).ToArray();
 
         TotalTrades = trades.Count;
         TotalOpenTrades = openTrades.Length;
+        OpenTradesAmounts = openTrades.Sum(x => x.TradeSize);
         TotalClosedTrades = closedTrades.Length;
         InitialBudget = spot.InitialBudget;
 
-        var openTradesSizesAndFeesAndSlippages = openTrades.Sum(x => x.TradeFees + x.TradeSize + x.SlippageCosts);
-        BudgetWithoutOpenTrades = spot.Budget + openTradesSizesAndFeesAndSlippages;
-
-        PnL = BudgetWithoutOpenTrades - InitialBudget;
+        PnL = closedTrades.Sum(x => x.PnL!.Value);
+        BudgetWithoutOpenTrades = spot.InitialBudget + PnL;
         AverageReturnPerTradeToInitialBudget = TotalClosedTrades > 0 ? PnL / (InitialBudget * TotalClosedTrades) * 100 : 0;
 
         TradeFees = closedTrades.Sum(x => x.TradeFees);
@@ -47,6 +48,8 @@ public class BacktestMetrics
             var downsideDev = downside.Length != 0 ? Math.Sqrt(downside.Average(x => Math.Pow(x - meanPnL, 2))) : 0;
             SortinoRatio = downsideDev > 0 ? meanPnL / downsideDev : double.NaN;
 
+            CalculateMaxDrawdown(closedTrades);
+
             Streaks = new StreaksModel(closedTrades);
         }
 
@@ -60,6 +63,7 @@ public class BacktestMetrics
     public int TotalTrades { get; }
     public int TotalClosedTrades { get; }
     public int TotalOpenTrades { get; }
+    public double OpenTradesAmounts { get; }
     public double InitialBudget { get; }
     public double BudgetWithoutOpenTrades { get; }
     public double PnL { get; }
@@ -70,12 +74,47 @@ public class BacktestMetrics
     public GradedMetric<double> WinRate { get; }
     public double AverageWin { get; }
     public double AverageLoss { get; }
+    public GradedMetric<double> MaximumDrawdown { get; private set; }
     public GradedMetric<double> PayoffRatio { get; }
     public GradedMetric<double> Expectancy { get; }
     public GradedMetric<double> StandardDeviation { get; }
     public GradedMetric<double> SharpeRatio { get; }
     public GradedMetric<double> SortinoRatio { get; }
     public StreaksModel Streaks { get; }
+
+    private void CalculateMaxDrawdown(Trade[] trades)
+    {
+        var closedBudgets = trades
+            .Where(t => t.IsClosed && t.BudgetAfterExit.HasValue)
+            .OrderBy(t => t.ExitTime)
+            .Select(t => t.BudgetAfterExit!.Value)
+            .ToList();
+
+        if (closedBudgets.Count == 0)
+        {
+            MaximumDrawdown = 0;
+            return;
+        }
+
+        var peak = closedBudgets[0];
+        var maxDrawdown = 0.0;
+
+        foreach (var value in closedBudgets)
+        {
+            if (value > peak)
+            {
+                peak = value;
+            }
+
+            var drawdown = (peak - value) / peak;
+            if (drawdown > maxDrawdown)
+            {
+                maxDrawdown = drawdown;
+            }
+        }
+
+        MaximumDrawdown = maxDrawdown * 100.0;
+    }
 
     public class StreaksModel
     {

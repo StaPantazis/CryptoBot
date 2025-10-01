@@ -63,7 +63,7 @@ public static class Backtester
     private static async Task<List<BybitCandle>> GetCandlesticks(BacktestingDetails details)
     {
         var resourcesPath = PathHelper.GetHistoryPath(details);
-        var files = Directory.GetFiles(resourcesPath, "*.parquet").OrderBy(f => f);
+        var files = Directory.GetFiles(resourcesPath, $"*{Constants.PARQUET}").OrderBy(f => f);
 
         var allCandles = new List<BybitCandle>();
 
