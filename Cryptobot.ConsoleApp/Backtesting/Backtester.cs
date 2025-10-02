@@ -106,7 +106,7 @@ public static class Backtester
                 exitCandle.TradeIndex = i;
                 exitCandle.ExitPrice = trade.ExitPrice?.Round(1);
                 entryCandle.ExitTradeSize = trade.TradeSize.Round(1);
-                exitCandle.PnL = trade.PnL?.Round(1);
+                exitCandle.PnL = trade.PnL?.Round(2);
                 exitCandle.IsProfit = trade.PnL >= 0;
                 exitCandle.BudgetAfterExit = trade.BudgetAfterExit!.Value.Round(1);
 

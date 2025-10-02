@@ -217,13 +217,12 @@ public static class Printer
         public PrintTable(bool ignoreFirstColumnForAlignment, params string[] firstColumn)
         {
             _ignoreFirstColumnForAlignment = ignoreFirstColumnForAlignment;
-            var rows = new List<PrintCell>();
+            var rows = new List<PrintCell>() { PrintCell.Empty };
 
             foreach (var row in firstColumn)
             {
                 if (row.StartsWith('_'))
                 {
-                    rows.Add(PrintCell.Empty);
                     rows.Add(new(row.ToUpper(), Blue));
                 }
                 else
@@ -249,7 +248,7 @@ public static class Printer
                     titlesMet += index != null ? 1 : 0;
                     return index;
                 })
-                .Where(x => x is not null and > 0)
+                .Where(x => x is not null)
                 .Cast<int>()
                 .ToList();
         }
@@ -293,7 +292,7 @@ public static class Printer
 
             for (var i = 1; i < Columns.Count - 1; i++)
             {
-                Columns[i].Cells.Insert(cellIndex, PrintCell.Border(middle));
+                Columns[i].Cells.Insert(cellIndex == 1 ? 2 : cellIndex, PrintCell.Border(middle));
             }
 
             Columns.Last().Cells.Insert(cellIndex, PrintCell.Border(end));

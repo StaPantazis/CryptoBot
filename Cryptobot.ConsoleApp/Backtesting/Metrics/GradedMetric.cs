@@ -1,4 +1,6 @@
-﻿namespace Cryptobot.ConsoleApp.Backtesting.Metrics;
+﻿using Cryptobot.ConsoleApp.Extensions;
+
+namespace Cryptobot.ConsoleApp.Backtesting.Metrics;
 
 public class GradedMetric<T>(T value)
 {
@@ -9,4 +11,6 @@ public class GradedMetric<T>(T value)
 
     public static implicit operator T(GradedMetric<T> graded) => graded.Value;
     public static implicit operator Grade(GradedMetric<T> graded) => graded.Grade;
+
+    public override string ToString() => $"{Value} {Grade.GetDisplayName()}";
 }
