@@ -38,7 +38,7 @@ public static class ParquetManager
         await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[7], candles.Select(c => c.QuoteVolume).ToArray()));
     }
 
-    public static async Task SaveCandlesAsync(IEnumerable<BybitOutputCandle> candles, string filepath)
+    public static async Task SaveBacktestCandlesAsync(IEnumerable<BybitOutputCandle> candles, string filepath)
     {
         PathHelper.CheckFixFilepathExtensions(ref filepath, Constants.PARQUET);
 
@@ -93,23 +93,49 @@ public static class ParquetManager
         using var fileStream = File.Create(filepath);
         using var writer = await ParquetWriter.CreateAsync(schema, fileStream);
 
-        // Open a row group
         using var groupWriter = writer.CreateRowGroup();
 
-        // Write each column
         await groupWriter.WriteColumnAsync(new DataColumn((DataField<int>)schema[0], nodes.Select(x => x.TradeIndex).ToArray()));
         await groupWriter.WriteColumnAsync(new DataColumn((DataField<double?>)schema[1], nodes.Select(x => x.PnL).ToArray()));
         await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[2], nodes.Select(x => x.Budget).ToArray()));
         await groupWriter.WriteColumnAsync(new DataColumn((DataField<bool?>)schema[3], nodes.Select(x => x.IsProfit).ToArray()));
     }
 
-    // READ
-
-    public static async Task<List<BybitCandle>> LoadCandlesAsync(string filepath)
+    public static async Task SaveTrendCandlesAsync(IEnumerable<TrendCandle> candles, string filepath)
     {
         PathHelper.CheckFixFilepathExtensions(ref filepath, Constants.PARQUET);
 
-        var candles = new List<BybitCandle>();
+        var schema = new ParquetSchema(
+            new DataField<int>(nameof(TrendCandle.Trend)),
+            new DataField<DateTime>(nameof(TrendCandle.OpenTime)),
+            new DataField<DateTime>(nameof(TrendCandle.CloseTime)),
+            new DataField<double>(nameof(TrendCandle.OpenPrice)),
+            new DataField<double>(nameof(TrendCandle.ClosePrice)),
+            new DataField<double>(nameof(TrendCandle.HighPrice)),
+            new DataField<double>(nameof(TrendCandle.LowPrice)),
+            new DataField<double>(nameof(TrendCandle.Volume)));
+
+        using var fileStream = File.Create(filepath);
+        using var writer = await ParquetWriter.CreateAsync(schema, fileStream);
+
+        using var groupWriter = writer.CreateRowGroup();
+        await groupWriter.WriteColumnAsync(new DataColumn((DataField<int>)schema[0], candles.Select(x => (int)x.Trend).ToArray()));
+        await groupWriter.WriteColumnAsync(new DataColumn((DataField<DateTime>)schema[1], candles.Select(x => x.OpenTime).ToArray()));
+        await groupWriter.WriteColumnAsync(new DataColumn((DataField<DateTime>)schema[2], candles.Select(x => x.CloseTime).ToArray()));
+        await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[3], candles.Select(x => x.OpenPrice).ToArray()));
+        await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[4], candles.Select(x => x.ClosePrice).ToArray()));
+        await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[5], candles.Select(x => x.HighPrice).ToArray()));
+        await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[6], candles.Select(x => x.LowPrice).ToArray()));
+        await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[7], candles.Select(x => x.Volume).ToArray()));
+    }
+
+    // READ
+
+    public static async Task<List<T>> LoadCandlesAsync<T>(string filepath) where T : BybitCandle, new()
+    {
+        PathHelper.CheckFixFilepathExtensions(ref filepath, Constants.PARQUET);
+
+        var candles = new List<T>();
 
         await using var stream = File.OpenRead(filepath);
         using var reader = await ParquetReader.CreateAsync(stream);
@@ -138,7 +164,7 @@ public static class ParquetManager
 
             for (var i = 0; i < openTimes!.Length; i++)
             {
-                candles.Add(new BybitCandle
+                candles.Add(new T
                 {
                     OpenTime = openTimes![i],
                     CloseTime = closeTimes![i],

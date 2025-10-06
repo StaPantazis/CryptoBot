@@ -23,16 +23,17 @@ public static class Printer
             EmptyLine();
         }
 
-        WriteLine("Choose an option:" +
-                "\n1) Download history" +
-                "\n2) Run backtest" +
-                "\n3) Exit", Cyan);
+        WriteLine("Choose an option:", Cyan);
+        WriteLine("  1) Download history", Yellow);
+        WriteLine("  2) Run backtest", Yellow);
+        WriteLine("  3) Run trend profiler", Yellow);
+        WriteLine("  4) Exit", Red);
     }
 
     public static void PressKeyToContinue()
     {
         EmptyLine();
-        WriteLine("Done! Press any key to continue.", White);
+        WriteLine("Done! Press any key to continue.", DarkYellow);
         EmptyLine();
         EmptyLine();
         Wait();
@@ -165,9 +166,9 @@ public static class Printer
         }
     }
 
-    public static void BacktesterOutputStart() => WriteLine("\n__STORING__", Cyan);
+    public static void SavingOutputStart() => WriteLine("\n__STORING__", Cyan);
 
-    public static void BacktesterOutputEnd(int candlesCount, Stopwatch sw)
+    public static void SavingOutputEnd(int candlesCount, Stopwatch sw)
     {
         Write("Total Candles: ", White);
         WriteLine(candlesCount, Yellow);
@@ -176,10 +177,21 @@ public static class Printer
         WriteLine(sw.ElapsedMilliseconds.MillisecondsToFormattedTime(), Yellow);
     }
 
-    public static void BacktesterTotalRuntime(Stopwatch sw)
+    public static void TotalRuntime(Stopwatch sw)
     {
         Write("Total Runtime: ", White);
         WriteLine(sw.ElapsedMilliseconds.MillisecondsToFormattedTime(), Yellow);
+    }
+
+    public static void ProfilerInitialization() => WriteLine("Running Trend Profiler...", Cyan);
+
+    public static void ProfilerRunEnded(Stopwatch sw)
+    {
+        EraseLineContent();
+        Write("Profiling Runtime: ", White);
+        WriteLine(sw.ElapsedMilliseconds.MillisecondsToFormattedTime(), Yellow);
+
+        EmptyLine();
     }
 
     // General
@@ -187,7 +199,11 @@ public static class Printer
     public static void Finished() => WriteLine("Finished!", Green);
     public static void Divider() => WriteLine("\n-----------------------------------------\n", Red);
 
-    #region Privates
+    #region Functionality
+    public static void EmptyLine() => Console.WriteLine();
+
+    private static void EraseLineContent() => Console.Write("\r                                          \r");
+
     private static void Write(object message, ConsoleColor color)
     {
         Console.ForegroundColor = color;
@@ -225,10 +241,6 @@ public static class Printer
             _ => throw new NotImplementedException(),
         };
     }
-
-    private static void EmptyLine() => Console.WriteLine();
-
-    private static void EraseLineContent() => Console.Write("\r                                          \r");
 
     private static void ClearConsole() => Console.Clear();
 

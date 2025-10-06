@@ -3,20 +3,23 @@ using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 
 namespace Cryptobot.ConsoleApp.EngineDir;
 
-public static class TrendProfiler
+public class TrendProfiler(TrendConfiguration config)
 {
-    public static Trend Profile<T>(IReadOnlyList<T> candles, int window, TrendConfiguration config) where T : Candle
+    private readonly TrendConfiguration _config = EnsureValid(config);
+
+    public Trend Profile<T>(List<T> candles, int currentCandleIndex) where T : Candle
     {
-        if (candles == null || window < 3 || candles.Count < window)
+        var positions = GetWindowPositions(candles, currentCandleIndex);
+
+        if (positions == null)
         {
-            throw new ArgumentException("Not enough candles (need ≥ 3 and ≥ window).");
+            return Trend.Neutral;
         }
 
-        // --- Config safety (defaults + clamps) ---
-        var cfg = EnsureValid(config ?? TrendConfiguration.Balanced());
+        (var start, var length) = positions.Value;
 
         // --- Slice & extract prices ---
-        var slice = candles.Skip(candles.Count - window).Take(window).ToArray();
+        var slice = candles.Skip(start).Take(length).ToArray();
         var closes = slice.Select(c => (double)c.ClosePrice).ToArray();
 
         // --- Price domain checks for log ---
@@ -27,13 +30,13 @@ public static class TrendProfiler
 
         // log-prices & regression axis
         var y = closes.Select(x => Math.Log(x)).ToArray();
-        var x = Enumerable.Range(0, window).Select(i => (double)i).ToArray();
+        var x = Enumerable.Range(0, _config.Window).Select(i => (double)i).ToArray();
 
         var (slope, r2) = LinearRegressionSlopeR2(x, y);
 
         // log-returns
-        var rets = new double[window - 1];
-        for (var i = 1; i < window; i++)
+        var rets = new double[_config.Window - 1];
+        for (var i = 1; i < _config.Window; i++)
         {
             rets[i - 1] = y[i] - y[i - 1];
         }
@@ -50,40 +53,76 @@ public static class TrendProfiler
 
         // Drift-to-noise + breadth blend
         var t = slope / vol;
-        var raw = ((1.0 - cfg.BreadthWeight) * t) + (cfg.BreadthWeight * breadth);
+        var raw = ((1.0 - _config.BreadthWeight) * t) + (_config.BreadthWeight * breadth);
         var strength = 0.5 + (0.5 * Math.Sqrt(Math.Max(0, r2))); // [0.5..1]
         var score = Math.Tanh(raw * strength);
 
         // --- Labeling gates (consistent & symmetric) ---
-        if (Math.Abs(score) < cfg.NeutralBand || r2 < cfg.MinR2ForTrend)
+        if (Math.Abs(score) < _config.NeutralBand || r2 < _config.MinR2ForTrend)
         {
             return Trend.Neutral;
         }
-        else if (score >= cfg.ThresholdBull)
+        else if (score >= _config.ThresholdBull)
         {
             return Trend.FullBull;
         }
-        else if (score >= cfg.ThresholdBear)
+        else if (score >= _config.ThresholdBear)
         {
             return Trend.Bull;
         }
-        else if (score <= -cfg.ThresholdBull)
+        else if (score <= -_config.ThresholdBull)
         {
             return Trend.FullBear;
         }
 
-        return score <= -cfg.ThresholdBear ? Trend.Bear : Trend.Neutral;
+        return score <= -_config.ThresholdBear ? Trend.Bear : Trend.Neutral;
     }
 
     private static TrendConfiguration EnsureValid(TrendConfiguration c)
     {
         // clamp all to [0,1]; enforce ordering for thresholds
-        c.NeutralBand = Clamp01(c.NeutralBand);
-        c.MinR2ForTrend = Clamp01(c.MinR2ForTrend);
-        c.BreadthWeight = Clamp01(c.BreadthWeight);
-        c.ThresholdBear = Clamp01(c.ThresholdBear);
-        c.ThresholdBull = Clamp01(Math.Max(c.ThresholdBull, c.ThresholdBear)); // ensure Bull ≥ Bear
+        var neutralBand = Clamp01(c.NeutralBand);
+        var minR2ForTrend = Clamp01(c.MinR2ForTrend);
+        var breadthWeight = Clamp01(c.BreadthWeight);
+        var thresholdBear = Clamp01(c.ThresholdBear);
+        var thresholdBull = Clamp01(Math.Max(c.ThresholdBull, c.ThresholdBear)); // ensure Bull ≥ Bear
+
+        if (neutralBand != c.NeutralBand
+            || minR2ForTrend != c.MinR2ForTrend
+            || breadthWeight != c.BreadthWeight
+            || thresholdBear != c.ThresholdBear
+            || thresholdBull != c.ThresholdBull)
+        {
+            throw new ArgumentException();
+        }
+
         return c;
+    }
+
+    private (int start, int length)? GetWindowPositions<T>(List<T> candles, int currentCandleIndex) where T : Candle
+    {
+        if (candles == null || config.Window < 3 || candles.Count < config.Window)
+        {
+            return null;
+        }
+        else if (currentCandleIndex < 0 || currentCandleIndex >= candles.Count)
+        {
+            throw new ArgumentOutOfRangeException(nameof(currentCandleIndex));
+        }
+        else if (config.Window < 3 || currentCandleIndex + 1 < config.Window)
+        {
+            return null;
+        }
+
+        var start = Math.Max(0, currentCandleIndex - config.Window + 1);
+        var length = currentCandleIndex - start + 1;
+
+        if (length < 3)
+        {
+            return null;
+        }
+
+        return (start, length);
     }
 
     private static double Clamp01(double v) => v < 0 ? 0 : (v > 1 ? 1 : v);

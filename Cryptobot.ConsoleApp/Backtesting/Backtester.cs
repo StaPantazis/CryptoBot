@@ -10,12 +10,12 @@ namespace Cryptobot.ConsoleApp.Backtesting;
 
 public static class Backtester
 {
-    public static async Task Run(BacktestingDetails details)
+    public static async Task RunBacktest(BacktestingDetails details)
     {
         var swMain = new Stopwatch();
         swMain.Start();
 
-        var candles = await GetCandlesticks(details);
+        var candles = await GetCandles<BybitCandle>(details);
 
         foreach (var strategy in details.Strategies)
         {
@@ -30,20 +30,52 @@ public static class Backtester
             Printer.BacktesterResult(spot, sw);
 
             sw.Restart();
-            Printer.BacktesterOutputStart();
+            Printer.SavingOutputStart();
 
-            await SaveBacktest(candles, spot);
+            await SaveBacktestResult(candles, spot);
 
-            Printer.BacktesterOutputEnd(candles.Count, sw);
+            Printer.SavingOutputEnd(candles.Count, sw);
             Printer.Divider();
         }
 
         if (details.Strategies.Length > 1)
         {
-            Printer.BacktesterTotalRuntime(swMain);
+            Printer.TotalRuntime(swMain);
         }
 
         Printer.Done();
+    }
+
+    public static async Task RunTrendProfiler(BacktestingDetails details, TrendConfiguration trendConfiguration)
+    {
+        var swMain = new Stopwatch();
+        swMain.Start();
+
+        Printer.ProfilerInitialization();
+
+        var trendProfiler = new TrendProfiler(trendConfiguration);
+        var candles = await GetCandles<TrendCandle>(details);
+        var totalCandles = candles.Count;
+
+        for (var i = 0; i < totalCandles; i++)
+        {
+            Printer.CalculatingCandles(i, totalCandles);
+            var trend = trendProfiler.Profile(candles, i);
+
+            candles[i].Trend = trend;
+        }
+
+        Printer.ProfilerRunEnded(swMain);
+
+        var sw = new Stopwatch();
+        sw.Start();
+
+        Printer.SavingOutputStart();
+        await SaveTrendProfilerResult(candles, details, trendConfiguration);
+        Printer.SavingOutputEnd(candles.Count, sw);
+
+        Printer.EmptyLine();
+        Printer.TotalRuntime(swMain);
     }
 
     private static Spot Backtest(Spot spot, List<BybitCandle> candles)
@@ -54,22 +86,22 @@ public static class Backtester
         for (var i = 0; i < totalCandles; i++)
         {
             Printer.CalculatingCandles(i, totalCandles);
-            engine.CheckNewCandle(candles, i);
+            engine.TradeNewCandle(candles, i);
         }
 
         return spot;
     }
 
-    private static async Task<List<BybitCandle>> GetCandlesticks(BacktestingDetails details)
+    private static async Task<List<T>> GetCandles<T>(BacktestingDetails details) where T : BybitCandle, new()
     {
         var resourcesPath = PathHelper.GetHistoryPath(details);
         var files = Directory.GetFiles(resourcesPath, $"*{Constants.PARQUET}").OrderBy(f => f);
 
-        var allCandles = new List<BybitCandle>();
+        var allCandles = new List<T>();
 
         foreach (var filepath in files)
         {
-            var candles = await ParquetManager.LoadCandlesAsync(filepath);
+            var candles = await ParquetManager.LoadCandlesAsync<T>(filepath);
 
             if (candles != null)
             {
@@ -80,7 +112,7 @@ public static class Backtester
         return allCandles;
     }
 
-    private static async Task SaveBacktest(List<BybitCandle> candles, Spot spot)
+    private static async Task SaveBacktestResult(List<BybitCandle> candles, Spot spot)
     {
         var outputPath = PathHelper.GetBacktestingOutputPath();
 
@@ -137,7 +169,7 @@ public static class Backtester
         }
 
         var candlesFilepath = $"{outputPath}\\candles-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}{Constants.PARQUET}";
-        await ParquetManager.SaveCandlesAsync(outputCandles, candlesFilepath);
+        await ParquetManager.SaveBacktestCandlesAsync(outputCandles, candlesFilepath);
 
         var linearFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\linear-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}{Constants.PARQUET}";
         await ParquetManager.SaveLinearGraph(linearGraphNodes, linearFilepath);
@@ -147,5 +179,13 @@ public static class Backtester
 
         File.Delete(candlesFilepath);
         File.Delete(linearFilepath);
+    }
+
+    private static async Task SaveTrendProfilerResult(List<TrendCandle> candles, BacktestingDetails details, TrendConfiguration config)
+    {
+        var outputPath = PathHelper.GetTrendProfilingOutputPath();
+
+        var candlesFilepath = $"{outputPath}\\candles-{details.Interval}--{config}{Constants.PARQUET}";
+        await ParquetManager.SaveTrendCandlesAsync(candles, candlesFilepath);
     }
 }

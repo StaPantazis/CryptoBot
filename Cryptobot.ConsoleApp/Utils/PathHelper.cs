@@ -6,7 +6,16 @@ public class PathHelper
 {
     public static string GetBacktestingOutputPath()
     {
-        var outputDir = @"Cryptobot.ConsoleApp\Backtesting\Output";
+        var outputDir = @"Cryptobot.ConsoleApp\Backtesting\Output\Backtest";
+        var outputPath = Path.Combine(GetParentDir().FullName, outputDir);
+
+        CreateDirectoryNonexistent(outputPath);
+        return outputPath;
+    }
+
+    public static string GetTrendProfilingOutputPath()
+    {
+        var outputDir = @"Cryptobot.ConsoleApp\Backtesting\Output\TrendProfiling";
         var outputPath = Path.Combine(GetParentDir().FullName, outputDir);
 
         CreateDirectoryNonexistent(outputPath);

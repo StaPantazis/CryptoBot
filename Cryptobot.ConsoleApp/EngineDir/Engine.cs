@@ -7,7 +7,7 @@ public class Engine(params Spot[] spots)
 {
     private readonly Spot[] _spots = spots;
 
-    public void CheckNewCandle(List<BybitCandle> candles, int currentCandleIndex)
+    public void TradeNewCandle(List<BybitCandle> candles, int currentCandleIndex)
     {
         foreach (var spot in _spots)
         {
