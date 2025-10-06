@@ -8,6 +8,7 @@ internal class TradeStrategyDummy(PositionSide position) : TradeStrategy
     private readonly PositionSide _position = position;
     public override string Name { get; } = "Trade Dummy";
     public override string NameOf { get; } = nameof(TradeStrategyDummy);
+    public override IndicatorType[] RelevantIndicators { get; protected set; } = [];
 
     protected override double StopLossLong<T>(List<T> candles, int currentCandleIndex) => 1.05;
     protected override double StopLossShort<T>(List<T> candles, int currentCandleIndex) => 0.95;

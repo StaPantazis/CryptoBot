@@ -11,6 +11,11 @@ public class BacktestMetrics
     {
         Title = title;
 
+        if (trades.Count == 0)
+        {
+            return;
+        }
+
         var openTrades = trades.Where(x => !x.IsClosed).ToArray();
         var closedTrades = trades.Where(x => x.IsClosed).ToArray();
 
@@ -22,6 +27,7 @@ public class BacktestMetrics
 
         PnL = closedTrades.Sum(x => x.PnL!.Value);
         BudgetWithoutOpenTrades = spot.InitialBudget + PnL;
+        BudgetWithOpenTrades = spot.InitialBudget + PnL + OpenTradesAmounts;
         AverageReturnPerTradeToInitialBudget = TotalClosedTrades > 0 ? PnL / (InitialBudget * TotalClosedTrades) * 100 : 0;
 
         TradeFees = closedTrades.Sum(x => x.TradeFees);
@@ -64,6 +70,7 @@ public class BacktestMetrics
     public int TotalClosedTrades { get; }
     public int TotalOpenTrades { get; }
     public double OpenTradesAmounts { get; }
+    public double BudgetWithOpenTrades { get; }
     public double InitialBudget { get; }
     public double BudgetWithoutOpenTrades { get; }
     public double PnL { get; }

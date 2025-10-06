@@ -5,6 +5,8 @@ namespace Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
 
 public abstract class TradeStrategy : StrategyBase
 {
+    public abstract IndicatorType[] RelevantIndicators { get; protected set; }
+
     public double StopLoss<T>(List<T> candles, int currentCandleIndex, PositionSide position) where T : Candle
         => position is PositionSide.Long ? StopLossLong(candles, currentCandleIndex) : StopLossShort(candles, currentCandleIndex);
 
@@ -13,11 +15,17 @@ public abstract class TradeStrategy : StrategyBase
 
     public virtual bool ShouldOpenTrade<T>(List<T> candles, int currentCandleIndex, out PositionSide? position) where T : Candle
     {
+        if (Spot.Budget < 10)
+        {
+            position = null;
+            return false;
+        }
+
         position = ShouldShort(candles, currentCandleIndex) ? PositionSide.Short
                  : ShouldLong(candles, currentCandleIndex) ? PositionSide.Long
                  : null;
 
-        return position != null && Spot.Budget > 10;
+        return position != null;
     }
 
     public virtual bool ShouldCloseTrade<T>(List<T> candles, int currentCandleIndex, Trade trade) where T : Candle

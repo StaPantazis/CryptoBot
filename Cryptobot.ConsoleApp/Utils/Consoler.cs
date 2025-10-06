@@ -20,7 +20,9 @@ public static class Consoler
             Symbol: Constants.SYMBOL_BTCUSDT,
             MarketCategory: Constants.MARKET_PERPETUAL_FUTURES,
             Strategies: [
-                new StrategyBundle<TS_Every100Candles_SL5_TP5, BS_OnePercent>(),
+                //new StrategyBundle<TS_Every100Candles_SL5_TP5, BS_OnePercent>(),
+                //new StrategyBundle<TS_LongWhenMovingAverageIncreases_SL5_TP5, BS_OnePercent>(),
+                new StrategyBundle<TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3, BS_100Percent>(),
                 ]);
 
         var choiceMade = false;

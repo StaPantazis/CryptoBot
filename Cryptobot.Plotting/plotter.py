@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import matplotlib.ticker as mticker
 from matplotlib.collections import LineCollection
 from pathlib import Path
 from plotSettings import PlotSettings
@@ -75,6 +76,7 @@ def plot_candle_chart(df, title):
     ax.set_title(title)
     ax.set_xlabel("Time")
     ax.set_ylabel("Price (USDT)")
+    ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:.0f}€"))
     ax.xaxis_date()
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%y-%m-%d %H:%M"))
     plt.xticks(rotation=45)
@@ -103,6 +105,7 @@ def plot_linear_chart(df, title):
     ax.set_title(title)
     ax.set_xlabel("Trades")
     ax.set_ylabel("Budget")
+    ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:.0f}€"))
     ax.grid(True)
 
     # Annotate final result
@@ -223,6 +226,7 @@ def plot_trend_candles(parquet_path: str | Path, title: str | None = None):
     ax.set_title(title or f"Trend Candlesticks – {parquet_path.name}")
     ax.set_xlabel("Time")
     ax.set_ylabel("Price (USDT)")
+    ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:.0f}€"))
     ax.xaxis_date()
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%y-%m-%d %H:%M"))
     plt.xticks(rotation=45)

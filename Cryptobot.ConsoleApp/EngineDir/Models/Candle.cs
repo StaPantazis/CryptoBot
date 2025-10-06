@@ -17,6 +17,7 @@ public abstract class Candle
     /// Total number of Dollars traded
     /// </summary>
     public double QuoteVolume { get; set; }
+    public Indicators Indicators { get; } = new();
 
     public double PriceDif => Math.Round(ClosePrice - OpenPrice, 2);
 

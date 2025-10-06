@@ -40,11 +40,7 @@ public static class Printer
         Wait();
     }
 
-    public static void InvalidChoice()
-    {
-        WriteLine("Invalid choice. Press any key to try again.", White);
-        Wait();
-    }
+    public static void InvalidChoice() => WriteLine("Invalid choice.", Red);
 
     // History
     public static void HistoryDownloadTitle(BacktestingDetails details) => WriteLine($"Downloadig intervals of {(int)details.Interval} minutes...\n", White);
@@ -121,11 +117,18 @@ public static class Printer
         EmptyLine();
         WriteLine("__RESULTS__", Cyan);
 
-        Write("Score: ", White);
-        WriteLine($"{totalMetrics.StrategyScore.Round(0)}/100", GradeColor(totalMetrics.StrategyGrade));
+        if (spot.Trades.Count != 0)
+        {
+            Write("Score: ", White);
+            WriteLine($"{totalMetrics.StrategyScore.Round(0)}/100", GradeColor(totalMetrics.StrategyGrade));
 
-        Write("Initial Budget: ", White);
-        WriteLine(totalMetrics.InitialBudget.Euro(), Yellow);
+            Write("Initial Budget: ", White);
+            WriteLine(spot.InitialBudget.Euro(), Yellow);
+        }
+        else
+        {
+            WriteLine("No trades made for this strategy!", Red);
+        }
 
         if (totalMetrics.TotalTrades > 0)
         {
@@ -133,7 +136,7 @@ public static class Printer
             var shortMetrics = new BacktestMetrics(spot.Trades.Where(x => x.PositionSide is PositionSide.Short).ToList(), spot, "Shorts");
 
             var table = new PrintTable(ignoreFirstColumnForAlignment: true,
-                "_Budgeting_", "Total Trades", "Closed Trades", "Open Trades", $"Open Trades {Constants.STRING_EURO}", "Final Budget", "Total PnL", "Fees", "Slippage", "Total Costs", "Avg Win", "Avg Loss",
+                "_Budgeting_", "Total Trades", "Closed Trades", "Open Trades", $"Open Trades {Constants.STRING_EURO}", "Final Budget", $"Final Budget with Open Trades", "Total PnL", "Fees", "Slippage", "Total Costs", "Avg Win", "Avg Loss",
                 "_Performance_", "Max Drawdown", "Payoff Ratio W/L", "Std Deviation", "Sharpe Ratio", "Sortino Ratio", "Budget % per trade", "Win Rate", "Expectancy",
                 "_Streaks_", "Avg Win Streak", "Avg Loss Streak", "Longest Win Streak", "Longest Lose Streak", "Win Streak Deviation", "Lose Streak Deviation");
 
@@ -141,6 +144,11 @@ public static class Printer
 
             foreach (var metric in metrics)
             {
+                if (metric.StrategyGrade is Grade.Ungraded)
+                {
+                    continue;
+                }
+
                 table.AddColumn(
                     ($"{metric.Title} - {metric.StrategyScore.Round(0)}/100", GradeColor(metric.StrategyGrade), null),
 
@@ -148,8 +156,9 @@ public static class Printer
                     (metric.TotalTrades, Yellow, null),
                     (metric.TotalClosedTrades, Yellow, null),
                     (metric.TotalOpenTrades, Yellow, null),
-                    (metric.BudgetWithoutOpenTrades.Euro(), GreenRed(metric.BudgetWithoutOpenTrades - spot.InitialBudget), null),
                     (metric.OpenTradesAmounts.Euro(), Yellow, null),
+                    (metric.BudgetWithoutOpenTrades.Euro(), GreenRed(metric.BudgetWithoutOpenTrades - spot.InitialBudget), null),
+                    (metric.BudgetWithOpenTrades.Euro(), GreenRed(metric.BudgetWithOpenTrades - spot.InitialBudget), null),
                     (metric.PnL.Euro(plusIfPositive: true), GreenRed(metric.PnL), null),
                     (metric.TradeFees.Euro(), Red, null),
                     (metric.SlippageCosts.Euro(), Red, null),
@@ -267,6 +276,7 @@ public static class Printer
             Grade.D => ConsoleColor.DarkYellow,
             Grade.E => ConsoleColor.Red,
             Grade.F => ConsoleColor.DarkRed,
+            Grade.Ungraded => ConsoleColor.DarkRed,
             _ => throw new NotImplementedException(),
         };
     }

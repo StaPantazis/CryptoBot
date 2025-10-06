@@ -10,6 +10,7 @@ public class Spot
 {
     private readonly double _slippage_multiplier = 0;
 
+    public string Id { get; } = Guid.NewGuid().ToString();
     public User User { get; }
     public TradeStrategy TradeStrategy { get; }
     public BudgetStrategy BudgetStrategy { get; }
