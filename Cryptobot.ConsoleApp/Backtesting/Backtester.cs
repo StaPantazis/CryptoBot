@@ -29,12 +29,16 @@ public static class Backtester
             spot = Backtest(spot, candles);
             Printer.BacktesterResult(spot, sw);
 
-            sw.Restart();
-            Printer.SavingOutputStart();
+            var saveOutput = ShouldSaveLoop(swMain);
 
-            await SaveBacktestResult(candles, spot);
+            if (saveOutput)
+            {
+                sw.Restart();
+                Printer.SavingOutputStart();
+                await SaveBacktestResult(candles, spot);
+                Printer.SavingOutputEnd(candles.Count, sw);
+            }
 
-            Printer.SavingOutputEnd(candles.Count, sw);
             Printer.Divider();
         }
 
@@ -83,12 +87,39 @@ public static class Backtester
         var sw = new Stopwatch();
         sw.Start();
 
-        Printer.SavingOutputStart();
-        await SaveTrendProfilerResult(candles, details, trendConfiguration);
-        Printer.SavingOutputEnd(candles.Count, sw);
+        var saveOutput = ShouldSaveLoop(swMain);
+
+        if (saveOutput)
+        {
+            Printer.SavingOutputStart();
+            await SaveTrendProfilerResult(candles, details, trendConfiguration);
+            Printer.SavingOutputEnd(candles.Count, sw);
+        }
 
         Printer.EmptyLine();
         Printer.TotalRuntime(swMain);
+    }
+
+    private static bool ShouldSaveLoop(Stopwatch sw)
+    {
+        sw.Stop();
+        bool saveOutput;
+
+        while (true)
+        {
+            Printer.ShouldSaveQuestion();
+            var shouldSave = Console.ReadLine();
+
+            if ((shouldSave?.ToLower() ?? "") is "y" or "n")
+            {
+                saveOutput = shouldSave!.Equals("y", StringComparison.CurrentCultureIgnoreCase);
+                break;
+            }
+        }
+
+        sw.Start();
+
+        return saveOutput;
     }
 
     private static async Task<List<T>> GetCandles<T>(BacktestingDetails details) where T : BybitCandle, new()
@@ -189,7 +220,7 @@ public static class Backtester
     {
         var outputPath = PathHelper.GetTrendProfilingOutputPath();
 
-        var candlesFilepath = $"{outputPath}\\candles-{details.IntervalShortString}--{config}{Constants.PARQUET}";
+        var candlesFilepath = $"{outputPath}\\{DateTime.Now:yyyy-MM-dd HH_mm}-{details.IntervalShortString}--{config}{Constants.PARQUET}";
         await ParquetManager.SaveTrendCandlesAsync(candles, candlesFilepath);
     }
 }

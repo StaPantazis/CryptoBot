@@ -181,6 +181,12 @@ public static class Printer
         }
     }
 
+    public static void ShouldSaveQuestion()
+    {
+        EmptyLine();
+        Write("Do you want to save this backtest? Y/N  ", Cyan);
+    }
+
     public static void SavingOutputStart() => WriteLine("\n__STORING__", Cyan);
 
     public static void SavingOutputEnd(int candlesCount, Stopwatch sw)
