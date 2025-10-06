@@ -101,7 +101,7 @@ def plot_linear_chart(df, title):
 
     # Add reference info
     ax.set_title(title)
-    ax.set_xlabel("Trade Index")
+    ax.set_xlabel("Trades")
     ax.set_ylabel("Budget")
     ax.grid(True)
 
@@ -139,28 +139,26 @@ def plot_backtest_candles(zip_path: str | Path, settings: "PlotSettings"):
 
         parquet_files = list(tmpdir.glob("*.parquet"))
 
-        if settings.plot_candles_graph:
-            candle_files = [f for f in parquet_files if "candles" in f.name.lower()]
-
-            if not candle_files:
-                print("❌ No 'candles' parquet file found inside ZIP.")
-
-            candle_file = candle_files[0]
-            print(f"✅ Candle file: {candle_file.name}")
-            df_candles = pd.read_parquet(candle_file)
-            plot_candle_chart(df_candles, f"Candles – {zip_path.name}")
-
         if settings.plot_linear_graph:
             linear_files = [f for f in parquet_files if "linear" in f.name.lower()]
 
             if not linear_files:
                 print("❌ No 'linear' parquet file found inside ZIP.")
-
-            if linear_files:
+            else:
                 linear_file = linear_files[0]
                 print(f"✅ Linear file: {linear_file.name}")
                 df_linear = pd.read_parquet(linear_file)
                 plot_linear_chart(df_linear, f"Budget & PnL – {zip_path.name}")
+
+        if settings.plot_candles_graph:
+            candle_files = [f for f in parquet_files if "candles" in f.name.lower()]
+            if not candle_files:
+                print("❌ No 'candles' parquet file found inside ZIP.")
+            else:
+                candle_file = candle_files[0]
+                print(f"✅ Candle file: {candle_file.name}")
+                df_candles = pd.read_parquet(candle_file)
+                plot_candle_chart(df_candles, f"Candles – {zip_path.name}")
 
         print("✅ Rendering complete. Close the plots to continue.")
         plt.show(block=True)

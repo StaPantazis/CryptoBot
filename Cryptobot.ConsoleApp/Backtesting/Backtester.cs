@@ -15,10 +15,7 @@ public static class Backtester
         var swMain = new Stopwatch();
         swMain.Start();
 
-        var swLoading = new Stopwatch();
-        Printer.LoadingCandlesStart(details);
         var candles = await GetCandles<BybitCandle>(details);
-        Printer.LoadingCandlesEnd(swLoading);
 
         foreach (var strategy in details.Strategies)
         {
@@ -47,6 +44,20 @@ public static class Backtester
         }
     }
 
+    private static Spot Backtest(Spot spot, List<BybitCandle> candles)
+    {
+        var engine = new Engine(spot);
+        var totalCandles = candles.Count;
+
+        for (var i = 0; i < totalCandles; i++)
+        {
+            Printer.CalculatingCandles(i, totalCandles);
+            engine.TradeNewCandle(candles, i);
+        }
+
+        return spot;
+    }
+
     public static async Task RunTrendProfiler(BacktestingDetails details, TrendConfiguration trendConfiguration)
     {
         var swMain = new Stopwatch();
@@ -54,10 +65,7 @@ public static class Backtester
 
         Printer.ProfilerInitialization();
 
-        var swLoading = new Stopwatch();
-        Printer.LoadingCandlesStart(details);
         var candles = await GetCandles<TrendCandle>(details);
-        Printer.LoadingCandlesEnd(swLoading);
 
         var trendProfiler = new TrendProfiler(trendConfiguration);
         var totalCandles = candles.Count;
@@ -83,22 +91,11 @@ public static class Backtester
         Printer.TotalRuntime(swMain);
     }
 
-    private static Spot Backtest(Spot spot, List<BybitCandle> candles)
-    {
-        var engine = new Engine(spot);
-        var totalCandles = candles.Count;
-
-        for (var i = 0; i < totalCandles; i++)
-        {
-            Printer.CalculatingCandles(i, totalCandles);
-            engine.TradeNewCandle(candles, i);
-        }
-
-        return spot;
-    }
-
     private static async Task<List<T>> GetCandles<T>(BacktestingDetails details) where T : BybitCandle, new()
     {
+        var swLoading = new Stopwatch();
+        Printer.LoadingCandlesStart(details);
+
         var resourcesPath = PathHelper.GetHistoryPath(details);
         var files = Directory.GetFiles(resourcesPath, $"*{Constants.PARQUET}").OrderBy(f => f);
 
@@ -113,6 +110,8 @@ public static class Backtester
                 allCandles.AddRange(candles);
             }
         }
+
+        Printer.LoadingCandlesEnd(swLoading);
 
         return allCandles;
     }
@@ -155,7 +154,7 @@ public static class Backtester
         outputCandles = outputCandles.OrderBy(x => x.OpenTime).ToArray();
 
         // Linear Graph
-        var linearGraphNodes = new List<LinearGraphNode>() { new(0, 0, spot.Budget, true) };
+        var linearGraphNodes = new List<LinearGraphNode>() { new(0, 0, spot.InitialBudget, true) };
         var tradedCandles = outputCandles.Where(x => x.EntryPrice != null || x.ExitPrice != null).ToArray();
 
         for (var i = 0; i < tradedCandles.Length; i++)
