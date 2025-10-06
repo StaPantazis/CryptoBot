@@ -9,13 +9,48 @@ namespace Cryptobot.ConsoleApp.Utils;
 
 public static class Printer
 {
+    // Consoler
+    public static void MainMenu(bool clear)
+    {
+        if (clear)
+        {
+            ClearConsole();
+        }
+        else
+        {
+            EmptyLine();
+            EmptyLine();
+            EmptyLine();
+        }
+
+        WriteLine("Choose an option:" +
+                "\n1) Download history" +
+                "\n2) Run backtest" +
+                "\n3) Exit", Cyan);
+    }
+
+    public static void PressKeyToContinue()
+    {
+        EmptyLine();
+        WriteLine("Done! Press any key to continue.", White);
+        EmptyLine();
+        EmptyLine();
+        Wait();
+    }
+
+    public static void InvalidChoice()
+    {
+        WriteLine("Invalid choice. Press any key to try again.", White);
+        Wait();
+    }
+
     // History
     public static void HistoryDownloadTitle(BacktestingDetails details) => WriteLine($"Downloadig intervals of {(int)details.Interval} minutes...\n", White);
 
     public static void CheckingHistory(DateTime day)
     {
         Write("Checking ", White);
-        Write($"{day:dd/MM/yyyy}", Blue);
+        Write($"{day:dd/MM/yyyy}", Cyan);
         Write("... ", White);
     }
 
@@ -36,7 +71,7 @@ public static class Printer
     // Backtesting
     public static void BacktesterInitialization(Spot spot)
     {
-        WriteLine("__BACKTESTING__", Blue);
+        WriteLine("__BACKTESTING__", Cyan);
 
         Write("Trading Strategy: ", White);
         WriteLine(spot.TradeStrategy.Name, Yellow);
@@ -68,7 +103,7 @@ public static class Printer
         WriteLine(sw.ElapsedMilliseconds.MillisecondsToFormattedTime(), Yellow);
 
         EmptyLine();
-        WriteLine("__RESULTS__", Blue);
+        WriteLine("__RESULTS__", Cyan);
 
         Write("Score: ", White);
         WriteLine($"{totalMetrics.StrategyScore.Round(0)}/100", GradeColor(totalMetrics.StrategyGrade));
@@ -130,7 +165,7 @@ public static class Printer
         }
     }
 
-    public static void BacktesterOutputStart() => WriteLine("\n__STORING__", Blue);
+    public static void BacktesterOutputStart() => WriteLine("\n__STORING__", Cyan);
 
     public static void BacktesterOutputEnd(int candlesCount, Stopwatch sw)
     {
@@ -195,8 +230,12 @@ public static class Printer
 
     private static void EraseLineContent() => Console.Write("\r                                          \r");
 
+    private static void ClearConsole() => Console.Clear();
+
+    private static void Wait() => Console.ReadLine();
+
     private static ConsoleColor Yellow => ConsoleColor.Yellow;
-    private static ConsoleColor Blue => ConsoleColor.Cyan;
+    private static ConsoleColor Cyan => ConsoleColor.Cyan;
     private static ConsoleColor Green => ConsoleColor.Green;
     private static ConsoleColor White => ConsoleColor.White;
     private static ConsoleColor Red => ConsoleColor.Red;
@@ -223,7 +262,7 @@ public static class Printer
             {
                 if (row.StartsWith('_'))
                 {
-                    rows.Add(new(row.ToUpper(), Blue));
+                    rows.Add(new(row.ToUpper(), Cyan));
                 }
                 else
                 {
