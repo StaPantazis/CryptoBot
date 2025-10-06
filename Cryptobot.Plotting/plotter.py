@@ -162,3 +162,71 @@ def plot_backtest_candles(zip_path: str | Path, settings: "PlotSettings"):
 
         print("✅ Rendering complete. Close the plots to continue.")
         plt.show(block=True)
+
+
+def plot_trend_candles(parquet_path: str | Path, title: str | None = None):
+    parquet_path = Path(parquet_path)
+
+    df = pd.read_parquet(parquet_path)
+
+    # Ensure types
+    df[CONST.OPEN_TIME] = pd.to_datetime(df[CONST.OPEN_TIME])
+    for col in [CONST.OPEN_PRICE, CONST.HIGH_PRICE, CONST.LOW_PRICE, CONST.CLOSE_PRICE]:
+        df[col] = pd.to_numeric(df[col])
+
+    # Sort and index by time
+    df.sort_values(CONST.OPEN_TIME, inplace=True)
+    df.set_index(CONST.OPEN_TIME, inplace=True)
+
+    # Trend must be numeric (1..5)
+    if "Trend" not in df.columns:
+        raise ValueError(
+            "Column 'Trend' is required in the Parquet for trend coloring."
+        )
+    df["Trend"] = pd.to_numeric(df["Trend"])
+
+    # Helpers to create wick/body segments
+    def make_lines(idx, lows, highs):
+        x = mdates.date2num(idx.to_pydatetime())
+        return [((xi, lo), (xi, hi)) for xi, lo, hi in zip(x, lows, highs)]
+
+    def make_bodies(idx, opens, closes):
+        x = mdates.date2num(idx.to_pydatetime())
+        return [((xi, o), (xi, c)) for xi, o, c in zip(x, opens, closes)]
+
+    _, ax = plt.subplots(figsize=(16, 9))
+
+    # For each trend bucket, add wick + body collections in that trend's color
+    for trend_value, color in CONST.TREND_COLORS.items():
+        sub = df[df["Trend"] == trend_value]
+        if sub.empty:
+            continue
+
+        # Wicks
+        ax.add_collection(
+            LineCollection(
+                make_lines(sub.index, sub[CONST.LOW_PRICE], sub[CONST.HIGH_PRICE]),
+                colors=color,
+                linewidths=1,
+            )
+        )
+        # Bodies
+        ax.add_collection(
+            LineCollection(
+                make_bodies(sub.index, sub[CONST.OPEN_PRICE], sub[CONST.CLOSE_PRICE]),
+                colors=color,
+                linewidths=6,
+            )
+        )
+
+    # Axes formatting
+    ax.set_title(title or f"Trend Candlesticks – {parquet_path.name}")
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Price (USDT)")
+    ax.xaxis_date()
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%y-%m-%d %H:%M"))
+    plt.xticks(rotation=45)
+    plt.grid(True, alpha=0.3)
+    ax.autoscale_view()
+
+    plt.show(block=True)

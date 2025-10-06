@@ -78,7 +78,7 @@ public static class Backtester
             candles[i].Trend = trend;
         }
 
-        Printer.ProfilerRunEnded(swMain);
+        Printer.ProfilerRunEnded(candles, swMain);
 
         var sw = new Stopwatch();
         sw.Start();

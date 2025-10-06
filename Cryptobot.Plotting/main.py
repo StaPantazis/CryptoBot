@@ -57,7 +57,7 @@ def main():
             selected = choose_file(files)
             if selected:
                 print(f"\nSelected: {selected.name}")
-                plotter.plot_trend_profiling_candles(selected)
+                plotter.plot_trend_candles(selected)
 
         elif option == "3":
             print("Goodbye!")

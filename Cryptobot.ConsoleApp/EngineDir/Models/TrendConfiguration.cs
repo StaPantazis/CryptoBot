@@ -16,7 +16,7 @@ public class TrendConfiguration(int window)
     /// Larger = more signals classified as Neutral.
     /// Smaller = more signals classified as Bull/Bear.
     /// </summary>
-    public double NeutralBand { get; set; } = 0.10;
+    public double NeutralBand { get; set; } = 0.08;
 
     /// <summary>
     /// Minimum R² required for a trend to be trusted.
@@ -26,7 +26,7 @@ public class TrendConfiguration(int window)
     /// Higher = require stronger regression fit, fewer Bull/Bear signals.
     /// Lower = allow noisier data to still count as trend.
     /// </summary>
-    public double MinR2ForTrend { get; set; } = 0.20;
+    public double MinR2ForTrend { get; set; } = 0.15;
 
     /// <summary>
     /// Threshold for Bear classification (mild).
@@ -36,7 +36,7 @@ public class TrendConfiguration(int window)
     /// Lower = easier to classify as Bear.
     /// Higher = stricter, more candles end up Neutral instead of Bear.
     /// </summary>
-    public double ThresholdBear { get; set; } = 0.15;
+    public double ThresholdBear { get; set; } = 0.12;
 
     /// <summary>
     /// Threshold for FullBear / FullBull (strong trend).
@@ -47,7 +47,7 @@ public class TrendConfiguration(int window)
     /// Lower = more aggressive "full" signals.
     /// Higher = stricter, only very strong trends become FullBear/FullBull.
     /// </summary>
-    public double ThresholdBull { get; set; } = 0.55;
+    public double ThresholdBull { get; set; } = 0.40;
 
     /// <summary>
     /// Weight of breadth (percentage of up vs down candles).
@@ -57,7 +57,7 @@ public class TrendConfiguration(int window)
     /// Higher = breadth has more influence, slope/vol less.
     /// Lower = slope/vol dominates the trend classification.
     /// </summary>
-    public double BreadthWeight { get; set; } = 0.30;
+    public double BreadthWeight { get; set; } = 0.25;
 
     /// <summary>
     /// How many candles back we are looking for the profiling.

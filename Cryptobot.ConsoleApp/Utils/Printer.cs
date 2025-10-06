@@ -1,5 +1,6 @@
 ﻿using Cryptobot.ConsoleApp.Backtesting;
 using Cryptobot.ConsoleApp.Backtesting.Metrics;
+using Cryptobot.ConsoleApp.Backtesting.OutputModels;
 using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Extensions;
@@ -199,11 +200,19 @@ public static class Printer
 
     public static void ProfilerInitialization() => WriteLine("Running Trend Profiler...", Cyan);
 
-    public static void ProfilerRunEnded(Stopwatch sw)
+    public static void ProfilerRunEnded(List<TrendCandle> candles, Stopwatch sw)
     {
         EraseLineContent();
         Write("Profiling Runtime: ", White);
         WriteLine(sw.ElapsedMilliseconds.MillisecondsToFormattedTime(), Yellow);
+
+        EmptyLine();
+
+        WriteLine($"Full Bear: {candles.Count(x => x.Trend is Trend.FullBear)}", DarkRed);
+        WriteLine($"Bear: {candles.Count(x => x.Trend is Trend.Bear)}", DarkRed);
+        WriteLine($"Neutral: {candles.Count(x => x.Trend is Trend.Neutral)}", White);
+        WriteLine($"Bull: {candles.Count(x => x.Trend is Trend.Bull)}", Green);
+        WriteLine($"Full Bull: {candles.Count(x => x.Trend is Trend.FullBull)}", DarkGreen);
 
         EmptyLine();
     }
