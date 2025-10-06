@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Backtesting\Output\Backtest\" />
     <Folder Include="Backtesting\Output\TrendProfiling\" />
     <Folder Include="Resources\Perpetual Futures\BTC_USDT\15m\" />
   </ItemGroup>

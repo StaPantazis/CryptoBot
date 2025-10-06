@@ -70,6 +70,20 @@ public static class Printer
     public static void CouldNotDownload() => Write($"Could not download.", Red);
 
     // Backtesting
+    public static void LoadingCandlesStart(BacktestingDetails details)
+    {
+        Write("Loading data for ", White);
+        WriteLine($"{details.IntervalShortString} {details.SymbolDescribed} - {details.MarketCategoryDescribed}", Yellow);
+    }
+
+    public static void LoadingCandlesEnd(Stopwatch sw)
+    {
+        Write("Loading Runtime: ", White);
+        WriteLine(sw.ElapsedMilliseconds.MillisecondsToFormattedTime(), Yellow);
+
+        EmptyLine();
+    }
+
     public static void BacktesterInitialization(Spot spot)
     {
         WriteLine("__BACKTESTING__", Cyan);

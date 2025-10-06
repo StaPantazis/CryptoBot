@@ -15,7 +15,10 @@ public static class Backtester
         var swMain = new Stopwatch();
         swMain.Start();
 
+        var swLoading = new Stopwatch();
+        Printer.LoadingCandlesStart(details);
         var candles = await GetCandles<BybitCandle>(details);
+        Printer.LoadingCandlesEnd(swLoading);
 
         foreach (var strategy in details.Strategies)
         {
@@ -42,8 +45,6 @@ public static class Backtester
         {
             Printer.TotalRuntime(swMain);
         }
-
-        Printer.Done();
     }
 
     public static async Task RunTrendProfiler(BacktestingDetails details, TrendConfiguration trendConfiguration)
@@ -53,8 +54,12 @@ public static class Backtester
 
         Printer.ProfilerInitialization();
 
-        var trendProfiler = new TrendProfiler(trendConfiguration);
+        var swLoading = new Stopwatch();
+        Printer.LoadingCandlesStart(details);
         var candles = await GetCandles<TrendCandle>(details);
+        Printer.LoadingCandlesEnd(swLoading);
+
+        var trendProfiler = new TrendProfiler(trendConfiguration);
         var totalCandles = candles.Count;
 
         for (var i = 0; i < totalCandles; i++)
@@ -185,7 +190,7 @@ public static class Backtester
     {
         var outputPath = PathHelper.GetTrendProfilingOutputPath();
 
-        var candlesFilepath = $"{outputPath}\\candles-{details.Interval}--{config}{Constants.PARQUET}";
+        var candlesFilepath = $"{outputPath}\\candles-{details.IntervalShortString}--{config}{Constants.PARQUET}";
         await ParquetManager.SaveTrendCandlesAsync(candles, candlesFilepath);
     }
 }
