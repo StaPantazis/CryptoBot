@@ -1,3 +1,4 @@
+using Cryptobot.ConsoleApp.EngineDir;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 
 namespace Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
@@ -14,9 +15,9 @@ public class TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3 : TradeStrateg
     protected override double StopLossShort<T>(List<T> candles, int currentCandleIndex) => 1.08;
     protected override double TakeProfitShort<T>(List<T> candles, int currentCandleIndex) => 0.93;
 
-    protected override bool ShouldShort<T>(List<T> candles, int currentCandleIndex) => false;
+    protected override bool ShouldShort<T>(CacheManager cacheManager, List<T> candles, int currentCandleIndex) => false;
 
-    protected override bool ShouldLong<T>(List<T> candles, int currentCandleIndex)
+    protected override bool ShouldLong<T>(CacheManager cacheManager, List<T> candles, int currentCandleIndex)
     {
         var nMABackCheck = 50;
         var candle = candles[currentCandleIndex];

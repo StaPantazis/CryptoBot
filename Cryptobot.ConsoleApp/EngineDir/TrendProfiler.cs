@@ -82,7 +82,7 @@ public class TrendProfiler(TrendConfiguration config)
     {
         currentCandle ??= candles[currentCandleIndex];
 
-        if (cacheManager is null)
+        if (cacheManager == null)
         {
             // 4 months ~ 11520 15m
             var ma = GetMovingAverage(candles, currentCandleIndex, 11520);

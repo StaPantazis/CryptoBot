@@ -1,12 +1,11 @@
 using Cryptobot.ConsoleApp.Backtesting;
 using Cryptobot.ConsoleApp.Backtesting.Strategies;
 using Cryptobot.ConsoleApp.Backtesting.Strategies.BudgetStrategies;
-using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies.Variations;
+using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
 using Cryptobot.ConsoleApp.Bybit;
 using Cryptobot.ConsoleApp.EngineDir;
 using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
-using System.Text;
 
 namespace Cryptobot.ConsoleApp.Utils;
 
@@ -14,8 +13,6 @@ public static class Consoler
 {
     public static async Task Run(CacheManager cacheManager)
     {
-        Console.OutputEncoding = Encoding.UTF8;
-
         var backtestingDetails = new BacktestingDetails(
             Interval: CandleInterval.Fifteen_Minutes,
             Symbol: Constants.SYMBOL_BTCUSDT,
@@ -24,7 +21,7 @@ public static class Consoler
                 //new StrategyBundle<TS_Every100Candles_SL5_TP5, BS_OnePercent>(),
                 //new StrategyBundle<TS_LongWhenMovingAverageIncreases_SL5_TP5, BS_OnePercent>(),
                 //new StrategyBundle<TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3, BS_100Percent>(),
-                new StrategyBundle(VariationSandboxFactory.AllInMA(), new BS_XPercent(100)),
+                new StrategyBundle(new TS_Simple_120_days_SMA(), new BS_XPercent(100)),
                 //new StrategyBundle(VariationSandboxFactory.AllInMA(), new BS_XPercent(20)),
                 ]);
 

@@ -26,8 +26,8 @@ public static class A
     public static TradeStrategyBase TradeStrategyShort => new TradeStrategyDummy(PositionSide.Short);
     public static TradeStrategyBase TradeStrategyLong => new TradeStrategyDummy(PositionSide.Long);
     public static BudgetStrategy BudgetStrategy => new BudgetStrategyDummy();
-    public static Spot SpotShort => new(User, _budget, TradeStrategyShort, BudgetStrategy, Constants.SYMBOL_BTCUSDT);
-    public static Spot SpotLong => new(User, _budget, TradeStrategyLong, BudgetStrategy, Constants.SYMBOL_BTCUSDT);
+    public static Spot SpotShort => new(User, _budget, TradeStrategyShort, BudgetStrategy, Constants.SYMBOL_BTCUSDT, new());
+    public static Spot SpotLong => new(User, _budget, TradeStrategyLong, BudgetStrategy, Constants.SYMBOL_BTCUSDT, new());
 
     private static User User => new("a");
 }

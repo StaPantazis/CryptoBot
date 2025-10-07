@@ -1,4 +1,5 @@
-﻿using Cryptobot.ConsoleApp.EngineDir.Models;
+﻿using Cryptobot.ConsoleApp.EngineDir;
+using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 
 namespace Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies.Variations;
@@ -58,14 +59,14 @@ public class VariationTradeStrategy<T>(StrategyVariationsBundle<T>? strategyVari
         return variationStrategies;
     }
 
-    protected override bool ShouldLong<T1>(List<T1> candles, int currentCandleIndex)
+    protected override bool ShouldLong<T1>(CacheManager cacheManager, List<T1> candles, int currentCandleIndex)
     {
         return candles is List<T> typed
             ? VariationToRun.ShouldLong(typed, currentCandleIndex)
             : throw new InvalidOperationException($"VariationTradeStrategy expects candles of type {typeof(T).Name} but got {typeof(T1).Name}.");
     }
 
-    protected override bool ShouldShort<T1>(List<T1> candles, int currentCandleIndex)
+    protected override bool ShouldShort<T1>(CacheManager cacheManager, List<T1> candles, int currentCandleIndex)
     {
         return candles is List<T> typed
             ? VariationToRun.ShouldShort(typed, currentCandleIndex)

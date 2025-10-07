@@ -30,7 +30,7 @@ public class Backtester(CacheManager cacheManager)
                 sw.Start();
 
                 var user = new User("Xatzias");
-                var spot = new Spot(user, details.Budget, strategyToRun, strategy.BudgetStrategy, details.Symbol);
+                var spot = new Spot(user, details.Budget, strategyToRun, strategy.BudgetStrategy, details.Symbol, _cacheManager);
                 Printer.BacktesterInitialization(spot);
 
                 spot = Backtest(spot, candles);

@@ -12,7 +12,7 @@ public class CacheManager
 
     public Dictionary<long, CachedMacroTrend> MacroTrendCache { get; private set; } = [];
 
-    public async Task InitializeAsync()
+    public async Task InitializeCache()
     {
         if (File.Exists(_cachePath))
         {

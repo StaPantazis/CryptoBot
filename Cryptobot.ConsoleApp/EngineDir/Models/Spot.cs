@@ -10,6 +10,7 @@ public class Spot
     private readonly double _slippage_multiplier = 0;
     private readonly List<Trade> _openTrades = [];
     private readonly List<Trade> _allTrades = [];
+    private readonly CacheManager _cacheManager;
 
     public string Id { get; } = Guid.NewGuid().ToString();
     public User User { get; }
@@ -19,7 +20,7 @@ public class Spot
     public double Budget { get; private set; }
     public IReadOnlyList<Trade> Trades => _allTrades;
 
-    public Spot(User user, double budget, TradeStrategyBase tradeStrategy, BudgetStrategy budgetStrategy, string symbol)
+    public Spot(User user, double budget, TradeStrategyBase tradeStrategy, BudgetStrategy budgetStrategy, string symbol, CacheManager cacheManager)
     {
         User = user;
         TradeStrategy = tradeStrategy;
@@ -36,6 +37,8 @@ public class Spot
             Constants.SYMBOL_BTCUSDT => Constants.SLIPPAGE_MULTIPLIER_BTC,
             _ => throw new NotImplementedException()
         };
+
+        _cacheManager = cacheManager;
     }
 
     public void OpenTrade<T>(List<T> candles, int currentCandleIndex, PositionSide position) where T : Candle
@@ -97,7 +100,7 @@ public class Spot
         {
             var trade = _openTrades[i];
 
-            if (!TradeStrategy.ShouldCloseTrade(candles, currentCandleIndex, trade))
+            if (!TradeStrategy.ShouldCloseTrade(_cacheManager, candles, currentCandleIndex, trade))
             {
                 continue;
             }
@@ -121,6 +124,12 @@ public class Spot
                 else if (candle.HighPrice >= trade.TakeProfit)
                 {
                     exitPrice = trade.TakeProfit;
+                }
+                else if (TradeStrategy.ShouldExitLongTrade(_cacheManager, candles, currentCandleIndex, trade))
+                {
+                    rawExitPrice = candles[currentCandleIndex].ClosePrice;
+                    exitPrice = rawExitPrice * (1 - _slippage_multiplier);
+                    exitSlip = Math.Abs(exitPrice - rawExitPrice) * trade.Quantity;
                 }
                 else
                 {
