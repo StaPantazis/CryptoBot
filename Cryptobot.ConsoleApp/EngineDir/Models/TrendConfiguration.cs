@@ -100,5 +100,14 @@ public class TrendConfiguration(int window)
         ThresholdBull = 0.40,  // easier to call "full" trends
         BreadthWeight = 0.40   // breadth matters more
     };
+
+    public static TrendConfiguration Xatzias() => new(_default_window)
+    {
+        NeutralBand = 0.05,    // narrow neutral zone
+        MinR2ForTrend = 0.10,  // allow weak fits
+        ThresholdBear = 0.10,  // classify bear/bull easily
+        ThresholdBull = 0.40,  // easier to call "full" trends
+        BreadthWeight = 0.40   // breadth matters more
+    };
 }
 

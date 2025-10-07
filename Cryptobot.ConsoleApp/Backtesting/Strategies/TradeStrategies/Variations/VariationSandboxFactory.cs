@@ -19,7 +19,7 @@ public static class VariationSandboxFactory
                 }
 
                 var lastN = candles.Skip(currentCandleIndex - nMABackCheck).Take(nMABackCheck).Select(x => x.Indicators.MovingAverage).ToArray();
-                return lastN.All(x => x < candle.ClosePrice) && variables.applicableTrends!.Contains(candle.Indicators.Trend);
+                return lastN.All(x => x < candle.ClosePrice) && variables.applicableTrends!.Contains(candle.Indicators.MicroTrend);
             },
 
             ShouldShort: (b, n, _) => false,
@@ -29,7 +29,7 @@ public static class VariationSandboxFactory
             TakeProfitLong: [1.05, 1.03],
             StopLossShort: null,
             TakeProfitShort: null,
-            IndicatorTypes: [[IndicatorType.MovingAverage], [IndicatorType.MovingAverage, IndicatorType.Trend]],
+            IndicatorTypes: [[IndicatorType.MovingAverage], [IndicatorType.MovingAverage, IndicatorType.MicroTrend]],
             ApplicableTrends: [[Trend.Neutral, Trend.Bull]]));
     }
 }

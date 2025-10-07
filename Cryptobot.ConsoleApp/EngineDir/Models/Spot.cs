@@ -48,8 +48,7 @@ public class Spot
 
         var entryPrice = position == PositionSide.Long
                 ? rawEntryPrice + slippagePerUnit  // pay up when buying
-                : rawEntryPrice - slippagePerUnit // sell a bit worse when shorting
-            ;
+                : rawEntryPrice - slippagePerUnit; // sell a bit worse when shorting
 
         var quantity = tradeSize / entryPrice;
         var entryFees = tradeSize * Constants.TRADE_FEE;
@@ -155,11 +154,10 @@ public class Spot
             }
 
             trade.ExitPrice = exitPrice;
-
-            trade.SlippageCosts = trade.SlippageCosts + exitSlip;
+            trade.SlippageCosts += exitSlip;
 
             var entryFees = trade.TradeFees;
-            trade.TradeFees = trade.TradeFees + exitFees;
+            trade.TradeFees += exitFees;
 
             trade.PnL = trade.PnL.Value - trade.TradeFees;
 

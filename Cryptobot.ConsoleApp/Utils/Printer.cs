@@ -31,6 +31,15 @@ public static class Printer
         WriteLine("  4) Exit", Red);
     }
 
+    public static void TrendProfilerScope()
+    {
+        EmptyLine();
+        WriteLine("Which scope do you want:", Cyan);
+        WriteLine("  1) Micro (3 days)", Yellow);
+        WriteLine("  2) Semi (3 weeks)", Yellow);
+        WriteLine("  3) Macro (4 months)", Yellow);
+    }
+
     public static void PressKeyToContinue()
     {
         EmptyLine();
@@ -100,7 +109,6 @@ public static class Printer
     public static void VariationsResult(int totalVariations)
     {
         EmptyLine();
-        Divider();
         Divider();
         WriteLine($"__RESULT: {totalVariations} VARIATIONS BACKTESTED__", Cyan);
         EmptyLine();

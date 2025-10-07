@@ -3,5 +3,7 @@
 public enum IndicatorType
 {
     MovingAverage,
-    Trend,
+    MicroTrend,
+    SemiTrend,
+    MacroTrend,
 }

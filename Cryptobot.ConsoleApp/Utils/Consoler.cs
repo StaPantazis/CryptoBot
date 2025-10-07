@@ -51,10 +51,36 @@ public static class Consoler
                     break;
 
                 case "3":
-                    var profilerConfig = new TrendConfiguration(window: TrendConfiguration._default_window);
+                    while (true)
+                    {
+                        Printer.TrendProfilerScope();
 
-                    await Backtester.RunTrendProfiler(backtestingDetails, profilerConfig);
-                    Printer.PressKeyToContinue();
+                        input = Console.ReadLine();
+                        Printer.EmptyLine();
+
+                        var scope = input switch
+                        {
+                            "1" => IndicatorType.MicroTrend,
+                            "2" => IndicatorType.SemiTrend,
+                            "3" => IndicatorType.MacroTrend,
+                            _ => (IndicatorType?)null
+                        };
+
+                        if (scope != null)
+                        {
+                            var profilerConfig = new TrendConfiguration(window: TrendConfiguration._default_window);
+
+                            await Backtester.RunTrendProfiler(backtestingDetails, profilerConfig, (IndicatorType)scope);
+                            Printer.PressKeyToContinue();
+
+                            break;
+                        }
+                        else
+                        {
+                            Printer.InvalidChoice();
+                        }
+                    }
+
                     choiceMade = true;
                     break;
 

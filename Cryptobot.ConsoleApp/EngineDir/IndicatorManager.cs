@@ -4,10 +4,15 @@ using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 
 namespace Cryptobot.ConsoleApp.EngineDir;
 
-public class IndicatorManager(TradeStrategyBase tradeStrategy)
+public class IndicatorManager(TradeStrategyBase? tradeStrategy)
 {
-    private readonly IndicatorType[] _indicators = tradeStrategy.RelevantIndicators;
-    private readonly TrendProfiler _trendProfiler = new(tradeStrategy.TrendConfiguration);
+    private readonly IndicatorType[] _indicators = tradeStrategy?.RelevantIndicators ?? [];
+    private readonly TrendProfiler? _microTrendProfiler = tradeStrategy != null ? new(tradeStrategy.MicroTrendConfiguration) : null;
+
+    public IndicatorManager(IndicatorType[] indicators) : this((TradeStrategyBase?)null)
+    {
+        _indicators = indicators ?? throw new ArgumentNullException();
+    }
 
     public void CalculateRelevantIndicators<T>(List<T> candles, int currentCandleIndex) where T : Candle
     {
@@ -23,34 +28,17 @@ public class IndicatorManager(TradeStrategyBase tradeStrategy)
             switch (indicator)
             {
                 case IndicatorType.MovingAverage:
-                    candle.Indicators.MovingAverage = GetMovingAverage(candles, currentCandleIndex, 30);
+                    candle.Indicators.MovingAverage = TrendProfiler.GetMovingAverage(candles, currentCandleIndex, 30);
                     break;
-                case IndicatorType.Trend:
-                    candle.Indicators.Trend = _trendProfiler.Profile(candles, currentCandleIndex);
+                case IndicatorType.MicroTrend:
+                    candle.Indicators.MicroTrend = _microTrendProfiler!.ProfileComplex(candles, currentCandleIndex);
+                    break;
+                case IndicatorType.MacroTrend:
+                    candle.Indicators.MacroTrend = TrendProfiler.ProfileByMovingAverage(candles, currentCandleIndex, candle);
                     break;
                 default:
                     break;
             }
         }
-    }
-
-    private static double? GetMovingAverage<T>(List<T> candles, int currentCandleIndex, int window) where T : Candle
-    {
-        if (candles == null || candles.Count == 0)
-        {
-            return null;
-        }
-        else if (window < 1)
-        {
-            throw new ArgumentException("Window must be >= 1", nameof(window));
-        }
-        else if (currentCandleIndex < window - 1)
-        {
-            return null;
-        }
-
-        // Select last 'window' candles ending at the current index
-        var slice = candles.Skip(currentCandleIndex - window + 1).Take(window);
-        return slice.Average(c => c.ClosePrice);
     }
 }

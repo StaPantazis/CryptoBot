@@ -7,7 +7,7 @@ public class TrendProfiler(TrendConfiguration config)
 {
     private readonly TrendConfiguration _config = EnsureValid(config);
 
-    public Trend Profile<T>(List<T> candles, int currentCandleIndex) where T : Candle
+    public Trend ProfileComplex<T>(List<T> candles, int currentCandleIndex) where T : Candle
     {
         var positions = GetWindowPositions(candles, currentCandleIndex);
 
@@ -76,6 +76,43 @@ public class TrendProfiler(TrendConfiguration config)
         }
 
         return score <= -_config.ThresholdBear ? Trend.Bear : Trend.Neutral;
+    }
+
+    public static Trend ProfileByMovingAverage<T>(List<T> candles, int currentCandleIndex, T? currentCandle = null) where T : Candle
+    {
+        currentCandle ??= candles[currentCandleIndex];
+
+        //var ma = macroMA[currentCandleIndex];
+
+        //if (ma is null || currentCandle.Indicators.MovingAverage is null)
+        //    return Trend.Neutral;
+
+        // 4 months ~ 11520 15m
+        var ma = GetMovingAverage(candles, currentCandleIndex, 11520);
+
+        return ma is null
+            ? Trend.Neutral
+            : (double)currentCandle.Indicators.MovingAverage! >= (double)ma! ? Trend.Bull : Trend.Bear;
+    }
+
+    public static double? GetMovingAverage<T>(List<T> candles, int currentCandleIndex, int window) where T : Candle
+    {
+        if (candles == null || candles.Count == 0)
+        {
+            return null;
+        }
+        else if (window < 1)
+        {
+            throw new ArgumentException("Window must be >= 1", nameof(window));
+        }
+        else if (currentCandleIndex < window - 1)
+        {
+            return null;
+        }
+
+        // Select last 'window' candles ending at the current index
+        var slice = candles.Skip(currentCandleIndex - window + 1).Take(window);
+        return slice.Average(c => c.ClosePrice);
     }
 
     private static TrendConfiguration EnsureValid(TrendConfiguration c)

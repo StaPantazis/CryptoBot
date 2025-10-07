@@ -5,7 +5,8 @@ namespace Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
 
 public abstract class TradeStrategyBase : StrategyBase
 {
-    public virtual TrendConfiguration TrendConfiguration { get; } = new(window: 30);
+    public virtual TrendConfiguration MicroTrendConfiguration { get; } = new(window: 30);
+    public virtual TrendConfiguration SemiTrendConfiguration { get; } = new(window: 30);
 
     public abstract IndicatorType[] RelevantIndicators { get; protected set; }
 

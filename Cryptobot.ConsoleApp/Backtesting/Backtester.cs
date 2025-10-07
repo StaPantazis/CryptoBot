@@ -4,6 +4,7 @@ using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies.Variations;
 using Cryptobot.ConsoleApp.Bybit.Models;
 using Cryptobot.ConsoleApp.EngineDir;
 using Cryptobot.ConsoleApp.EngineDir.Models;
+using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Extensions;
 using Cryptobot.ConsoleApp.Utils;
 using System.Diagnostics;
@@ -107,7 +108,7 @@ public static class Backtester
         return spot;
     }
 
-    public static async Task RunTrendProfiler(BacktestingDetails details, TrendConfiguration trendConfiguration)
+    public static async Task RunTrendProfiler(BacktestingDetails details, TrendConfiguration trendConfiguration, IndicatorType profilerScope)
     {
         var swMain = new Stopwatch();
         swMain.Start();
@@ -117,12 +118,21 @@ public static class Backtester
         var candles = await GetCandles<TrendCandle>(details);
 
         var trendProfiler = new TrendProfiler(trendConfiguration);
+        var indicatorManager = new IndicatorManager([IndicatorType.MovingAverage]);
         var totalCandles = candles.Count;
 
         for (var i = 0; i < totalCandles; i++)
         {
             Printer.CalculatingCandles(i, totalCandles);
-            var trend = trendProfiler.Profile(candles, i);
+
+            if (profilerScope is IndicatorType.MacroTrend)
+            {
+                indicatorManager.CalculateRelevantIndicators(candles, i);
+            }
+
+            var trend = profilerScope is IndicatorType.MacroTrend
+                ? TrendProfiler.ProfileByMovingAverage(candles, i)
+                : trendProfiler.ProfileComplex(candles, i);
 
             candles[i].Trend = trend;
         }
@@ -137,7 +147,10 @@ public static class Backtester
         if (saveOutput)
         {
             Printer.SavingOutputStart();
-            await SaveTrendProfilerResult(candles, details, trendConfiguration);
+
+            var profilingName = profilerScope is IndicatorType.MacroTrend ? "Macro_Trend" : trendConfiguration.ToString();
+            await SaveTrendProfilerResult(candles, details, profilingName);
+
             Printer.SavingOutputEnd(candles.Count, sw);
         }
 
@@ -261,11 +274,11 @@ public static class Backtester
         File.Delete(linearFilepath);
     }
 
-    private static async Task SaveTrendProfilerResult(List<TrendCandle> candles, BacktestingDetails details, TrendConfiguration config)
+    private static async Task SaveTrendProfilerResult(List<TrendCandle> candles, BacktestingDetails details, string trendProfilerName)
     {
         var outputPath = PathHelper.GetTrendProfilingOutputPath();
 
-        var candlesFilepath = $"{outputPath}\\{DateTime.Now:yyyy-MM-dd HH_mm}-{details.IntervalShortString}--{config}{Constants.PARQUET}";
+        var candlesFilepath = $"{outputPath}\\{DateTime.Now:yyyy-MM-dd HH_mm}-{details.IntervalShortString}--{trendProfilerName}{Constants.PARQUET}";
         await ParquetManager.SaveTrendCandlesAsync(candles, candlesFilepath);
     }
 }
