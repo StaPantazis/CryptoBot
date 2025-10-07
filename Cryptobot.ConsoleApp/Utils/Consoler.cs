@@ -23,7 +23,8 @@ public static class Consoler
                 //new StrategyBundle<TS_Every100Candles_SL5_TP5, BS_OnePercent>(),
                 //new StrategyBundle<TS_LongWhenMovingAverageIncreases_SL5_TP5, BS_OnePercent>(),
                 //new StrategyBundle<TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3, BS_100Percent>(),
-                new StrategyBundle<BS_100Percent>(VariationSandboxFactory.AllInMA()),
+                new StrategyBundle(VariationSandboxFactory.AllInMA(), new BS_XPercent(100)),
+                //new StrategyBundle(VariationSandboxFactory.AllInMA(), new BS_XPercent(20)),
                 ]);
 
         var choiceMade = false;

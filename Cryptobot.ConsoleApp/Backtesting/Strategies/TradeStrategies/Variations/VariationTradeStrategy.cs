@@ -60,22 +60,16 @@ public class VariationTradeStrategy<T>(StrategyVariationsBundle<T>? strategyVari
 
     protected override bool ShouldLong<T1>(List<T1> candles, int currentCandleIndex)
     {
-        if (candles is List<T> typed)
-        {
-            return VariationToRun.ShouldLong(typed, currentCandleIndex);
-        }
-
-        throw new InvalidOperationException($"VariationTradeStrategy expects candles of type {typeof(T).Name} but got {typeof(T1).Name}.");
+        return candles is List<T> typed
+            ? VariationToRun.ShouldLong(typed, currentCandleIndex)
+            : throw new InvalidOperationException($"VariationTradeStrategy expects candles of type {typeof(T).Name} but got {typeof(T1).Name}.");
     }
 
     protected override bool ShouldShort<T1>(List<T1> candles, int currentCandleIndex)
     {
-        if (candles is List<T> typed)
-        {
-            return VariationToRun.ShouldShort(typed, currentCandleIndex);
-        }
-
-        throw new InvalidOperationException($"VariationTradeStrategy expects candles of type {typeof(T).Name} but got {typeof(T1).Name}.");
+        return candles is List<T> typed
+            ? VariationToRun.ShouldShort(typed, currentCandleIndex)
+            : throw new InvalidOperationException($"VariationTradeStrategy expects candles of type {typeof(T).Name} but got {typeof(T1).Name}.");
     }
 
     protected override double StopLossLong<T1>(List<T1> candles, int currentCandleIndex) => VariationToRun.StopLossLong ?? -1;

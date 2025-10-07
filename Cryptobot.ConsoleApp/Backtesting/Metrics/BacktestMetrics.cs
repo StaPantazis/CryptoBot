@@ -7,7 +7,7 @@ public class BacktestMetrics
 {
     public string Title { get; }
 
-    public BacktestMetrics(List<Trade> trades, Spot spot, string title)
+    public BacktestMetrics(IReadOnlyList<Trade> trades, Spot spot, string title)
     {
         Title = title;
 

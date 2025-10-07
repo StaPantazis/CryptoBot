@@ -30,6 +30,15 @@ public class StrategyBundle<TBudgetStrategy> : StrategyBundleBase
     }
 }
 
+public class StrategyBundle : StrategyBundleBase
+{
+    public StrategyBundle(TradeStrategyBase tradeStrategy, BudgetStrategy budgetStrategy)
+    {
+        TradeStrategy = tradeStrategy;
+        BudgetStrategy = budgetStrategy;
+    }
+}
+
 public abstract class StrategyBundleBase
 {
     public TradeStrategyBase TradeStrategy { get; protected set; }
