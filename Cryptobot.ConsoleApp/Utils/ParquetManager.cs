@@ -1,5 +1,7 @@
 ﻿using Cryptobot.ConsoleApp.Backtesting.OutputModels;
 using Cryptobot.ConsoleApp.Bybit.Models;
+using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
+using Cryptobot.ConsoleApp.Resources.CachedIndicators;
 using Parquet;
 using Parquet.Data;
 using Parquet.Schema;
@@ -101,7 +103,7 @@ public static class ParquetManager
         await groupWriter.WriteColumnAsync(new DataColumn((DataField<bool?>)schema[3], nodes.Select(x => x.IsProfit).ToArray()));
     }
 
-    public static async Task SaveTrendCandlesAsync(IEnumerable<TrendCandle> candles, string filepath)
+    public static async Task SaveTrendCandles(IEnumerable<TrendCandle> candles, string filepath)
     {
         PathHelper.CheckFixFilepathExtensions(ref filepath, Constants.PARQUET);
 
@@ -129,9 +131,30 @@ public static class ParquetManager
         await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[7], candles.Select(x => x.Volume).ToArray()));
     }
 
+    public static async Task SaveMacroTrend(IEnumerable<CachedMacroTrend> data, string filepath)
+    {
+        var schema = new ParquetSchema(
+            new DataField<long>("OpenTimeTicks"),
+            new DataField<double?>("MA11520"),
+            new DataField<int>("Trend")
+        );
+
+        using var stream = File.Create(filepath);
+        using var writer = await ParquetWriter.CreateAsync(schema, stream);
+        using var rg = writer.CreateRowGroup();
+
+        var openTimes = data.Select(x => x.OpenTime.Ticks).ToArray();
+        var ma11520 = data.Select(x => x.MA11520).ToArray();
+        var trends = data.Select(x => (int)x.Trend).ToArray();
+
+        await rg.WriteColumnAsync(new DataColumn((DataField<long>)schema[0], openTimes));
+        await rg.WriteColumnAsync(new DataColumn((DataField<double?>)schema[1], ma11520.Cast<double?>().ToArray()));
+        await rg.WriteColumnAsync(new DataColumn((DataField<int>)schema[2], trends));
+    }
+
     // READ
 
-    public static async Task<List<T>> LoadCandlesAsync<T>(string filepath) where T : BybitCandle, new()
+    public static async Task<List<T>> LoadCandles<T>(string filepath) where T : BybitCandle, new()
     {
         PathHelper.CheckFixFilepathExtensions(ref filepath, Constants.PARQUET);
 
@@ -179,5 +202,35 @@ public static class ParquetManager
         }
 
         return candles;
+    }
+
+    public static async Task<List<CachedMacroTrend>> LoadMacroTrend(string filepath)
+    {
+        using var stream = File.OpenRead(filepath);
+        using var reader = await ParquetReader.CreateAsync(stream);
+        using var rg = reader.OpenRowGroupReader(0);
+
+        // Access by index (no generic cast)
+        var openTimeField = (DataField)reader.Schema[0];
+        var maField = (DataField)reader.Schema[1];
+        var trendField = (DataField)reader.Schema[2];
+
+        var openTimeColumn = await rg.ReadColumnAsync(openTimeField);
+        var maColumn = await rg.ReadColumnAsync(maField);
+        var trendColumn = await rg.ReadColumnAsync(trendField);
+
+        // Safe extraction — Data property is an object[]
+        var openTimeTicks = ((IEnumerable<long>)openTimeColumn.Data).ToArray();
+        var ma11520 = ((IEnumerable<double?>)maColumn.Data).ToArray();
+        var trends = ((IEnumerable<int>)trendColumn.Data).ToArray();
+
+        var list = new List<CachedMacroTrend>(openTimeTicks.Length);
+        for (var i = 0; i < openTimeTicks.Length; i++)
+        {
+            var dt = new DateTime(openTimeTicks[i], DateTimeKind.Utc);
+            list.Add(new CachedMacroTrend(dt, ma11520[i], (Trend)trends[i]));
+        }
+
+        return list;
     }
 }

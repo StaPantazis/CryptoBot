@@ -1,3 +1,7 @@
-﻿using Cryptobot.ConsoleApp.Utils;
+﻿using Cryptobot.ConsoleApp.EngineDir;
+using Cryptobot.ConsoleApp.Utils;
 
-await Consoler.Run();
+var cacheManager = new CacheManager();
+await cacheManager.InitializeAsync();
+
+await Consoler.Run(cacheManager);

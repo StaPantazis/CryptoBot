@@ -78,21 +78,21 @@ public class TrendProfiler(TrendConfiguration config)
         return score <= -_config.ThresholdBear ? Trend.Bear : Trend.Neutral;
     }
 
-    public static Trend ProfileByMovingAverage<T>(List<T> candles, int currentCandleIndex, T? currentCandle = null) where T : Candle
+    public static Trend ProfileByMovingAverage<T>(CacheManager? cacheManager, List<T> candles, int currentCandleIndex, T? currentCandle = null) where T : Candle
     {
         currentCandle ??= candles[currentCandleIndex];
 
-        //var ma = macroMA[currentCandleIndex];
+        if (cacheManager is null)
+        {
+            // 4 months ~ 11520 15m
+            var ma = GetMovingAverage(candles, currentCandleIndex, 11520);
 
-        //if (ma is null || currentCandle.Indicators.MovingAverage is null)
-        //    return Trend.Neutral;
+            return ma is null
+                ? Trend.Neutral
+                : (double)currentCandle.Indicators.MovingAverage! >= (double)ma! ? Trend.Bull : Trend.Bear;
+        }
 
-        // 4 months ~ 11520 15m
-        var ma = GetMovingAverage(candles, currentCandleIndex, 11520);
-
-        return ma is null
-            ? Trend.Neutral
-            : (double)currentCandle.Indicators.MovingAverage! >= (double)ma! ? Trend.Bull : Trend.Bear;
+        return cacheManager.MacroTrendCache[currentCandle.OpenTime.Ticks].Trend;
     }
 
     public static double? GetMovingAverage<T>(List<T> candles, int currentCandleIndex, int window) where T : Candle

@@ -22,6 +22,15 @@ public class PathHelper
         return outputPath;
     }
 
+    public static string GetCachedIndicatorsOutputPath()
+    {
+        var outputDir = @"Cryptobot.ConsoleApp\Resources\CachedIndicators";
+        var outputPath = Path.Combine(GetParentDir().FullName, outputDir);
+
+        CreateDirectoryNonexistent(outputPath);
+        return outputPath;
+    }
+
     public static string GetResourcesPath()
     {
         var resourcesDir = @"Cryptobot.ConsoleApp\Resources";

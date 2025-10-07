@@ -4,12 +4,13 @@ using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 
 namespace Cryptobot.ConsoleApp.EngineDir;
 
-public class IndicatorManager(TradeStrategyBase? tradeStrategy)
+public class IndicatorManager(CacheManager? cacheManager, TradeStrategyBase? tradeStrategy)
 {
+    private readonly CacheManager? _cacheManager = cacheManager;
     private readonly IndicatorType[] _indicators = tradeStrategy?.RelevantIndicators ?? [];
     private readonly TrendProfiler? _microTrendProfiler = tradeStrategy != null ? new(tradeStrategy.MicroTrendConfiguration) : null;
 
-    public IndicatorManager(IndicatorType[] indicators) : this((TradeStrategyBase?)null)
+    public IndicatorManager(CacheManager? cacheManager, IndicatorType[] indicators) : this(cacheManager, (TradeStrategyBase?)null)
     {
         _indicators = indicators ?? throw new ArgumentNullException();
     }
@@ -34,7 +35,7 @@ public class IndicatorManager(TradeStrategyBase? tradeStrategy)
                     candle.Indicators.MicroTrend = _microTrendProfiler!.ProfileComplex(candles, currentCandleIndex);
                     break;
                 case IndicatorType.MacroTrend:
-                    candle.Indicators.MacroTrend = TrendProfiler.ProfileByMovingAverage(candles, currentCandleIndex, candle);
+                    candle.Indicators.MacroTrend = TrendProfiler.ProfileByMovingAverage(_cacheManager, candles, currentCandleIndex, candle);
                     break;
                 default:
                     break;

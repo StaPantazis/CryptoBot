@@ -3,6 +3,7 @@ using Cryptobot.ConsoleApp.Backtesting.Strategies;
 using Cryptobot.ConsoleApp.Backtesting.Strategies.BudgetStrategies;
 using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies.Variations;
 using Cryptobot.ConsoleApp.Bybit;
+using Cryptobot.ConsoleApp.EngineDir;
 using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using System.Text;
@@ -11,7 +12,7 @@ namespace Cryptobot.ConsoleApp.Utils;
 
 public static class Consoler
 {
-    public static async Task Run()
+    public static async Task Run(CacheManager cacheManager)
     {
         Console.OutputEncoding = Encoding.UTF8;
 
@@ -27,6 +28,7 @@ public static class Consoler
                 //new StrategyBundle(VariationSandboxFactory.AllInMA(), new BS_XPercent(20)),
                 ]);
 
+        var backtester = new Backtester(cacheManager);
         var choiceMade = false;
 
         while (true)
@@ -45,7 +47,7 @@ public static class Consoler
                     break;
 
                 case "2":
-                    await Backtester.RunBacktest(backtestingDetails);
+                    await backtester.RunBacktest(backtestingDetails);
                     Printer.PressKeyToContinue();
                     choiceMade = true;
                     break;
@@ -70,7 +72,7 @@ public static class Consoler
                         {
                             var profilerConfig = new TrendConfiguration(window: TrendConfiguration._default_window);
 
-                            await Backtester.RunTrendProfiler(backtestingDetails, profilerConfig, (IndicatorType)scope);
+                            await backtester.RunTrendProfiler(backtestingDetails, profilerConfig, (IndicatorType)scope);
                             Printer.PressKeyToContinue();
 
                             break;
