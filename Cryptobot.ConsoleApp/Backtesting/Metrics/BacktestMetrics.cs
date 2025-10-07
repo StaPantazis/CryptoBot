@@ -1,4 +1,4 @@
-﻿using Cryptobot.ConsoleApp.EngineDir.Models;
+using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.Extensions;
 
 namespace Cryptobot.ConsoleApp.Backtesting.Metrics;

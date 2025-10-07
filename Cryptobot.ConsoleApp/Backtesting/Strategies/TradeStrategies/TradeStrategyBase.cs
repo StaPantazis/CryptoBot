@@ -3,8 +3,10 @@ using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 
 namespace Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
 
-public abstract class TradeStrategy : StrategyBase
+public abstract class TradeStrategyBase : StrategyBase
 {
+    public virtual TrendConfiguration TrendConfiguration { get; } = new(window: 30);
+
     public abstract IndicatorType[] RelevantIndicators { get; protected set; }
 
     public double StopLoss<T>(List<T> candles, int currentCandleIndex, PositionSide position) where T : Candle

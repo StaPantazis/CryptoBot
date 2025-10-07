@@ -1,4 +1,4 @@
-﻿using Cryptobot.ConsoleApp.Backtesting.Strategies.BudgetStrategies;
+using Cryptobot.ConsoleApp.Backtesting.Strategies.BudgetStrategies;
 using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Extensions;
@@ -12,13 +12,13 @@ public class Spot
 
     public string Id { get; } = Guid.NewGuid().ToString();
     public User User { get; }
-    public TradeStrategy TradeStrategy { get; }
+    public TradeStrategyBase TradeStrategy { get; }
     public BudgetStrategy BudgetStrategy { get; }
     public double InitialBudget { get; private set; }
     public double Budget { get; private set; }
     public List<Trade> Trades { get; } = [];
 
-    public Spot(User user, double budget, TradeStrategy tradeStrategy, BudgetStrategy budgetStrategy, string symbol)
+    public Spot(User user, double budget, TradeStrategyBase tradeStrategy, BudgetStrategy budgetStrategy, string symbol)
     {
         User = user;
         TradeStrategy = tradeStrategy;

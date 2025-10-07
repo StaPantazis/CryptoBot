@@ -4,13 +4,18 @@ using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 
 namespace Cryptobot.ConsoleApp.EngineDir;
 
-public class IndicatorManager(TradeStrategy tradeStrategy)
+public class IndicatorManager(TradeStrategyBase tradeStrategy)
 {
     private readonly IndicatorType[] _indicators = tradeStrategy.RelevantIndicators;
-    private readonly TrendProfiler? _trendProfiler = tradeStrategy is TrendTradeStrategy t ? new(t.TrendConfiguration) : null;
+    private readonly TrendProfiler _trendProfiler = new(tradeStrategy.TrendConfiguration);
 
     public void CalculateRelevantIndicators<T>(List<T> candles, int currentCandleIndex) where T : Candle
     {
+        if (_indicators.Length == 0)
+        {
+            return;
+        }
+
         var candle = candles[currentCandleIndex];
 
         foreach (var indicator in _indicators)
@@ -21,7 +26,7 @@ public class IndicatorManager(TradeStrategy tradeStrategy)
                     candle.Indicators.MovingAverage = GetMovingAverage(candles, currentCandleIndex, 30);
                     break;
                 case IndicatorType.Trend:
-                    candle.Indicators.Trend = _trendProfiler!.Profile(candles, currentCandleIndex);
+                    candle.Indicators.Trend = _trendProfiler.Profile(candles, currentCandleIndex);
                     break;
                 default:
                     break;

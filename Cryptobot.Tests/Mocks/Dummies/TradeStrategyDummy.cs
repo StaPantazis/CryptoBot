@@ -3,11 +3,11 @@ using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 
 namespace Cryptobot.Tests.Mocks.Dummies;
-internal class TradeStrategyDummy(PositionSide position) : TradeStrategy
+internal class TradeStrategyDummy(PositionSide position) : TradeStrategyBase
 {
     private readonly PositionSide _position = position;
-    public override string Name { get; } = "Trade Dummy";
-    public override string NameOf { get; } = nameof(TradeStrategyDummy);
+    public override string Name { get; protected set; } = "Trade Dummy";
+    public override string NameOf { get; protected set; } = nameof(TradeStrategyDummy);
     public override IndicatorType[] RelevantIndicators { get; protected set; } = [];
 
     protected override double StopLossLong<T>(List<T> candles, int currentCandleIndex) => 1.05;

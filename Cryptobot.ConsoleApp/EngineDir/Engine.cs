@@ -1,14 +1,13 @@
-﻿using Cryptobot.ConsoleApp.Bybit.Models;
-using Cryptobot.ConsoleApp.EngineDir.Models;
+﻿using Cryptobot.ConsoleApp.EngineDir.Models;
 
 namespace Cryptobot.ConsoleApp.EngineDir;
 
-public class Engine(params Spot[] spots)
+public class Engine<T>(params Spot[] spots) where T : Candle
 {
     private readonly Spot[] _spots = spots;
     private readonly Dictionary<string, IndicatorManager> _indicatorManagers = spots.ToDictionary(x => x.Id, x => new IndicatorManager(x.TradeStrategy));
 
-    public void TradeNewCandle(List<BybitCandle> candles, int currentCandleIndex)
+    public void TradeNewCandle(List<T> candles, int currentCandleIndex)
     {
         foreach (var spot in _spots)
         {

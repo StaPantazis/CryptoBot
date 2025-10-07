@@ -20,10 +20,11 @@ public static class A
         LowPrice = low,
         ClosePrice = close,
     };
+
     public static List<Candle> Candles(double open, double high, double low, double close) => [Candle(open, high, low, close)];
     public static List<Candle> CandlesBasic() => [Candle(100_000, 100_000, 100_000, 100_000)];
-    public static TradeStrategy TradeStrategyShort => new TradeStrategyDummy(PositionSide.Short);
-    public static TradeStrategy TradeStrategyLong => new TradeStrategyDummy(PositionSide.Long);
+    public static TradeStrategyBase TradeStrategyShort => new TradeStrategyDummy(PositionSide.Short);
+    public static TradeStrategyBase TradeStrategyLong => new TradeStrategyDummy(PositionSide.Long);
     public static BudgetStrategy BudgetStrategy => new BudgetStrategyDummy();
     public static Spot SpotShort => new(User, _budget, TradeStrategyShort, BudgetStrategy, Constants.SYMBOL_BTCUSDT);
     public static Spot SpotLong => new(User, _budget, TradeStrategyLong, BudgetStrategy, Constants.SYMBOL_BTCUSDT);

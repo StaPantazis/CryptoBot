@@ -1,4 +1,6 @@
 ﻿using Cryptobot.ConsoleApp.Backtesting.OutputModels;
+using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
+using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies.Variations;
 using Cryptobot.ConsoleApp.Bybit.Models;
 using Cryptobot.ConsoleApp.EngineDir;
 using Cryptobot.ConsoleApp.EngineDir.Models;
@@ -19,38 +21,81 @@ public static class Backtester
 
         foreach (var strategy in details.Strategies)
         {
-            var sw = new Stopwatch();
-            sw.Start();
-
-            var user = new User("Xatzias");
-            var spot = new Spot(user, details.Budget, strategy.TradeStrategy, strategy.BudgetStrategy, details.Symbol);
-            Printer.BacktesterInitialization(spot);
-
-            spot = Backtest(spot, candles);
-            Printer.BacktesterResult(spot, sw);
-
-            var saveOutput = ShouldSaveLoop(swMain);
-
-            if (saveOutput)
+            (Spot spot, Stopwatch sw) innerLoop(TradeStrategyBase strategyToRun)
             {
-                sw.Restart();
-                Printer.SavingOutputStart();
-                await SaveBacktestResult(candles, spot);
-                Printer.SavingOutputEnd(candles.Count, sw);
+                var sw = new Stopwatch();
+                sw.Start();
+
+                var user = new User("Xatzias");
+                var spot = new Spot(user, details.Budget, strategyToRun, strategy.BudgetStrategy, details.Symbol);
+                Printer.BacktesterInitialization(spot);
+
+                spot = Backtest(spot, candles);
+                sw.Stop();
+
+                return (spot, sw);
             }
 
-            Printer.Divider();
+            if (strategy.TradeStrategy is VariationTradeStrategy<BybitCandle> variationStrategy)
+            {
+                var results = new List<(Spot spot, Stopwatch sw)>();
+                var variations = variationStrategy.GetVariations();
+
+                foreach (var variation in variations)
+                {
+                    var result = innerLoop(variation);
+                    results.Add(result);
+
+                    Printer.EmptyLine();
+                    Printer.EmptyLine();
+                }
+
+                results = results
+                    .OrderByDescending(x => x.spot.Trades.Count > 0)
+                    .ThenByDescending(x => x.spot.InitialBudget + x.spot.Trades.Where(x => x.IsClosed).Sum(x => x.PnL ?? 0))
+                    .ToList();
+
+                Printer.VariationsResult(results.Count);
+                var index = 1;
+
+                foreach (var (spot, sw) in results)
+                {
+                    Printer.BacktesterStrategyName(spot, index);
+                    Printer.BacktesterResult(spot, sw);
+                    Printer.Divider();
+
+                    index++;
+                }
+            }
+            else
+            {
+                var (spot, sw) = innerLoop(strategy.TradeStrategy);
+
+                Printer.BacktesterResult(spot, sw);
+
+                var saveOutput = ShouldSaveLoop(swMain);
+
+                if (saveOutput)
+                {
+                    sw.Restart();
+                    Printer.SavingOutputStart();
+                    await SaveBacktestResult(candles, spot);
+                    Printer.SavingOutputEnd(candles.Count, sw);
+                }
+
+                Printer.Divider();
+            }
         }
 
-        if (details.Strategies.Length > 1)
+        if (details.Strategies.Length > 1 || details.Strategies.Any(x => x.TradeStrategy is VariationTradeStrategy<BybitCandle>))
         {
             Printer.TotalRuntime(swMain);
         }
     }
 
-    private static Spot Backtest(Spot spot, List<BybitCandle> candles)
+    private static Spot Backtest<T>(Spot spot, List<T> candles) where T : Candle
     {
-        var engine = new Engine(spot);
+        var engine = new Engine<T>(spot);
         var totalCandles = candles.Count;
 
         for (var i = 0; i < totalCandles; i++)

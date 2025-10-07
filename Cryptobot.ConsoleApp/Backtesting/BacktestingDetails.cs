@@ -1,4 +1,4 @@
-﻿using Cryptobot.ConsoleApp.Backtesting.Strategies;
+using Cryptobot.ConsoleApp.Backtesting.Strategies;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Utils;
 

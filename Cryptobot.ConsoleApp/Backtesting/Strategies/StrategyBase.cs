@@ -4,7 +4,7 @@ namespace Cryptobot.ConsoleApp.Backtesting.Strategies;
 
 public abstract class StrategyBase
 {
-    public abstract string Name { get; }
-    public abstract string NameOf { get; }
+    public abstract string Name { get; protected set; }
+    public abstract string NameOf { get; protected set; }
     public Spot Spot { get; set; }
 }

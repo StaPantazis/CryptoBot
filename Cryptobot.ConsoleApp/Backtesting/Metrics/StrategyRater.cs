@@ -1,4 +1,4 @@
-﻿namespace Cryptobot.ConsoleApp.Backtesting.Metrics;
+namespace Cryptobot.ConsoleApp.Backtesting.Metrics;
 
 public static class StrategyScorer
 {

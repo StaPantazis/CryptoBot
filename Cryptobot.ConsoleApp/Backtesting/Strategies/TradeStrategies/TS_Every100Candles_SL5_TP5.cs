@@ -2,10 +2,10 @@ using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 
 namespace Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
 
-public class TS_Every100Candles_SL5_TP5 : TradeStrategy
+public class TS_Every100Candles_SL5_TP5 : TradeStrategyBase
 {
-    public override string Name { get; } = "Trade every 100 candles | SL -5% | TP +5%";
-    public override string NameOf { get; } = nameof(TS_Every100Candles_SL5_TP5);
+    public override string Name { get; protected set; } = "Trade every 100 candles | SL -5% | TP +5%";
+    public override string NameOf { get; protected set; } = nameof(TS_Every100Candles_SL5_TP5);
     public override IndicatorType[] RelevantIndicators { get; protected set; } = [];
 
     protected override double StopLossLong<T>(List<T> candles, int currentCandleIndex) => 0.95;

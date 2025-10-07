@@ -1,7 +1,7 @@
-﻿using Cryptobot.ConsoleApp.Backtesting;
+using Cryptobot.ConsoleApp.Backtesting;
 using Cryptobot.ConsoleApp.Backtesting.Strategies;
 using Cryptobot.ConsoleApp.Backtesting.Strategies.BudgetStrategies;
-using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
+using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies.Variations;
 using Cryptobot.ConsoleApp.Bybit;
 using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
@@ -22,7 +22,8 @@ public static class Consoler
             Strategies: [
                 //new StrategyBundle<TS_Every100Candles_SL5_TP5, BS_OnePercent>(),
                 //new StrategyBundle<TS_LongWhenMovingAverageIncreases_SL5_TP5, BS_OnePercent>(),
-                new StrategyBundle<TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3, BS_100Percent>(),
+                //new StrategyBundle<TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3, BS_100Percent>(),
+                new StrategyBundle<BS_100Percent>(VariationSandboxFactory.AllInMA()),
                 ]);
 
         var choiceMade = false;

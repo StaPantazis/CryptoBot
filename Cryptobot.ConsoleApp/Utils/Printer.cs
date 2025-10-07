@@ -1,4 +1,4 @@
-﻿using Cryptobot.ConsoleApp.Backtesting;
+using Cryptobot.ConsoleApp.Backtesting;
 using Cryptobot.ConsoleApp.Backtesting.Metrics;
 using Cryptobot.ConsoleApp.Backtesting.OutputModels;
 using Cryptobot.ConsoleApp.EngineDir.Models;
@@ -85,11 +85,25 @@ public static class Printer
     {
         WriteLine("__BACKTESTING__", Cyan);
 
-        Write("Trading Strategy: ", White);
-        WriteLine(spot.TradeStrategy.Name, Yellow);
+        BacktesterStrategyName(spot);
 
         Write("Budgeting Strategy: ", White);
         WriteLine(spot.BudgetStrategy.Name, Yellow);
+    }
+
+    public static void BacktesterStrategyName(Spot spot, int? index = null)
+    {
+        Write($"{(index != null ? $"{index}] " : "")}Trading Strategy: ", White);
+        WriteLine(spot.TradeStrategy.Name, Yellow);
+    }
+
+    public static void VariationsResult(int totalVariations)
+    {
+        EmptyLine();
+        Divider();
+        Divider();
+        WriteLine($"__RESULT: {totalVariations} VARIATIONS BACKTESTED__", Cyan);
+        EmptyLine();
     }
 
     public static void CalculatingCandles(int candleCount, int totalCandles)
