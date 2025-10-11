@@ -1,10 +1,11 @@
-﻿using Cryptobot.ConsoleApp.EngineDir.Models;
+﻿using Cryptobot.ConsoleApp.Backtesting;
+using Cryptobot.ConsoleApp.EngineDir.Models;
 
 namespace Cryptobot.ConsoleApp.Bybit.Models;
 
 public class BybitCandle : Candle
 {
-    public static List<BybitCandle> FromResponse(KlineResponse klineResponse)
+    public static List<BybitCandle> FromResponse(KlineResponse klineResponse, BacktestingDetails details)
     {
         var list = klineResponse.Result.List;
         var candlesticks = new List<BybitCandle>();
@@ -17,7 +18,7 @@ public class BybitCandle : Candle
             candlesticks.Add(new BybitCandle
             {
                 OpenTime = openTime,
-                CloseTime = openTime.AddMinutes(1),
+                CloseTime = openTime.AddMinutes(details.IntervalMinutes),
 
                 OpenPrice = double.Parse(item[1]),
                 HighPrice = double.Parse(item[2]),

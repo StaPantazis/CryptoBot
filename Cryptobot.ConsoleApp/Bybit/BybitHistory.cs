@@ -80,7 +80,7 @@ public static class BybitHistory
                     continue;
                 }
 
-                allDailyCandles.AddRange(BybitCandle.FromResponse(resp));
+                allDailyCandles.AddRange(BybitCandle.FromResponse(resp, details));
 
                 if (i < urls.Length - 1)
                 {
@@ -172,7 +172,7 @@ public static class BybitHistory
                 continue;
             }
 
-            var candles = BybitCandle.FromResponse(resp)
+            var candles = BybitCandle.FromResponse(resp, details)
                 .OrderBy(c => c.OpenTime)
                 .ToList();
 

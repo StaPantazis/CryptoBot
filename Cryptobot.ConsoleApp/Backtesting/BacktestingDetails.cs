@@ -45,4 +45,14 @@ public record BacktestingDetails(
         CandleInterval.One_Day => 1,
         _ => throw new NotImplementedException()
     };
+
+    public int IntervalMinutes => Interval switch
+    {
+        CandleInterval.One_Minute => 1,
+        CandleInterval.Three_Minutes => 3,
+        CandleInterval.Five_Minutes => 5,
+        CandleInterval.Fifteen_Minutes => 15,
+        CandleInterval.One_Day => 1440,
+        _ => throw new NotImplementedException()
+    };
 }
