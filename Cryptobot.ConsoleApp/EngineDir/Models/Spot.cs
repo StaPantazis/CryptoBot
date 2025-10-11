@@ -1,6 +1,7 @@
 using Cryptobot.ConsoleApp.Backtesting.Strategies.BudgetStrategies;
 using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
+using Cryptobot.ConsoleApp.Services;
 using Cryptobot.ConsoleApp.Utils;
 
 namespace Cryptobot.ConsoleApp.EngineDir.Models;
@@ -10,7 +11,7 @@ public class Spot
     private readonly double _slippage_multiplier = 0;
     private readonly List<Trade> _openTrades = [];
     private readonly List<Trade> _allTrades = [];
-    private readonly CacheManager _cacheManager;
+    private readonly CacheService _cacheManager;
 
     public string Id { get; } = Guid.NewGuid().ToString();
     public User User { get; }
@@ -20,7 +21,7 @@ public class Spot
     public double Budget { get; private set; }
     public IReadOnlyList<Trade> Trades => _allTrades;
 
-    public Spot(User user, double budget, TradeStrategyBase tradeStrategy, BudgetStrategy budgetStrategy, string symbol, CacheManager cacheManager)
+    public Spot(User user, double budget, TradeStrategyBase tradeStrategy, BudgetStrategy budgetStrategy, string symbol, CacheService cacheManager)
     {
         User = user;
         TradeStrategy = tradeStrategy;

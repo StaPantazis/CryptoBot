@@ -5,6 +5,7 @@ using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Extensions;
 using System.Diagnostics;
+using static Cryptobot.ConsoleApp.Utils.ConsoleColors;
 
 namespace Cryptobot.ConsoleApp.Utils;
 
@@ -52,16 +53,30 @@ public static class Printer
     public static void InvalidChoice() => WriteLine("Invalid choice.", Red);
 
     // History
-    public static void HistoryDownloadTitle(BacktestingDetails details) => WriteLine($"Downloadig intervals of {(int)details.Interval} minutes...\n", White);
+    public static void HistoryDownloadTitle(BacktestingDetails details) => WriteLine($"Downloading intervals of {(int)details.Interval} minutes...", White);
 
-    public static void CheckingHistory(DateTime day)
+    public static void CheckingHistory(DateTime dayFrom, DateTime? dayTo = null)
     {
         Write("Checking ", White);
-        Write($"{day:dd/MM/yyyy}", Cyan);
+
+        if (dayTo != null)
+        {
+            Write("From ", White);
+            Write($"{dayFrom:dd/MM/yyyy}", Cyan);
+            Write(" - Until ", White);
+            Write($"{dayTo:dd/MM/yyyy}", Cyan);
+        }
+        else
+        {
+            Write($"{dayFrom:dd/MM/yyyy}", Cyan);
+        }
+
         Write("... ", White);
     }
 
     public static void AlreadyDownloaded() => WriteLine("Already downloaded!", Yellow);
+
+    public static void AlreadyComputed() => WriteLine("Already computed!", Yellow);
 
     public static void Downloading() => Write("Downloading... ", White);
 
@@ -69,7 +84,10 @@ public static class Printer
 
     public static void ValidatingData() => WriteLine($"Validating data... ", White);
 
-    public static void WrongHistory(DateTime day, int mergeCount) => WriteLine($"\nWrong data for file {day}, found {mergeCount} records!", Red);
+    public static void WrongHistoryMinute(DateTime day, int mergeCount) => WriteLine($"\nWrong data for file {day}, found {mergeCount} records!", Red);
+    public static void WrongHistoryDaily(DateTime batchStart, DateTime batchEnd, Exception ex) => WrongHistoryDaily(batchStart, batchEnd, ex.Message);
+    public static void WrongHistoryDaily(DateTime batchStart, DateTime batchEnd, string message)
+        => WriteLine($"Failed to fetch data from {batchStart:yyyy-MM-dd} to {batchEnd:yyyy-MM-dd}: {message}", Red);
 
     public static void WrongHistory(string filepath) => WriteLine($"\nWrong data for file {filepath}!", Red);
 
@@ -256,27 +274,32 @@ public static class Printer
 
     // General
     public static void Done(string? prefix = null) => WriteLine($"{prefix ?? string.Empty}Done!", Green);
-    public static void Finished() => WriteLine("Finished!", Green);
+    public static void Finished()
+    {
+        WriteLine("Finished!", Green);
+        EmptyLine();
+    }
+
     public static void Divider() => WriteLine("\n-----------------------------------------\n", Red);
 
     #region Functionality
     public static void EmptyLine() => Console.WriteLine();
 
-    private static void EraseLineContent() => Console.Write("\r                                          \r");
-
-    private static void Write(object message, ConsoleColor color)
+    public static void Write(object message, ConsoleColor color)
     {
         Console.ForegroundColor = color;
         Console.Write(message);
         Console.ForegroundColor = White;
     }
 
-    private static void WriteLine(object message, ConsoleColor color)
+    public static void WriteLine(object message, ConsoleColor color)
     {
         Console.ForegroundColor = color;
         Console.WriteLine(message);
         Console.ForegroundColor = White;
     }
+
+    private static void EraseLineContent() => Console.Write("\r                                          \r");
 
     private static void Write(object message, Grade grade, ConsoleColor color)
     {
@@ -307,15 +330,7 @@ public static class Printer
 
     private static void Wait() => Console.ReadLine();
 
-    private static ConsoleColor Yellow => ConsoleColor.Yellow;
-    private static ConsoleColor Cyan => ConsoleColor.Cyan;
-    private static ConsoleColor Green => ConsoleColor.Green;
-    private static ConsoleColor White => ConsoleColor.White;
-    private static ConsoleColor Red => ConsoleColor.Red;
-    private static ConsoleColor DarkGreen => ConsoleColor.DarkGreen;
-    private static ConsoleColor DarkYellow => ConsoleColor.DarkYellow;
-    private static ConsoleColor DarkRed => ConsoleColor.DarkRed;
-    private static ConsoleColor GreenRed(double value, bool positiveIsGreen = true)
+    public static ConsoleColor GreenRed(double value, bool positiveIsGreen = true)
         => positiveIsGreen ? value is >= 0 or double.NaN ? Green : Red : value <= 0 ? Green : Red;
     #endregion
 

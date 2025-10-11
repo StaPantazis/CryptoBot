@@ -6,14 +6,16 @@ using Cryptobot.ConsoleApp.EngineDir;
 using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Extensions;
+using Cryptobot.ConsoleApp.Repositories;
+using Cryptobot.ConsoleApp.Services;
 using Cryptobot.ConsoleApp.Utils;
 using System.Diagnostics;
 
 namespace Cryptobot.ConsoleApp.Backtesting;
 
-public class Backtester(CacheManager cacheManager)
+public class Backtester(CacheService cacheManager)
 {
-    private readonly CacheManager _cacheManager = cacheManager;
+    private readonly CacheService _cacheManager = cacheManager;
 
     public async Task RunBacktest(BacktestingDetails details)
     {
@@ -120,7 +122,7 @@ public class Backtester(CacheManager cacheManager)
         var candles = await GetCandlesWithPrint<TrendCandle>(details);
 
         var trendProfiler = new TrendProfiler(trendConfiguration);
-        var indicatorManager = new IndicatorManager(_cacheManager, [IndicatorType.MovingAverage]);
+        var indicatorManager = new IndicatorService(_cacheManager, [IndicatorType.MovingAverage]);
         var totalCandles = candles.Count;
 
         for (var i = 0; i < totalCandles; i++)
@@ -160,26 +162,6 @@ public class Backtester(CacheManager cacheManager)
         Printer.TotalRuntime(swMain);
     }
 
-    public static async Task<List<T>> GetCandles<T>(BacktestingDetails details) where T : BybitCandle, new()
-    {
-        var resourcesPath = PathHelper.GetHistoryPath(details);
-        var files = Directory.GetFiles(resourcesPath, $"*{Constants.PARQUET}").OrderBy(f => f);
-
-        var allCandles = new List<T>();
-
-        foreach (var filepath in files)
-        {
-            var candles = await ParquetManager.LoadCandles<T>(filepath);
-
-            if (candles != null)
-            {
-                allCandles.AddRange(candles);
-            }
-        }
-
-        return allCandles;
-    }
-
     private static bool ShouldSaveLoop(Stopwatch sw)
     {
         sw.Stop();
@@ -207,7 +189,7 @@ public class Backtester(CacheManager cacheManager)
         var swLoading = new Stopwatch();
         Printer.LoadingCandlesStart(details);
 
-        var allCandles = await GetCandles<T>(details);
+        var allCandles = await CandlesRepository.GetCandles<T>(details);
 
         Printer.LoadingCandlesEnd(swLoading);
 
@@ -271,10 +253,10 @@ public class Backtester(CacheManager cacheManager)
         }
 
         var candlesFilepath = $"{outputPath}\\candles-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}{Constants.PARQUET}";
-        await ParquetManager.SaveBacktestCandlesAsync(outputCandles, candlesFilepath);
+        await ParquetService.SaveBacktestCandlesAsync(outputCandles, candlesFilepath);
 
         var linearFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\linear-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}{Constants.PARQUET}";
-        await ParquetManager.SaveLinearGraph(linearGraphNodes, linearFilepath);
+        await ParquetService.SaveLinearGraph(linearGraphNodes, linearFilepath);
 
         var zipFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}__{totalPnL.Euro(digits: 1, plusIfPositive: true)}{Constants.ZIP}";
         ZipHelper.BundleFiles(zipFilepath, candlesFilepath, linearFilepath);
@@ -288,6 +270,6 @@ public class Backtester(CacheManager cacheManager)
         var outputPath = PathHelper.GetTrendProfilingOutputPath();
 
         var candlesFilepath = $"{outputPath}\\{DateTime.Now:yyyy-MM-dd HH_mm}-{details.IntervalShortString}--{trendProfilerName}{Constants.PARQUET}";
-        await ParquetManager.SaveTrendCandles(candles, candlesFilepath);
+        await ParquetService.SaveTrendCandles(candles, candlesFilepath);
     }
 }

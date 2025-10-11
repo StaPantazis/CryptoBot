@@ -1,10 +1,10 @@
-﻿using Cryptobot.ConsoleApp.EngineDir;
-using Cryptobot.ConsoleApp.Utils;
+﻿using Cryptobot.ConsoleApp;
+using Cryptobot.ConsoleApp.Services;
 using System.Text;
 
 Console.OutputEncoding = Encoding.UTF8;
 
-var cacheManager = new CacheManager();
+var cacheManager = new CacheService();
 await cacheManager.InitializeCache();
 
 await Consoler.Run(cacheManager);

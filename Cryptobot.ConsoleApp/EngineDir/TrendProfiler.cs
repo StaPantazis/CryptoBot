@@ -1,10 +1,12 @@
 ﻿using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
+using Cryptobot.ConsoleApp.Services;
 
 namespace Cryptobot.ConsoleApp.EngineDir;
 
 public class TrendProfiler(TrendConfiguration config)
 {
+    private const int _movingAverageWindow = 120;
     private readonly TrendConfiguration _config = EnsureValid(config);
 
     public Trend ProfileComplex<T>(List<T> candles, int currentCandleIndex) where T : Candle
@@ -78,14 +80,13 @@ public class TrendProfiler(TrendConfiguration config)
         return score <= -_config.ThresholdBear ? Trend.Bear : Trend.Neutral;
     }
 
-    public static Trend ProfileByMovingAverage<T>(CacheManager? cacheManager, List<T> candles, int currentCandleIndex, T? currentCandle = null) where T : Candle
+    public static Trend ProfileByMovingAverage<T>(CacheService? cacheManager, List<T> candles, int currentCandleIndex, T? currentCandle = null) where T : Candle
     {
         currentCandle ??= candles[currentCandleIndex];
 
         if (cacheManager == null)
         {
-            // 4 months ~ 11520 15m
-            var ma = GetMovingAverage(candles, currentCandleIndex, 11520);
+            var ma = GetMovingAverage(candles, currentCandleIndex);
 
             return ma is null
                 ? Trend.Neutral
@@ -95,45 +96,20 @@ public class TrendProfiler(TrendConfiguration config)
         return cacheManager.MacroTrendCache[currentCandle.OpenTime.Ticks].Trend;
     }
 
-    public static double? GetMovingAverage<T>(List<T> candles, int currentCandleIndex, int window) where T : Candle
+    public static double? GetMovingAverage<T>(List<T> candles, int currentCandleIndex) where T : Candle
     {
         if (candles == null || candles.Count == 0)
         {
             return null;
         }
-        else if (window < 1)
-        {
-            throw new ArgumentException("Window must be >= 1", nameof(window));
-        }
-        else if (currentCandleIndex < window - 1)
+        else if (currentCandleIndex < _movingAverageWindow - 1)
         {
             return null;
         }
 
         // Select last 'window' candles ending at the current index
-        var slice = candles.Skip(currentCandleIndex - window + 1).Take(window);
+        var slice = candles.Skip(currentCandleIndex - _movingAverageWindow + 1).Take(_movingAverageWindow);
         return slice.Average(c => c.ClosePrice);
-    }
-
-    private static TrendConfiguration EnsureValid(TrendConfiguration c)
-    {
-        // clamp all to [0,1]; enforce ordering for thresholds
-        var neutralBand = Clamp01(c.NeutralBand);
-        var minR2ForTrend = Clamp01(c.MinR2ForTrend);
-        var breadthWeight = Clamp01(c.BreadthWeight);
-        var thresholdBear = Clamp01(c.ThresholdBear);
-        var thresholdBull = Clamp01(Math.Max(c.ThresholdBull, c.ThresholdBear)); // ensure Bull ≥ Bear
-
-        if (neutralBand != c.NeutralBand
-            || minR2ForTrend != c.MinR2ForTrend
-            || breadthWeight != c.BreadthWeight
-            || thresholdBear != c.ThresholdBear
-            || thresholdBull != c.ThresholdBull)
-        {
-            throw new ArgumentException();
-        }
-
-        return c;
     }
 
     private (int start, int length)? GetWindowPositions<T>(List<T> candles, int currentCandleIndex) where T : Candle
@@ -235,5 +211,26 @@ public class TrendProfiler(TrendConfiguration config)
         }
         var total = up + down;
         return total == 0 ? 0 : (up - down) / (double)total;
+    }
+
+    private static TrendConfiguration EnsureValid(TrendConfiguration c)
+    {
+        // clamp all to [0,1]; enforce ordering for thresholds
+        var neutralBand = Clamp01(c.NeutralBand);
+        var minR2ForTrend = Clamp01(c.MinR2ForTrend);
+        var breadthWeight = Clamp01(c.BreadthWeight);
+        var thresholdBear = Clamp01(c.ThresholdBear);
+        var thresholdBull = Clamp01(Math.Max(c.ThresholdBull, c.ThresholdBear)); // ensure Bull ≥ Bear
+
+        if (neutralBand != c.NeutralBand
+            || minR2ForTrend != c.MinR2ForTrend
+            || breadthWeight != c.BreadthWeight
+            || thresholdBear != c.ThresholdBear
+            || thresholdBull != c.ThresholdBull)
+        {
+            throw new ArgumentException();
+        }
+
+        return c;
     }
 }

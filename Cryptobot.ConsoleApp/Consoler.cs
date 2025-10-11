@@ -3,18 +3,19 @@ using Cryptobot.ConsoleApp.Backtesting.Strategies;
 using Cryptobot.ConsoleApp.Backtesting.Strategies.BudgetStrategies;
 using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
 using Cryptobot.ConsoleApp.Bybit;
-using Cryptobot.ConsoleApp.EngineDir;
 using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
+using Cryptobot.ConsoleApp.Services;
+using Cryptobot.ConsoleApp.Utils;
 
-namespace Cryptobot.ConsoleApp.Utils;
+namespace Cryptobot.ConsoleApp;
 
 public static class Consoler
 {
-    public static async Task Run(CacheManager cacheManager)
+    public static async Task Run(CacheService cacheManager)
     {
         var backtestingDetails = new BacktestingDetails(
-            Interval: CandleInterval.Fifteen_Minutes,
+            Interval: CandleInterval.One_Day,
             Symbol: Constants.SYMBOL_BTCUSDT,
             MarketCategory: Constants.MARKET_PERPETUAL_FUTURES,
             Strategies: [

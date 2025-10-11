@@ -2,7 +2,17 @@
 
 public abstract class Candle
 {
+    private long? _dayTicks;
+
     public string Id { get; protected set; } = Guid.NewGuid().ToString();
+    public long DayTicks
+    {
+        get
+        {
+            _dayTicks ??= OpenTime.Date.Ticks;
+            return _dayTicks.Value;
+        }
+    }
     public DateTime OpenTime { get; set; }
     public DateTime CloseTime { get; set; }
     public double OpenPrice { get; set; }
@@ -21,5 +31,5 @@ public abstract class Candle
 
     public double PriceDif => Math.Round(ClosePrice - OpenPrice, 2);
 
-    public override string ToString() => $"{OpenTime:dd/MM HH:mm}| {Math.Round(OpenPrice, 2)} / {Math.Round(ClosePrice, 2)}  ({PriceDif})";
+    public override string ToString() => $"{OpenTime:dd/MM/yyyy HH:mm}| {Math.Round(OpenPrice, 2)} / {Math.Round(ClosePrice, 2)}  ({PriceDif})";
 }

@@ -1,16 +1,17 @@
 ﻿using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
+using Cryptobot.ConsoleApp.EngineDir;
 using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 
-namespace Cryptobot.ConsoleApp.EngineDir;
+namespace Cryptobot.ConsoleApp.Services;
 
-public class IndicatorManager(CacheManager? cacheManager, TradeStrategyBase? tradeStrategy)
+public class IndicatorService(CacheService? cacheManager, TradeStrategyBase? tradeStrategy)
 {
-    private readonly CacheManager? _cacheManager = cacheManager;
+    private readonly CacheService? _cacheManager = cacheManager;
     private readonly IndicatorType[] _indicators = tradeStrategy?.RelevantIndicators ?? [];
     private readonly TrendProfiler? _microTrendProfiler = tradeStrategy != null ? new(tradeStrategy.MicroTrendConfiguration) : null;
 
-    public IndicatorManager(CacheManager? cacheManager, IndicatorType[] indicators) : this(cacheManager, (TradeStrategyBase?)null)
+    public IndicatorService(CacheService? cacheManager, IndicatorType[] indicators) : this(cacheManager, (TradeStrategyBase?)null)
     {
         _indicators = indicators ?? throw new ArgumentNullException();
     }
@@ -29,7 +30,9 @@ public class IndicatorManager(CacheManager? cacheManager, TradeStrategyBase? tra
             switch (indicator)
             {
                 case IndicatorType.MovingAverage:
-                    candle.Indicators.MovingAverage = TrendProfiler.GetMovingAverage(candles, currentCandleIndex, 30);
+                    candle.Indicators.MovingAverage = _cacheManager is null
+                        ? TrendProfiler.GetMovingAverage(candles, currentCandleIndex)
+                        : _cacheManager.MacroTrendCache[candle.DayTicks].MA120d;
                     break;
                 case IndicatorType.MicroTrend:
                     candle.Indicators.MicroTrend = _microTrendProfiler!.ProfileComplex(candles, currentCandleIndex);

@@ -4,7 +4,12 @@ using Cryptobot.ConsoleApp.Utils;
 
 namespace Cryptobot.ConsoleApp.Backtesting;
 
-public record BacktestingDetails(CandleInterval Interval, string Symbol, string MarketCategory, double Budget = 10000, params StrategyBundleBase[] Strategies)
+public record BacktestingDetails(
+    CandleInterval Interval,
+    string Symbol = Constants.SYMBOL_BTCUSDT,
+    string MarketCategory = Constants.MARKET_PERPETUAL_FUTURES,
+    double Budget = 10000,
+    params StrategyBundleBase[] Strategies)
 {
     public string SymbolDescribed => Symbol switch
     {
@@ -27,6 +32,7 @@ public record BacktestingDetails(CandleInterval Interval, string Symbol, string 
         CandleInterval.Three_Minutes => "3m",
         CandleInterval.Five_Minutes => "5m",
         CandleInterval.Fifteen_Minutes => "15m",
+        CandleInterval.One_Day => "1d",
         _ => throw new NotImplementedException(),
     };
 
@@ -36,6 +42,7 @@ public record BacktestingDetails(CandleInterval Interval, string Symbol, string 
         CandleInterval.Three_Minutes => 480,
         CandleInterval.Five_Minutes => 288,
         CandleInterval.Fifteen_Minutes => 96,
+        CandleInterval.One_Day => 1,
         _ => throw new NotImplementedException()
     };
 }

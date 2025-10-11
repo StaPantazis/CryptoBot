@@ -1,6 +1,6 @@
-using Cryptobot.ConsoleApp.EngineDir;
 using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
+using Cryptobot.ConsoleApp.Services;
 
 namespace Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
 
@@ -16,7 +16,7 @@ public class TS_Simple_120_days_SMA : TradeStrategyBase
     protected override double StopLossShort<T>(List<T> candles, int currentCandleIndex) => 500.00;
     protected override double TakeProfitShort<T>(List<T> candles, int currentCandleIndex) => 0.01;
 
-    public override bool ShouldExitLongTrade<T>(CacheManager cacheManager, List<T> candles, int currentCandleIndex, Trade trade)
+    public override bool ShouldExitLongTrade<T>(CacheService cacheManager, List<T> candles, int currentCandleIndex, Trade trade)
     {
         if (currentCandleIndex < 11520)
         {
@@ -24,7 +24,7 @@ public class TS_Simple_120_days_SMA : TradeStrategyBase
         }
 
         var currentCandle = candles[currentCandleIndex];
-        var lala = currentCandle.ClosePrice < cacheManager.MacroTrendCache[currentCandle.OpenTime.Ticks].MA11520;
+        var lala = currentCandle.ClosePrice < cacheManager.MacroTrendCache[currentCandle.OpenTime.Ticks].MA120d;
 
         if (lala is true)
         {
@@ -34,9 +34,9 @@ public class TS_Simple_120_days_SMA : TradeStrategyBase
         return lala;
     }
 
-    protected override bool ShouldShort<T>(CacheManager cacheManager, List<T> candles, int currentCandleIndex) => false;
+    protected override bool ShouldShort<T>(CacheService cacheManager, List<T> candles, int currentCandleIndex) => false;
 
-    protected override bool ShouldLong<T>(CacheManager cacheManager, List<T> candles, int currentCandleIndex)
+    protected override bool ShouldLong<T>(CacheService cacheManager, List<T> candles, int currentCandleIndex)
     {
         if (currentCandleIndex < 11520)
         {
@@ -44,6 +44,6 @@ public class TS_Simple_120_days_SMA : TradeStrategyBase
         }
 
         var candle = candles[currentCandleIndex];
-        return candle.ClosePrice > cacheManager.MacroTrendCache[candle.OpenTime.Ticks].MA11520;
+        return candle.ClosePrice > cacheManager.MacroTrendCache[candle.OpenTime.Ticks].MA120d;
     }
 }

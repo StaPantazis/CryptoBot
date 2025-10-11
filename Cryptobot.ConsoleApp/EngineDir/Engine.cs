@@ -1,12 +1,13 @@
 ﻿using Cryptobot.ConsoleApp.EngineDir.Models;
+using Cryptobot.ConsoleApp.Services;
 
 namespace Cryptobot.ConsoleApp.EngineDir;
 
-public class Engine<T>(CacheManager cacheManager, params Spot[] spots) where T : Candle
+public class Engine<T>(CacheService cacheManager, params Spot[] spots) where T : Candle
 {
-    private readonly CacheManager _cacheManager = cacheManager;
+    private readonly CacheService _cacheManager = cacheManager;
     private readonly Spot[] _spots = spots;
-    private readonly Dictionary<string, IndicatorManager> _indicatorManagers = spots.ToDictionary(x => x.Id, x => new IndicatorManager(cacheManager, x.TradeStrategy));
+    private readonly Dictionary<string, IndicatorService> _indicatorManagers = spots.ToDictionary(x => x.Id, x => new IndicatorService(cacheManager, x.TradeStrategy));
 
     public void TradeNewCandle(List<T> candles, int currentCandleIndex)
     {

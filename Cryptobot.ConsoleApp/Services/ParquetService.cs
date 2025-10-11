@@ -2,13 +2,14 @@
 using Cryptobot.ConsoleApp.Bybit.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Resources.CachedIndicators;
+using Cryptobot.ConsoleApp.Utils;
 using Parquet;
 using Parquet.Data;
 using Parquet.Schema;
 
-namespace Cryptobot.ConsoleApp.Utils;
+namespace Cryptobot.ConsoleApp.Services;
 
-public static class ParquetManager
+public static class ParquetService
 {
     // CREATE
 
@@ -134,22 +135,17 @@ public static class ParquetManager
     public static async Task SaveMacroTrend(IEnumerable<CachedMacroTrend> data, string filepath)
     {
         var schema = new ParquetSchema(
-            new DataField<long>("OpenTimeTicks"),
-            new DataField<double?>("MA11520"),
-            new DataField<int>("Trend")
-        );
+            new DataField<long>(nameof(CachedMacroTrend.DayTicks)),
+            new DataField<double?>(nameof(CachedMacroTrend.MA120d)),
+            new DataField<int>(nameof(CachedMacroTrend.Trend)));
 
         using var stream = File.Create(filepath);
         using var writer = await ParquetWriter.CreateAsync(schema, stream);
         using var rg = writer.CreateRowGroup();
 
-        var openTimes = data.Select(x => x.OpenTime.Ticks).ToArray();
-        var ma11520 = data.Select(x => x.MA11520).ToArray();
-        var trends = data.Select(x => (int)x.Trend).ToArray();
-
-        await rg.WriteColumnAsync(new DataColumn((DataField<long>)schema[0], openTimes));
-        await rg.WriteColumnAsync(new DataColumn((DataField<double?>)schema[1], ma11520.Cast<double?>().ToArray()));
-        await rg.WriteColumnAsync(new DataColumn((DataField<int>)schema[2], trends));
+        await rg.WriteColumnAsync(new DataColumn((DataField<long>)schema[0], data.Select(x => x.DayTicks).ToArray()));
+        await rg.WriteColumnAsync(new DataColumn((DataField<double?>)schema[1], data.Select(x => x.MA120d).ToArray()));
+        await rg.WriteColumnAsync(new DataColumn((DataField<int>)schema[2], data.Select(x => (int)x.Trend).ToArray()));
     }
 
     // READ
