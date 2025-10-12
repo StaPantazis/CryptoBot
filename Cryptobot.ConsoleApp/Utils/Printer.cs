@@ -26,10 +26,9 @@ public static class Printer
         }
 
         WriteLine("Choose an option:", Cyan);
-        WriteLine("  1) Download history", Yellow);
-        WriteLine("  2) Run backtest", Yellow);
-        WriteLine("  3) Run trend profiler", Yellow);
-        WriteLine("  4) Exit", Red);
+        WriteLine("  1) Run backtest", Yellow);
+        WriteLine("  2) Run trend profiler", Yellow);
+        WriteLine("  3) Exit", Red);
     }
 
     public static void TrendProfilerScope()

@@ -47,6 +47,11 @@ public class Spot
         var candle = candles[currentCandleIndex];
         var tradeSize = BudgetStrategy.DefineTradeSize();
 
+        if (tradeSize <= 0 || tradeSize + (tradeSize * Constants.TRADE_FEE) > Budget)
+        {
+            return;
+        }
+
         var rawEntryPrice = candle.OpenPrice;
         var slippagePerUnit = rawEntryPrice * _slippage_multiplier;
 
@@ -106,8 +111,6 @@ public class Spot
                 continue;
             }
 
-            var exitFees = trade.TradeSize * Constants.TRADE_FEE;
-
             trade.IsClosed = true;
             trade.ExitTime = candle.OpenTime;
             trade.ExitCandleId = candle.Id;
@@ -151,6 +154,12 @@ public class Spot
                 {
                     exitPrice = trade.TakeProfit;
                 }
+                else if (TradeStrategy.ShouldExitShortTrade(_cacheManager, candles, currentCandleIndex, trade))
+                {
+                    rawExitPrice = candles[currentCandleIndex].ClosePrice;
+                    exitPrice = rawExitPrice * (1 + _slippage_multiplier);
+                    exitSlip = Math.Abs(exitPrice - rawExitPrice) * trade.Quantity;
+                }
                 else
                 {
                     throw new NotImplementedException();
@@ -167,8 +176,10 @@ public class Spot
             trade.SlippageCosts += exitSlip;
 
             var entryFees = trade.TradeFees;
-            trade.TradeFees += exitFees;
+            var exitNotional = exitPrice * trade.Quantity;
+            var exitFees = exitNotional * Constants.TRADE_FEE;
 
+            trade.TradeFees += exitFees;
             trade.PnL = trade.PnL.Value - trade.TradeFees;
 
             // Add the entry fees to avoid calculating them twice since they are already in the PnL

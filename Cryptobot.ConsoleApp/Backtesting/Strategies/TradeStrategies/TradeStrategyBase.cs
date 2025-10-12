@@ -35,12 +35,14 @@ public abstract class TradeStrategyBase : StrategyBase
     public virtual bool ShouldCloseTrade<T>(CacheService cacheManager, List<T> candles, int currentCandleIndex, Trade trade) where T : Candle
     {
         var candle = candles[currentCandleIndex];
-        return (trade.PositionSide is PositionSide.Long && (candle.LowPrice <= trade.StopLoss || candle.HighPrice >= trade.TakeProfit))
-            || (trade.PositionSide is PositionSide.Short && (candle.HighPrice >= trade.StopLoss || candle.LowPrice <= trade.TakeProfit))
-            || ShouldExitLongTrade(cacheManager, candles, currentCandleIndex, trade);
+        return (trade.PositionSide is PositionSide.Long
+                && (candle.LowPrice <= trade.StopLoss || candle.HighPrice >= trade.TakeProfit || ShouldExitLongTrade(cacheManager, candles, currentCandleIndex, trade)))
+            || (trade.PositionSide is PositionSide.Short
+                && (candle.HighPrice >= trade.StopLoss || candle.LowPrice <= trade.TakeProfit || ShouldExitShortTrade(cacheManager, candles, currentCandleIndex, trade)));
     }
 
     public virtual bool ShouldExitLongTrade<T>(CacheService cacheManager, List<T> candles, int currentCandleIndex, Trade trade) where T : Candle => false;
+    public virtual bool ShouldExitShortTrade<T>(CacheService cacheManager, List<T> candles, int currentCandleIndex, Trade trade) where T : Candle => false;
     protected abstract double StopLossLong<T>(List<T> candles, int currentCandleIndex) where T : Candle;
     protected abstract double StopLossShort<T>(List<T> candles, int currentCandleIndex) where T : Candle;
     protected abstract double TakeProfitLong<T>(List<T> candles, int currentCandleIndex) where T : Candle;
