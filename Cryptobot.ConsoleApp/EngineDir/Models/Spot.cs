@@ -121,13 +121,13 @@ public class Spot
             {
                 if (candle.LowPrice <= trade.StopLoss)
                 {
-                    rawExitPrice = trade.StopLoss;
+                    rawExitPrice = trade.StopLoss!.Value;
                     exitPrice = rawExitPrice * (1 - _slippage_multiplier);
                     exitSlip = Math.Abs(exitPrice - rawExitPrice) * trade.Quantity;
                 }
                 else if (candle.HighPrice >= trade.TakeProfit)
                 {
-                    exitPrice = trade.TakeProfit;
+                    exitPrice = trade.TakeProfit!.Value;
                 }
                 else if (TradeStrategy.ShouldExitLongTrade(_cacheManager, candles, currentCandleIndex, trade))
                 {
@@ -146,13 +146,13 @@ public class Spot
             {
                 if (candle.HighPrice >= trade.StopLoss)
                 {
-                    rawExitPrice = trade.StopLoss;
+                    rawExitPrice = trade.StopLoss!.Value;
                     exitPrice = rawExitPrice * (1 + _slippage_multiplier);
                     exitSlip = Math.Abs(exitPrice - rawExitPrice) * trade.Quantity;
                 }
                 else if (candle.LowPrice <= trade.TakeProfit)
                 {
-                    exitPrice = trade.TakeProfit;
+                    exitPrice = trade.TakeProfit!.Value;
                 }
                 else if (TradeStrategy.ShouldExitShortTrade(_cacheManager, candles, currentCandleIndex, trade))
                 {

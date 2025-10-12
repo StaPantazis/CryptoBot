@@ -11,8 +11,8 @@ public class Trade
     public required double EntryPrice { get; set; }
     public required string EntryCandleId { get; set; }
 
-    public required double StopLoss { get; set; }
-    public required double TakeProfit { get; set; }
+    public required double? StopLoss { get; set; }
+    public required double? TakeProfit { get; set; }
     public required double Quantity { get; set; }
     public required double TradeSize { get; set; }
     public required double TradeFees { get; set; }

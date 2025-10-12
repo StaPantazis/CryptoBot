@@ -9,11 +9,11 @@ public class TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3 : TradeStrateg
     public override string NameOf { get; protected set; } = nameof(TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3);
     public override IndicatorType[] RelevantIndicators { get; protected set; } = [IndicatorType.MovingAverage, IndicatorType.MicroTrend];
 
-    protected override double StopLossLong<T>(List<T> candles, int currentCandleIndex) => 0.97;
-    protected override double TakeProfitLong<T>(List<T> candles, int currentCandleIndex) => 1.03;
+    protected override double? StopLossLong<T>(List<T> candles, int currentCandleIndex) => 0.97;
+    protected override double? TakeProfitLong<T>(List<T> candles, int currentCandleIndex) => 1.03;
 
-    protected override double StopLossShort<T>(List<T> candles, int currentCandleIndex) => 1.08;
-    protected override double TakeProfitShort<T>(List<T> candles, int currentCandleIndex) => 0.93;
+    protected override double? StopLossShort<T>(List<T> candles, int currentCandleIndex) => 1.08;
+    protected override double? TakeProfitShort<T>(List<T> candles, int currentCandleIndex) => 0.93;
 
     protected override bool ShouldShort<T>(CacheService cacheManager, List<T> candles, int currentCandleIndex) => false;
 

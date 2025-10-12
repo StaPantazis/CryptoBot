@@ -212,8 +212,8 @@ public class Backtester(CacheService cacheManager)
             var entryCandle = candleMap[trade.EntryCandleId];
             entryCandle.TradeIndex = i;
             entryCandle.EntryPrice = trade.EntryPrice.Round(1);
-            entryCandle.StopLoss = trade.StopLoss.Round(1);
-            entryCandle.TakeProfit = trade.TakeProfit.Round(1);
+            entryCandle.StopLoss = trade.StopLoss?.Round(1);
+            entryCandle.TakeProfit = trade.TakeProfit?.Round(1);
             entryCandle.EntryTradeSize = trade.TradeSize.Round(1);
             entryCandle.BudgetAfterEntry = trade.BudgetAfterEntry.Round(1);
 

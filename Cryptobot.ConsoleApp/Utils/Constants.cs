@@ -16,6 +16,8 @@ public static class Constants
     public const double SLIPPAGE_MULTIPLIER_BTC = 0.0001;
     public const double SLIPPAGE_MULTIPLIER_ALTS = 0.001;
 
+    public const int FIFTEEN_MINUTE_CANDLES_120_DAYS = 11520;
+
     // STORING
     public const string PARQUET = ".parquet";
     public const string JSON = ".json";

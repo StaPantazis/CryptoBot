@@ -73,8 +73,8 @@ public class VariationTradeStrategy<T>(StrategyVariationsBundle<T>? strategyVari
             : throw new InvalidOperationException($"VariationTradeStrategy expects candles of type {typeof(T).Name} but got {typeof(T1).Name}.");
     }
 
-    protected override double StopLossLong<T1>(List<T1> candles, int currentCandleIndex) => VariationToRun.StopLossLong ?? -1;
-    protected override double StopLossShort<T1>(List<T1> candles, int currentCandleIndex) => VariationToRun.StopLossShort ?? -1;
-    protected override double TakeProfitLong<T1>(List<T1> candles, int currentCandleIndex) => VariationToRun.TakeProfitLong ?? -1;
-    protected override double TakeProfitShort<T1>(List<T1> candles, int currentCandleIndex) => VariationToRun.TakeProfitShort ?? -1;
+    protected override double? StopLossLong<T1>(List<T1> candles, int currentCandleIndex) => VariationToRun.StopLossLong ?? null;
+    protected override double? StopLossShort<T1>(List<T1> candles, int currentCandleIndex) => VariationToRun.StopLossShort ?? null;
+    protected override double? TakeProfitLong<T1>(List<T1> candles, int currentCandleIndex) => VariationToRun.TakeProfitLong ?? null;
+    protected override double? TakeProfitShort<T1>(List<T1> candles, int currentCandleIndex) => VariationToRun.TakeProfitShort ?? null;
 }
