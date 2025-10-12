@@ -18,10 +18,10 @@ public static class Consoler
             Symbol: Constants.SYMBOL_BTCUSDT,
             MarketCategory: Constants.MARKET_PERPETUAL_FUTURES,
             Strategies: [
-                //new StrategyBundle<TS_Every100Candles_SL5_TP5, BS_OnePercent>(),
-                //new StrategyBundle(new TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3(), new BS_XPercent(100)),
-                new StrategyBundle(new TS_Simple_120_days_SMA(), new BS_XPercent(100)),
-                //new StrategyBundle(VariationSandboxFactory.AllInMA(), new BS_XPercent(100)),
+                new StrategyBundle<TS_Every100Candles_SL5_TP5, BS_1Percent>(),
+                //new StrategyBundle<TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3, BS_100Percent>(),
+                //new StrategyBundle<TS_Simple_120_days_SMA, BS_1Percent>(),
+                //new StrategyBundle<VariationSandboxFactory, BS_100Percent>(),
                 ]);
 
         var backtester = new Backtester(cacheManager);
