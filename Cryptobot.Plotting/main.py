@@ -33,7 +33,9 @@ def choose_file(files):
 def main():
     base_dir = Path(__file__).resolve().parent
     output_root = base_dir.parent / "Cryptobot.ConsoleApp" / "Backtesting" / "Output"
-    plotSettings = PlotSettings(plot_candles_graph=False, plot_linear_graph=True)
+    plotSettings = PlotSettings(
+        plot_candles_graph=False, plot_linear_graph=False, plot_linear_time_graph=True
+    )
 
     while True:
         print("\n=== Cryptobot Viewer ===")
@@ -46,6 +48,10 @@ def main():
         if option == "1":
             folder = output_root / "Backtest"
             files = list_files(folder, "*.zip")
+
+            if len(files) == 1:
+                plotter.plot_backtest_candles(files[0], plotSettings)
+
             selected = choose_file(files)
             if selected:
                 print(f"\nSelected: {selected.name}")
@@ -54,6 +60,10 @@ def main():
         elif option == "2":
             folder = output_root / "TrendProfiling"
             files = list_files(folder, "*.parquet")
+
+            if len(files) == 1:
+                plotter.plot_trend_candles(files[0], plotSettings)
+
             selected = choose_file(files)
             if selected:
                 print(f"\nSelected: {selected.name}")

@@ -104,6 +104,27 @@ public static class ParquetService
         await groupWriter.WriteColumnAsync(new DataColumn((DataField<bool?>)schema[3], nodes.Select(x => x.IsProfit).ToArray()));
     }
 
+    public static async Task SaveLinearTimeGraph(List<LinearTimeGraphNode> nodes, string filepath)
+    {
+        PathHelper.CheckFixFilepathExtensions(ref filepath, Constants.PARQUET);
+
+        var schema = new ParquetSchema(
+            new DataField<int>(nameof(LinearTimeGraphNode.TradeIndex)),
+            new DataField<double>(nameof(LinearTimeGraphNode.Budget)),
+            new DataField<bool?>(nameof(LinearTimeGraphNode.IsOpen)),
+            new DataField<DateTime>(nameof(LinearTimeGraphNode.Timestamp)));
+
+        using var fileStream = File.Create(filepath);
+        using var writer = await ParquetWriter.CreateAsync(schema, fileStream);
+
+        using var groupWriter = writer.CreateRowGroup();
+
+        await groupWriter.WriteColumnAsync(new DataColumn((DataField<int>)schema[0], nodes.Select(x => x.TradeIndex).ToArray()));
+        await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[1], nodes.Select(x => x.Budget).ToArray()));
+        await groupWriter.WriteColumnAsync(new DataColumn((DataField<bool?>)schema[2], nodes.Select(x => x.IsOpen).ToArray()));
+        await groupWriter.WriteColumnAsync(new DataColumn((DataField<DateTime>)schema[3], nodes.Select(x => x.Timestamp).ToArray()));
+    }
+
     public static async Task SaveTrendCandles(IEnumerable<TrendCandle> candles, string filepath)
     {
         PathHelper.CheckFixFilepathExtensions(ref filepath, Constants.PARQUET);

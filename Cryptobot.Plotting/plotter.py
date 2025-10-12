@@ -3,15 +3,19 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mticker
-from matplotlib.collections import LineCollection
-from pathlib import Path
-from plotSettings import PlotSettings
 import zipfile
 import tempfile
 import constants as CONST
-
+import mplcursors
+import warnings
+from matplotlib.collections import LineCollection
+from pathlib import Path
+from plotSettings import PlotSettings
+from datetime import datetime
 
 matplotlib.use("TkAgg")
+warnings.filterwarnings("ignore", message="Glyph .* missing from font")
+plt.rcParams["font.family"] = "Segoe UI Emoji"
 
 
 # -----------------------------
@@ -125,7 +129,183 @@ def plot_linear_chart(df, title):
 
 
 # -----------------------------
-#  MAIN ENTRY
+#  LINEAR TIME GRAPH PLOT
+# -----------------------------
+def plot_linear_time_chart(df: pd.DataFrame, title: str):
+    if df is None or df.empty:
+        print("⚠️ No data to plot.")
+        return
+
+    df = df.copy()
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"])
+    df = df.sort_values(["Timestamp", "IsOpen"], ascending=[True, False])
+
+    # Determine line color based on overall performance
+    start_budget = float(df["Budget"].iloc[0])
+    end_budget = float(df["Budget"].iloc[-1])
+    line_color = "green" if end_budget >= start_budget else "red"
+
+    _, ax = plt.subplots(figsize=(16, 6))
+
+    # Budget over time line (thin, color based on gain/loss)
+    ax.plot(
+        df["Timestamp"],
+        df["Budget"],
+        linewidth=1.0,
+        color=line_color,
+        label="Budget over Time",
+    )
+
+    # Separate Entry/Exit nodes
+    entry_nodes = df[df["IsOpen"] == True]
+    exit_nodes = df[df["IsOpen"] == False]
+
+    entry_scatter = ax.scatter(
+        entry_nodes["Timestamp"],
+        entry_nodes["Budget"],
+        color="gold",
+        s=35,
+        label="Entry",
+        zorder=3,
+    )
+
+    exit_scatter = ax.scatter(
+        exit_nodes["Timestamp"],
+        exit_nodes["Budget"],
+        color="royalblue",
+        s=35,
+        label="Exit",
+        zorder=3,
+    )
+
+    # Formatting
+    ax.set_title(title)
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Budget (€)")
+    ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}€"))
+    ax.grid(True, alpha=0.4)
+    ax.legend(loc="best")
+
+    # --- Hover interaction ---
+    cursor = mplcursors.cursor([entry_scatter, exit_scatter], hover=True)
+
+    @cursor.connect("add")
+    def on_hover(sel):
+        ind = sel.index
+        if sel.artist == entry_scatter:
+            node = entry_nodes.iloc[ind]
+            sel.annotation.set_text(
+                f"📈 Entry #{int(node.TradeIndex)}\n"
+                f"Budget: {node.Budget:,.2f}€\n"
+                f"Time: {node.Timestamp:%Y-%m-%d %H:%M}"
+            )
+        else:
+            node = exit_nodes.iloc[ind]
+            sel.annotation.set_text(
+                f"📉 Exit #{int(node.TradeIndex)}\n"
+                f"Budget: {node.Budget:,.2f}€\n"
+                f"Time: {node.Timestamp:%Y-%m-%d %H:%M}"
+            )
+        sel.annotation.get_bbox_patch().set(fc="white", alpha=0.9, edgecolor="black")
+
+    plt.tight_layout()
+    plt.show(block=False)
+    if df is None or df.empty:
+        print("⚠️ No data to plot.")
+        return
+
+    # --- Prepare base timeline ---
+    start_date = pd.Timestamp("2020-03-26")
+    today = pd.Timestamp(datetime.utcnow().date())
+
+    full_range = pd.date_range(start=start_date, end=today, freq="D")
+    df = df.copy()
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"])
+    df = df.sort_values("Timestamp")
+
+    # --- Build continuous timeline ---
+    # Use last known budget for each missing date
+    daily_budget = (
+        df.set_index("Timestamp")["Budget"]
+        .resample("D")
+        .last()  # take last budget of each day
+        .reindex(full_range)  # fill missing days
+        .ffill()  # forward fill last known value
+        .reset_index()
+        .rename(columns={"index": "Date", "Budget": "Budget"})
+    )
+
+    start_budget = daily_budget["Budget"].iloc[0]
+    end_budget = daily_budget["Budget"].iloc[-1]
+    color = "green" if end_budget >= start_budget else "red"
+
+    # --- Plot ---
+    fig, ax = plt.subplots(figsize=(16, 6))
+    ax.plot(
+        daily_budget["Date"],
+        daily_budget["Budget"],
+        color=color,
+        linewidth=1.4,
+        label="Budget over Time",
+    )
+
+    # --- Add Entry/Exit markers (optional) ---
+    entry_nodes = df[df["IsOpen"] == True]
+    exit_nodes = df[df["IsOpen"] == False]
+
+    entry_scatter = ax.scatter(
+        entry_nodes["Timestamp"],
+        entry_nodes["Budget"],
+        color="gold",
+        s=35,
+        label="Entry",
+        zorder=3,
+    )
+    exit_scatter = ax.scatter(
+        exit_nodes["Timestamp"],
+        exit_nodes["Budget"],
+        color="royalblue",
+        s=35,
+        label="Exit",
+        zorder=3,
+    )
+
+    # --- Axis formatting ---
+    ax.set_title(title)
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Budget (€)")
+    ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}€"))
+    ax.grid(True, alpha=0.4)
+    ax.legend(loc="best")
+
+    # --- Hover interaction ---
+    cursor = mplcursors.cursor([entry_scatter, exit_scatter], hover=True)
+
+    @cursor.connect("add")
+    def on_hover(sel):
+        ind = sel.index
+        if sel.artist == entry_scatter:
+            node = entry_nodes.iloc[ind]
+            sel.annotation.set_text(
+                f"📈 Entry #{int(node.TradeIndex)}\n"
+                f"Budget: {node.Budget:,.2f}€\n"
+                f"Time: {node.Timestamp:%Y-%m-%d}"
+            )
+        else:
+            node = exit_nodes.iloc[ind]
+            sel.annotation.set_text(
+                f"📉 Exit #{int(node.TradeIndex)}\n"
+                f"Budget: {node.Budget:,.2f}€\n"
+                f"Time: {node.Timestamp:%Y-%m-%d}"
+            )
+        sel.annotation.get_bbox_patch().set(fc="white", alpha=0.9, edgecolor="black")
+
+    plt.tight_layout()
+    plt.show(block=False)
+
+
+# -----------------------------
+#  MAIN ENTRIES
 # -----------------------------
 def plot_backtest_candles(zip_path: str | Path, settings: "PlotSettings"):
     zip_path = Path(zip_path)
@@ -141,10 +321,13 @@ def plot_backtest_candles(zip_path: str | Path, settings: "PlotSettings"):
             z.extractall(tmpdir)
 
         parquet_files = list(tmpdir.glob("*.parquet"))
+        if not parquet_files:
+            print("❌ No parquet files found in archive.")
+            return
 
+        # --- Linear Graph ---
         if settings.plot_linear_graph:
-            linear_files = [f for f in parquet_files if "linear" in f.name.lower()]
-
+            linear_files = [f for f in parquet_files if "linear-" in f.name.lower()]
             if not linear_files:
                 print("❌ No 'linear' parquet file found inside ZIP.")
             else:
@@ -153,6 +336,20 @@ def plot_backtest_candles(zip_path: str | Path, settings: "PlotSettings"):
                 df_linear = pd.read_parquet(linear_file)
                 plot_linear_chart(df_linear, f"Budget & PnL – {zip_path.name}")
 
+        # --- Linear Time Graph ---
+        if getattr(settings, "plot_linear_time_graph", True):  # only if enabled
+            linear_time_files = [
+                f for f in parquet_files if "lineartime-" in f.name.lower()
+            ]
+            if not linear_time_files:
+                print("❌ No 'linearTime' parquet file found inside ZIP.")
+            else:
+                linear_time_file = linear_time_files[0]
+                print(f"✅ LinearTime file: {linear_time_file.name}")
+                df_linear_time = pd.read_parquet(linear_time_file)
+                plot_linear_time_chart(df_linear_time, f"Timeline – {zip_path.name}")
+
+        # --- Candle Graph ---
         if settings.plot_candles_graph:
             candle_files = [f for f in parquet_files if "candles" in f.name.lower()]
             if not candle_files:

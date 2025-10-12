@@ -199,58 +199,9 @@ public class Backtester(CacheService cacheManager)
     private static async Task SaveBacktestResult(List<BybitCandle> candles, Spot spot)
     {
         var outputPath = PathHelper.GetBacktestingOutputPath();
-
-        // Candles
-        var outputCandles = candles.Select(BybitOutputCandle.FromBybitCandle).ToArray();
-        var candleMap = outputCandles.ToDictionary(x => x.Id);
-        double totalPnL = 0;
-
-        for (var i = 1; i < spot.Trades.Count + 1; i++)
-        {
-            var trade = spot.Trades[i - 1];
-
-            var entryCandle = candleMap[trade.EntryCandleId];
-            entryCandle.TradeIndex = i;
-            entryCandle.EntryPrice = trade.EntryPrice.Round(1);
-            entryCandle.StopLoss = trade.StopLoss?.Round(1);
-            entryCandle.TakeProfit = trade.TakeProfit?.Round(1);
-            entryCandle.EntryTradeSize = trade.TradeSize.Round(1);
-            entryCandle.BudgetAfterEntry = trade.BudgetAfterEntry.Round(1);
-
-            if (trade.ExitCandleId != null && candleMap.TryGetValue(trade.ExitCandleId, out var exitCandle))
-            {
-                exitCandle.TradeIndex = i;
-                exitCandle.ExitPrice = trade.ExitPrice?.Round(1);
-                entryCandle.ExitTradeSize = trade.TradeSize.Round(1);
-                exitCandle.PnL = trade.PnL?.Round(2);
-                exitCandle.IsProfit = trade.PnL >= 0;
-                exitCandle.BudgetAfterExit = trade.BudgetAfterExit!.Value.Round(1);
-
-                totalPnL += exitCandle.PnL!.Value.Round(1);
-                exitCandle.TotalPnL = totalPnL;
-            }
-        }
-
-        outputCandles = outputCandles.OrderBy(x => x.OpenTime).ToArray();
-
-        // Linear Graph
-        var linearGraphNodes = new List<LinearGraphNode>() { new(0, 0, spot.InitialBudget, true) };
-        var tradedCandles = outputCandles.Where(x => x.EntryPrice != null || x.ExitPrice != null).ToArray();
-
-        for (var i = 0; i < tradedCandles.Length; i++)
-        {
-            var candle = tradedCandles[i];
-
-            if (candle.ExitPrice != null)
-            {
-                linearGraphNodes.Add(new(i + 1, candle.PnL, candle.BudgetAfterExit!.Value, candle.PnL!.Value >= 0));
-            }
-
-            if (candle.EntryPrice != null)
-            {
-                linearGraphNodes.Add(new(i + 1, null, candle.BudgetAfterEntry!.Value, null));
-            }
-        }
+        var (outputCandles, totalPnL) = BacktestGraphCreator.CreateOutputCandles(candles, spot);
+        var linearGraphNodes = BacktestGraphCreator.CreateLinearGraphNodes(outputCandles, spot);
+        var linearTimeGraphNodes = BacktestGraphCreator.CreateLinearTimeGraphNodes(spot);
 
         var candlesFilepath = $"{outputPath}\\candles-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}{Constants.PARQUET}";
         await ParquetService.SaveBacktestCandlesAsync(outputCandles, candlesFilepath);
@@ -258,11 +209,15 @@ public class Backtester(CacheService cacheManager)
         var linearFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\linear-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}{Constants.PARQUET}";
         await ParquetService.SaveLinearGraph(linearGraphNodes, linearFilepath);
 
+        var linearTimeFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\linearTime-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}{Constants.PARQUET}";
+        await ParquetService.SaveLinearTimeGraph(linearTimeGraphNodes, linearTimeFilepath);
+
         var zipFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}__{totalPnL.Euro(digits: 1, plusIfPositive: true)}{Constants.ZIP}";
-        ZipHelper.BundleFiles(zipFilepath, candlesFilepath, linearFilepath);
+        ZipHelper.BundleFiles(zipFilepath, candlesFilepath, linearFilepath, linearTimeFilepath);
 
         File.Delete(candlesFilepath);
         File.Delete(linearFilepath);
+        File.Delete(linearTimeFilepath);
     }
 
     private static async Task SaveTrendProfilerResult(List<TrendCandle> candles, BacktestingDetails details, string trendProfilerName)
