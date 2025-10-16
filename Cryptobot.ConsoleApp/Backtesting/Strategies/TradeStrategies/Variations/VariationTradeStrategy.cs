@@ -37,8 +37,8 @@ public class VariationTradeStrategy<T>(StrategyVariationsBundle<T>? strategyVari
                                 foreach (var tr in Variations.ApplicableTrends ?? [null])
                                 {
                                     var newVariation = new StrategyVariation<T>(
-                                        ShouldLong: (candles, currentCandleIndex) => Variations.ShouldLong(candles, currentCandleIndex, (ma, tr)),
-                                        ShouldShort: (candles, currentCandleIndex) => Variations.ShouldShort(candles, currentCandleIndex, (ma, tr)),
+                                        ShouldLong: (candles, currentCandleIndex, candleInterval) => Variations.ShouldLong(candles, currentCandleIndex, candleInterval, (ma, tr)),
+                                        ShouldShort: (candles, currentCandleIndex, candleInterval) => Variations.ShouldShort(candles, currentCandleIndex, candleInterval, (ma, tr)),
                                         MovingAverage: ma,
                                         StopLossLong: sl_l,
                                         TakeProfitLong: tp_l,
@@ -59,17 +59,17 @@ public class VariationTradeStrategy<T>(StrategyVariationsBundle<T>? strategyVari
         return variationStrategies;
     }
 
-    protected override bool ShouldLong<T1>(CacheService cacheManager, List<T1> candles, int currentCandleIndex)
+    protected override bool ShouldLong<T1>(CacheService cacheManager, List<T1> candles, int currentCandleIndex, CandleInterval candleInterval)
     {
         return candles is List<T> typed
-            ? VariationToRun.ShouldLong(typed, currentCandleIndex)
+            ? VariationToRun.ShouldLong(typed, currentCandleIndex, candleInterval)
             : throw new InvalidOperationException($"VariationTradeStrategy expects candles of type {typeof(T).Name} but got {typeof(T1).Name}.");
     }
 
-    protected override bool ShouldShort<T1>(CacheService cacheManager, List<T1> candles, int currentCandleIndex)
+    protected override bool ShouldShort<T1>(CacheService cacheManager, List<T1> candles, int currentCandleIndex, CandleInterval candleInterval)
     {
         return candles is List<T> typed
-            ? VariationToRun.ShouldShort(typed, currentCandleIndex)
+            ? VariationToRun.ShouldShort(typed, currentCandleIndex, candleInterval)
             : throw new InvalidOperationException($"VariationTradeStrategy expects candles of type {typeof(T).Name} but got {typeof(T1).Name}.");
     }
 

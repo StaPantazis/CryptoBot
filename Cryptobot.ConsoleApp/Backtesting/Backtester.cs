@@ -35,7 +35,7 @@ public class Backtester(CacheService cacheManager)
                 var spot = new Spot(user, details.Budget, strategyToRun, strategy.BudgetStrategy, details.Symbol, _cacheManager);
                 Printer.BacktesterInitialization(spot);
 
-                spot = Backtest(spot, candles);
+                spot = Backtest(spot, candles, details.Interval);
                 sw.Stop();
 
                 return (spot, sw);
@@ -98,7 +98,7 @@ public class Backtester(CacheService cacheManager)
         }
     }
 
-    private Spot Backtest<T>(Spot spot, List<T> candles) where T : Candle
+    private Spot Backtest<T>(Spot spot, List<T> candles, CandleInterval candleInterval) where T : Candle
     {
         var engine = new Engine<T>(_cacheManager, spot);
         var totalCandles = candles.Count;
@@ -106,7 +106,7 @@ public class Backtester(CacheService cacheManager)
         for (var i = 0; i < totalCandles; i++)
         {
             Printer.CalculatingCandles(i, totalCandles);
-            engine.TradeNewCandle(candles, i);
+            engine.TradeNewCandle(candles, i, candleInterval);
         }
 
         return spot;

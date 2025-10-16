@@ -15,9 +15,7 @@ public class TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3 : TradeStrateg
     protected override double? StopLossShort<T>(List<T> candles, int currentCandleIndex) => 1.08;
     protected override double? TakeProfitShort<T>(List<T> candles, int currentCandleIndex) => 0.93;
 
-    protected override bool ShouldShort<T>(CacheService cacheManager, List<T> candles, int currentCandleIndex) => false;
-
-    protected override bool ShouldLong<T>(CacheService cacheManager, List<T> candles, int currentCandleIndex)
+    protected override bool ShouldLong<T>(CacheService cacheManager, List<T> candles, int currentCandleIndex, CandleInterval _)
     {
         var nMABackCheck = 50;
         var candle = candles[currentCandleIndex];

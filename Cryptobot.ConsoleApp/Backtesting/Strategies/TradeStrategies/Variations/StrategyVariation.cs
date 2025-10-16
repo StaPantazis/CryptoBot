@@ -4,8 +4,8 @@ using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 namespace Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies.Variations;
 
 public record StrategyVariation<T>(
-    Func<List<T>, int, bool> ShouldLong,
-    Func<List<T>, int, bool> ShouldShort,
+    Func<List<T>, int, CandleInterval, bool> ShouldLong,
+    Func<List<T>, int, CandleInterval, bool> ShouldShort,
     int? MovingAverage,
     double? StopLossLong,
     double? TakeProfitLong,

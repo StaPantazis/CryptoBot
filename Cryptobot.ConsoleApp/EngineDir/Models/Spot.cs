@@ -93,7 +93,7 @@ public class Spot
         _allTrades.Add(newTrade);
     }
 
-    public void CheckCloseTrades<T>(List<T> candles, int currentCandleIndex) where T : Candle
+    public void CheckCloseTrades<T>(List<T> candles, int currentCandleIndex, CandleInterval candleInterval) where T : Candle
     {
         if (_openTrades.Count == 0)
         {
@@ -106,7 +106,7 @@ public class Spot
         {
             var trade = _openTrades[i];
 
-            if (!TradeStrategy.ShouldCloseTrade(_cacheManager, candles, currentCandleIndex, trade))
+            if (!TradeStrategy.ShouldCloseTrade(_cacheManager, candles, currentCandleIndex, candleInterval, trade))
             {
                 continue;
             }
@@ -129,7 +129,7 @@ public class Spot
                 {
                     exitPrice = trade.TakeProfit!.Value;
                 }
-                else if (TradeStrategy.ShouldExitLongTrade(_cacheManager, candles, currentCandleIndex, trade))
+                else if (TradeStrategy.ShouldExitLongTrade(_cacheManager, candles, currentCandleIndex, trade, candleInterval))
                 {
                     rawExitPrice = candles[currentCandleIndex].ClosePrice;
                     exitPrice = rawExitPrice * (1 - _slippage_multiplier);
@@ -154,7 +154,7 @@ public class Spot
                 {
                     exitPrice = trade.TakeProfit!.Value;
                 }
-                else if (TradeStrategy.ShouldExitShortTrade(_cacheManager, candles, currentCandleIndex, trade))
+                else if (TradeStrategy.ShouldExitShortTrade(_cacheManager, candles, currentCandleIndex, trade, candleInterval))
                 {
                     rawExitPrice = candles[currentCandleIndex].ClosePrice;
                     exitPrice = rawExitPrice * (1 + _slippage_multiplier);

@@ -33,7 +33,7 @@ public class SpotTests
         var tpCandle = A.Candle(200_000, 250_000, 150_000, 210_000);
         candles.Add(tpCandle);
 
-        spot.CheckCloseTrades(candles, 1);
+        spot.CheckCloseTrades(candles, 1, CandleInterval.One_Day);
 
         trade.IsClosed.Should().BeTrue();
         trade.ExitTime.Should().Be(candles.Last().OpenTime);
@@ -71,7 +71,7 @@ public class SpotTests
         var tpCandle = A.Candle(20_000, 25_000, 15_000, 21_000);
         candles.Add(tpCandle);
 
-        spot.CheckCloseTrades(candles, 1);
+        spot.CheckCloseTrades(candles, 1, CandleInterval.One_Day);
 
         trade.IsClosed.Should().BeTrue();
         trade.ExitTime.Should().Be(candles.Last().OpenTime);
@@ -109,7 +109,7 @@ public class SpotTests
         var tpCandle = A.Candle(20_000, 25_000, 15_000, 21_000);
         candles.Add(tpCandle);
 
-        spot.CheckCloseTrades(candles, 1);
+        spot.CheckCloseTrades(candles, 1, CandleInterval.One_Day);
 
         trade.IsClosed.Should().BeTrue();
         trade.ExitTime.Should().Be(candles.Last().OpenTime);
@@ -147,7 +147,7 @@ public class SpotTests
         var tpCandle = A.Candle(200_000, 250_000, 150_000, 210_000);
         candles.Add(tpCandle);
 
-        spot.CheckCloseTrades(candles, 1);
+        spot.CheckCloseTrades(candles, 1, CandleInterval.One_Day);
 
         trade.IsClosed.Should().BeTrue();
         trade.ExitTime.Should().Be(candles.Last().OpenTime);
@@ -170,7 +170,7 @@ public class SpotTests
         var neutral = A.Candle(100, 102, 99, 101);
         candles.Add(neutral);
 
-        Action act = () => spot.CheckCloseTrades(candles, 1);
+        var act = () => spot.CheckCloseTrades(candles, 1, CandleInterval.One_Day);
         act.Should().Throw<NotImplementedException>();
     }
 
@@ -184,7 +184,7 @@ public class SpotTests
         var neutral = A.Candle(100, 102, 99, 101);
         candles.Add(neutral);
 
-        Action act = () => spot.CheckCloseTrades(candles, 1);
+        var act = () => spot.CheckCloseTrades(candles, 1, CandleInterval.One_Day);
         act.Should().Throw<NotImplementedException>();
     }
 }
