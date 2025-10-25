@@ -89,30 +89,9 @@ public static class ParquetService
 
         var schema = new ParquetSchema(
             new DataField<int>(nameof(LinearGraphNode.TradeIndex)),
-            new DataField<double?>(nameof(LinearGraphNode.PnL)),
             new DataField<double>(nameof(LinearGraphNode.Budget)),
-            new DataField<bool?>(nameof(LinearGraphNode.IsProfit)));
-
-        using var fileStream = File.Create(filepath);
-        using var writer = await ParquetWriter.CreateAsync(schema, fileStream);
-
-        using var groupWriter = writer.CreateRowGroup();
-
-        await groupWriter.WriteColumnAsync(new DataColumn((DataField<int>)schema[0], nodes.Select(x => x.TradeIndex).ToArray()));
-        await groupWriter.WriteColumnAsync(new DataColumn((DataField<double?>)schema[1], nodes.Select(x => x.PnL).ToArray()));
-        await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[2], nodes.Select(x => x.Budget).ToArray()));
-        await groupWriter.WriteColumnAsync(new DataColumn((DataField<bool?>)schema[3], nodes.Select(x => x.IsProfit).ToArray()));
-    }
-
-    public static async Task SaveLinearTimeGraph(List<LinearTimeGraphNode> nodes, string filepath)
-    {
-        PathHelper.CheckFixFilepathExtensions(ref filepath, Constants.PARQUET);
-
-        var schema = new ParquetSchema(
-            new DataField<int>(nameof(LinearTimeGraphNode.TradeIndex)),
-            new DataField<double>(nameof(LinearTimeGraphNode.Budget)),
-            new DataField<bool?>(nameof(LinearTimeGraphNode.IsOpen)),
-            new DataField<DateTime>(nameof(LinearTimeGraphNode.Timestamp)));
+            new DataField<bool?>(nameof(LinearGraphNode.IsOpen)),
+            new DataField<DateTime>(nameof(LinearGraphNode.Timestamp)));
 
         using var fileStream = File.Create(filepath);
         using var writer = await ParquetWriter.CreateAsync(schema, fileStream);

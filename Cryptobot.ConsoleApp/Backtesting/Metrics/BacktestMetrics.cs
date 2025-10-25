@@ -26,8 +26,8 @@ public class BacktestMetrics
         InitialBudget = spot.InitialBudget;
 
         PnL = closedTrades.Sum(x => x.PnL!.Value);
-        BudgetWithoutOpenTrades = spot.InitialBudget + PnL;
-        BudgetWithOpenTrades = spot.InitialBudget + PnL + OpenTradesAmounts;
+        FinalFullBudget = spot.InitialBudget + PnL;
+        FinalAvailableBudget = spot.InitialBudget + PnL + OpenTradesAmounts;
         AverageReturnPerTradeToInitialBudget = TotalClosedTrades > 0 ? PnL / (InitialBudget * TotalClosedTrades) * 100 : 0;
 
         TradeFees = closedTrades.Sum(x => x.TradeFees);
@@ -54,7 +54,7 @@ public class BacktestMetrics
             var downsideDev = downside.Length != 0 ? Math.Sqrt(downside.Average(x => Math.Pow(x - meanPnL, 2))) : 0;
             SortinoRatio = downsideDev > 0 ? meanPnL / downsideDev : double.NaN;
 
-            CalculateMaxDrawdown(closedTrades);
+            CalculateMaxDrawdown(closedTrades, InitialBudget);
 
             Streaks = new StreaksModel(closedTrades);
         }
@@ -70,14 +70,19 @@ public class BacktestMetrics
     public int TotalClosedTrades { get; }
     public int TotalOpenTrades { get; }
     public double OpenTradesAmounts { get; }
-    public double BudgetWithOpenTrades { get; }
     public double InitialBudget { get; }
-    public double BudgetWithoutOpenTrades { get; }
-    public double PnL { get; }
+
+    public double FinalFullBudget { get; }
+    public double FinalAvailableBudget { get; }
+    public double PnL { get; }                // = FinalFullBudget - InitialBudget
+    public double RealizedPnLSum { get; }     // sum of closed-trade PnL (diagnostic)
+
     public GradedMetric<double> AverageReturnPerTradeToInitialBudget { get; }
+
     public double TradeFees { get; }
     public double SlippageCosts { get; }
     public double TotalCosts { get; }
+
     public GradedMetric<double> WinRate { get; }
     public double AverageWin { get; }
     public double AverageLoss { get; }
@@ -89,34 +94,54 @@ public class BacktestMetrics
     public GradedMetric<double> SortinoRatio { get; }
     public StreaksModel Streaks { get; }
 
-    private void CalculateMaxDrawdown(Trade[] trades)
+    private void CalculateMaxDrawdown(Trade[] trades, double initialBudget)
     {
-        var closedBudgets = trades
-            .Where(t => t.IsClosed && t.BudgetAfterExit.HasValue)
-            .OrderBy(t => t.ExitTime)
-            .Select(t => t.BudgetAfterExit!.Value)
-            .ToList();
-
-        if (closedBudgets.Count == 0)
+        if (trades == null || trades.Length == 0)
         {
             MaximumDrawdown = 0;
             return;
         }
 
-        var peak = closedBudgets[0];
+        var events = new List<(DateTime time, double equity, int order)>(trades.Length * 2);
+
+        // Seed baseline just before first trade
+        var firstTime = trades.Min(t => t.EntryTime);
+        events.Add((firstTime.AddTicks(-1), initialBudget, -1));
+
+        foreach (var t in trades)
+        {
+            // Entry: total equity (cash + open) at the moment of entering
+            events.Add((t.EntryTime, t.FullBudgetOnEntry, 0));
+
+            // Exit: realized total equity
+            if (t.IsClosed && t.ExitTime.HasValue && t.FullBudgetAfterExit.HasValue)
+            {
+                events.Add((t.ExitTime.Value, t.FullBudgetAfterExit.Value, 1));
+            }
+        }
+
+        var ordered = events
+            .OrderBy(e => e.time)
+            .ThenBy(e => e.order)   // baseline (-1), then entry (0), then exit (1)
+            .ToList();
+
+        var peak = ordered[0].equity;
         var maxDrawdown = 0.0;
 
-        foreach (var value in closedBudgets)
+        foreach (var (time, equity, order) in ordered)
         {
-            if (value > peak)
+            if (equity > peak)
             {
-                peak = value;
+                peak = equity;
             }
 
-            var drawdown = (peak - value) / peak;
-            if (drawdown > maxDrawdown)
+            if (peak > 0)
             {
-                maxDrawdown = drawdown;
+                var dd = (peak - equity) / peak;
+                if (dd > maxDrawdown)
+                {
+                    maxDrawdown = dd;
+                }
             }
         }
 
@@ -152,12 +177,12 @@ public class BacktestMetrics
                     // Flush previous streak
                     if (currentStreak > 0)
                     {
-                        if (currentResultType == true)
+                        if (currentResultType is true)
                         {
                             winStreaks.Add(currentStreak);
                         }
 
-                        if (currentResultType == false)
+                        if (currentResultType is false)
                         {
                             loseStreaks.Add(currentStreak);
                         }

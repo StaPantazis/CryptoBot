@@ -23,7 +23,7 @@ public static class BacktestGraphCreator
             entryCandle.StopLoss = trade.StopLoss?.Round(1);
             entryCandle.TakeProfit = trade.TakeProfit?.Round(1);
             entryCandle.EntryTradeSize = trade.TradeSize.Round(1);
-            entryCandle.BudgetAfterEntry = trade.BudgetAfterEntry.Round(1);
+            entryCandle.BudgetAfterEntry = trade.AvailableBudgetAfterEntry.Round(1);
 
             if (trade.ExitCandleId != null && candleMap.TryGetValue(trade.ExitCandleId, out var exitCandle))
             {
@@ -32,7 +32,7 @@ public static class BacktestGraphCreator
                 entryCandle.ExitTradeSize = trade.TradeSize.Round(1);
                 exitCandle.PnL = trade.PnL?.Round(2);
                 exitCandle.IsProfit = trade.PnL >= 0;
-                exitCandle.BudgetAfterExit = trade.BudgetAfterExit!.Value.Round(1);
+                exitCandle.BudgetAfterExit = trade.AvailableBudgetAfterExit!.Value.Round(1);
 
                 totalPnL += exitCandle.PnL!.Value.Round(1);
                 exitCandle.TotalPnL = totalPnL;
@@ -42,53 +42,44 @@ public static class BacktestGraphCreator
         return (outputCandles.OrderBy(x => x.OpenTime).ToArray(), totalPnL);
     }
 
-    public static List<LinearGraphNode> CreateLinearGraphNodes(BybitOutputCandle[] outputCandles, Spot spot)
+    public static List<LinearGraphNode> CreateLinearGraphNodes(Spot spot)
     {
-        var linearGraphNodes = new List<LinearGraphNode>() { new(0, 0, spot.InitialBudget, true) };
-        var tradedCandles = outputCandles.Where(x => x.EntryPrice != null || x.ExitPrice != null).ToArray();
-
-        for (var i = 0; i < tradedCandles.Length; i++)
+        var nodes = new List<LinearGraphNode>
         {
-            var candle = tradedCandles[i];
+            new(0, spot.InitialBudget, null, DateTime.ParseExact("26/03/2020", "dd/MM/yyyy", null))
+        };
 
-            if (candle.ExitPrice != null)
-            {
-                linearGraphNodes.Add(new(i + 1, candle.PnL, candle.BudgetAfterExit!.Value, candle.PnL!.Value >= 0));
-            }
-
-            if (candle.EntryPrice != null)
-            {
-                linearGraphNodes.Add(new(i + 1, null, candle.BudgetAfterEntry!.Value, null));
-            }
-        }
-
-        return linearGraphNodes;
-    }
-
-    public static List<LinearTimeGraphNode> CreateLinearTimeGraphNodes(Spot spot)
-    {
-        var nodes = new List<LinearTimeGraphNode>() { new(0, spot.InitialBudget, null, DateTime.ParseExact("26/03/2020", "dd/MM/yyyy", null)) };
         var tradeIndex = 1;
+        var activeTrades = new List<Trade>();
 
-        foreach (var trade in spot.Trades)
+        foreach (var trade in spot.Trades.OrderBy(t => t.EntryTime))
         {
-            var openNode = new LinearTimeGraphNode(tradeIndex, trade.BudgetAfterEntry, IsOpen: true, trade.EntryTime);
-            nodes.Add(openNode);
+            activeTrades.Add(trade);
 
-            if (trade.IsClosed && trade.ExitTime.HasValue && trade.BudgetAfterExit.HasValue)
+            var entryBudget = trade.AvailableBudgetAfterEntry;
+            nodes.Add(new LinearGraphNode(tradeIndex, entryBudget, true, trade.EntryTime));
+
+            if (trade.IsClosed && trade.ExitTime.HasValue && trade.AvailableBudgetAfterExit.HasValue)
             {
-                var closeNode = new LinearTimeGraphNode(tradeIndex, trade.BudgetAfterExit.Value, IsOpen: false, trade.ExitTime.Value);
-                nodes.Add(closeNode);
+                activeTrades.Remove(trade);
+
+                var totalBudget = trade.AvailableBudgetAfterExit.Value;
+
+                foreach (var open in activeTrades)
+                {
+                    totalBudget += open.AvailableBudgetAfterEntry - open.AvailableBudgetBeforePlaced;
+                }
+
+                nodes.Add(new LinearGraphNode(tradeIndex, totalBudget, false, trade.ExitTime.Value));
             }
 
             tradeIndex++;
         }
 
-        var orderedNodes = nodes
-            .OrderBy(n => n.Timestamp)
-            .ThenByDescending(n => n.IsOpen == true)
-            .ToList();
+        nodes.RemoveAll(x => x.IsOpen is true);
 
-        return orderedNodes;
+        return nodes
+            .OrderBy(n => n.Timestamp)
+            .ToList();
     }
 }

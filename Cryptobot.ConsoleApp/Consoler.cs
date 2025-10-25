@@ -14,13 +14,13 @@ public static class Consoler
     public static async Task Run(CacheService cacheManager)
     {
         var backtestingDetails = new BacktestingDetails(
-            Interval: CandleInterval.One_Day,
+            Interval: CandleInterval.Fifteen_Minutes,
             Symbol: Constants.SYMBOL_BTCUSDT,
             MarketCategory: Constants.MARKET_PERPETUAL_FUTURES,
             Strategies: [
                 //new StrategyBundle<TS_Every100Candles_SL5_TP5, BS_1Percent>(),
                 //new StrategyBundle<TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3, BS_100Percent>(),
-                new StrategyBundle<TS_Simple_120_days_SMA_Long, BS_100Percent>(),
+                new StrategyBundle<TS_Every100Candles_SL5_TP5, BS_20Percent>(),
                 //new StrategyBundle<TS_Simple_120_days_SMA_short, BS_1Percent>(),
                 //new StrategyBundle<TS_Simple_120_days_SMA_Mix, BS_1Percent>(),
                 //new StrategyBundle<VariationSandboxFactory, BS_100Percent>(),

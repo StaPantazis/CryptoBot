@@ -18,7 +18,8 @@ public class Spot
     public TradeStrategyBase TradeStrategy { get; }
     public BudgetStrategy BudgetStrategy { get; }
     public double InitialBudget { get; private set; }
-    public double Budget { get; private set; }
+    public double FullBudget { get; private set; }
+    public double AvailableBudget { get; private set; }
     public IReadOnlyList<Trade> Trades => _allTrades;
 
     public Spot(User user, double budget, TradeStrategyBase tradeStrategy, BudgetStrategy budgetStrategy, string symbol, CacheService cacheManager)
@@ -31,7 +32,8 @@ public class Spot
         BudgetStrategy.Spot = this;
 
         InitialBudget = budget;
-        Budget = budget;
+        FullBudget = budget;
+        AvailableBudget = budget;
 
         _slippage_multiplier = symbol switch
         {
@@ -47,7 +49,7 @@ public class Spot
         var candle = candles[currentCandleIndex];
         var tradeSize = BudgetStrategy.DefineTradeSize();
 
-        if (tradeSize <= 0 || tradeSize + (tradeSize * Constants.TRADE_FEE) > Budget)
+        if (tradeSize <= 0 || tradeSize + (tradeSize * Constants.TRADE_FEE) > AvailableBudget)
         {
             return;
         }
@@ -63,8 +65,8 @@ public class Spot
         var entryFees = tradeSize * Constants.TRADE_FEE;
         var entrySlippage = Math.Abs(entryPrice - rawEntryPrice) * quantity;
 
-        var budgetBeforePlaced = Budget;
-        Budget = Budget - tradeSize - entryFees;
+        var availableBudgetBeforePlaced = AvailableBudget;
+        AvailableBudget = AvailableBudget - tradeSize - entryFees;
 
         var stopLossMultiplier = TradeStrategy.StopLoss(candles, currentCandleIndex, position);
         var takeProfitMultiplier = TradeStrategy.TakeProfit(candles, currentCandleIndex, position);
@@ -85,8 +87,9 @@ public class Spot
             TradeFees = entryFees,
             SlippageCosts = entrySlippage,
             IsClosed = false,
-            BudgetBeforePlaced = budgetBeforePlaced,
-            BudgetAfterEntry = Budget,
+            AvailableBudgetBeforePlaced = availableBudgetBeforePlaced,
+            AvailableBudgetAfterEntry = AvailableBudget,
+            FullBudgetOnEntry = FullBudget,
         };
 
         _openTrades.Add(newTrade);
@@ -183,9 +186,12 @@ public class Spot
             trade.PnL = trade.PnL.Value - trade.TradeFees;
 
             // Add the entry fees to avoid calculating them twice since they are already in the PnL
-            Budget = Budget + trade.TradeSize + trade.PnL.Value + entryFees;
+            AvailableBudget = AvailableBudget + trade.TradeSize + trade.PnL.Value + entryFees;
+            FullBudget += trade.PnL.Value;
 
-            trade.BudgetAfterExit = Budget;
+            trade.AvailableBudgetAfterExit = AvailableBudget;
+            trade.FullBudgetAfterExit = FullBudget;
+
             _openTrades.RemoveAt(i);
         }
     }

@@ -200,31 +200,30 @@ public class Backtester(CacheService cacheManager)
     {
         var outputPath = PathHelper.GetBacktestingOutputPath();
         var (outputCandles, totalPnL) = BacktestGraphCreator.CreateOutputCandles(candles, spot);
-        var linearGraphNodes = BacktestGraphCreator.CreateLinearGraphNodes(outputCandles, spot);
-        var linearTimeGraphNodes = BacktestGraphCreator.CreateLinearTimeGraphNodes(spot);
+        var linearGraphNodes = BacktestGraphCreator.CreateLinearGraphNodes(spot);
 
-        var candlesFilepath = $"{outputPath}\\candles-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}{Constants.PARQUET}";
+        var candlesFilepath = $"{outputPath}\\{DateNow()}candles-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}{Constants.PARQUET}";
         await ParquetService.SaveBacktestCandlesAsync(outputCandles, candlesFilepath);
 
-        var linearFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\linear-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}{Constants.PARQUET}";
-        await ParquetService.SaveLinearGraph(linearGraphNodes, linearFilepath);
+        var linearGraphFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\{DateNow()}linear-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}{Constants.PARQUET}";
+        await ParquetService.SaveLinearGraph(linearGraphNodes, linearGraphFilepath);
 
-        var linearTimeFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\linearTime-{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}{Constants.PARQUET}";
-        await ParquetService.SaveLinearTimeGraph(linearTimeGraphNodes, linearTimeFilepath);
+        var zipFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\{DateNow()}{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}__{totalPnL.Euro(digits: 1, plusIfPositive: true)}{Constants.ZIP}";
+        ZipHelper.BundleFiles(zipFilepath, candlesFilepath, linearGraphFilepath);
 
-        var zipFilepath = $"{PathHelper.GetBacktestingOutputPath()}\\{spot.TradeStrategy.NameOf}--{spot.BudgetStrategy.NameOf}__{totalPnL.Euro(digits: 1, plusIfPositive: true)}{Constants.ZIP}";
-        ZipHelper.BundleFiles(zipFilepath, candlesFilepath, linearFilepath, linearTimeFilepath);
+        Printer.SavedOutputFileName(zipFilepath);
 
         File.Delete(candlesFilepath);
-        File.Delete(linearFilepath);
-        File.Delete(linearTimeFilepath);
+        File.Delete(linearGraphFilepath);
     }
 
     private static async Task SaveTrendProfilerResult(List<TrendCandle> candles, BacktestingDetails details, string trendProfilerName)
     {
         var outputPath = PathHelper.GetTrendProfilingOutputPath();
 
-        var candlesFilepath = $"{outputPath}\\{DateTime.Now:yyyy-MM-dd HH_mm}-{details.IntervalShortString}--{trendProfilerName}{Constants.PARQUET}";
+        var candlesFilepath = $"{outputPath}\\{DateNow()}{details.IntervalShortString}--{trendProfilerName}{Constants.PARQUET}";
         await ParquetService.SaveTrendCandles(candles, candlesFilepath);
     }
+
+    private static string DateNow() => $"{DateTime.Now:yyyy-MM-dd HH_mm}__";
 }

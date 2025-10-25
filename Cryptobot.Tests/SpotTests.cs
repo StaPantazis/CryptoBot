@@ -27,8 +27,8 @@ public class SpotTests
         trade.StopLoss.Should().Be(95_009.5);
         trade.TakeProfit.Should().Be(105_010.5);
         trade.Quantity.Should().Be(0.9999);
-        trade.BudgetBeforePlaced.Should().Be(1_000_000);
-        trade.BudgetAfterEntry.Should().Be(899_935);
+        trade.AvailableBudgetBeforePlaced.Should().Be(1_000_000);
+        trade.AvailableBudgetAfterEntry.Should().Be(899_935);
 
         var tpCandle = A.Candle(200_000, 250_000, 150_000, 210_000);
         candles.Add(tpCandle);
@@ -43,7 +43,7 @@ public class SpotTests
         trade.SlippageCosts.Should().Be(10);
         trade.TradeFees.Should().Be(110);
         trade.PnL.Should().Be(4_879.99895);
-        trade.BudgetAfterExit.Should().Be(1_004_879.99895);
+        trade.AvailableBudgetAfterExit.Should().Be(1_004_879.99895);
     }
 
     [Fact]
@@ -65,8 +65,8 @@ public class SpotTests
         trade.StopLoss.Should().Be(95_009.5);
         trade.TakeProfit.Should().Be(105_010.5);
         trade.Quantity.Should().Be(0.9999);
-        trade.BudgetBeforePlaced.Should().Be(1_000_000);
-        trade.BudgetAfterEntry.Should().Be(899_935);
+        trade.AvailableBudgetBeforePlaced.Should().Be(1_000_000);
+        trade.AvailableBudgetAfterEntry.Should().Be(899_935);
 
         var tpCandle = A.Candle(20_000, 25_000, 15_000, 21_000);
         candles.Add(tpCandle);
@@ -81,7 +81,7 @@ public class SpotTests
         trade.SlippageCosts.Should().Be(19.5);
         trade.TradeFees.Should().Be(110);
         trade.PnL.Should().Be(-5_139);
-        trade.BudgetAfterExit.Should().Be(994_861);
+        trade.AvailableBudgetAfterExit.Should().Be(994_861);
     }
 
     [Fact]
@@ -103,8 +103,8 @@ public class SpotTests
         trade.StopLoss.Should().Be(104_989.5);
         trade.TakeProfit.Should().Be(94_990.5);
         trade.Quantity.Should().BeApproximately(1.0001, _precision);
-        trade.BudgetBeforePlaced.Should().Be(1_000_000);
-        trade.BudgetAfterEntry.Should().Be(899_935);
+        trade.AvailableBudgetBeforePlaced.Should().Be(1_000_000);
+        trade.AvailableBudgetAfterEntry.Should().Be(899_935);
 
         var tpCandle = A.Candle(20_000, 25_000, 15_000, 21_000);
         candles.Add(tpCandle);
@@ -119,7 +119,7 @@ public class SpotTests
         trade.SlippageCosts.Should().Be(10);
         trade.TradeFees.Should().Be(110);
         trade.PnL.Should().Be(4_880.00095);
-        trade.BudgetAfterExit.Should().Be(1_004_880.00095);
+        trade.AvailableBudgetAfterExit.Should().Be(1_004_880.00095);
     }
 
     [Fact]
@@ -141,8 +141,8 @@ public class SpotTests
         trade.StopLoss.Should().Be(104_989.5);
         trade.TakeProfit.Should().Be(94_990.5);
         trade.Quantity.Should().BeApproximately(1.0001, _precision);
-        trade.BudgetBeforePlaced.Should().Be(1_000_000);
-        trade.BudgetAfterEntry.Should().Be(899_935);
+        trade.AvailableBudgetBeforePlaced.Should().Be(1_000_000);
+        trade.AvailableBudgetAfterEntry.Should().Be(899_935);
 
         var tpCandle = A.Candle(200_000, 250_000, 150_000, 210_000);
         candles.Add(tpCandle);
@@ -157,7 +157,7 @@ public class SpotTests
         trade.SlippageCosts.Should().BeApproximately(20.49994, _precision);
         trade.TradeFees.Should().Be(110);
         trade.PnL.Should().Be(-5130.4979);
-        trade.BudgetAfterExit.Should().Be(1_004_880.00095);
+        trade.AvailableBudgetAfterExit.Should().Be(1_004_880.00095);
     }
 
     [Fact]

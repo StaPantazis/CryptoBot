@@ -175,7 +175,7 @@ public static class Printer
             var shortMetrics = new BacktestMetrics(spot.Trades.Where(x => x.PositionSide is PositionSide.Short).ToList(), spot, "Shorts");
 
             var table = new PrintTable(ignoreFirstColumnForAlignment: true,
-                "_Budgeting_", "Total Trades", "Closed Trades", "Open Trades", $"Open Trades {Constants.STRING_EURO}", "Final Budget", $"Final Budget with Open Trades", "Total PnL", "Fees", "Slippage", "Total Costs", "Avg Win", "Avg Loss",
+                "_Budgeting_", "Total Trades", "Closed Trades", "Open Trades", $"Open Trades {Constants.STRING_EURO}", "Final Full Budget", $"Final Available Budget", "Total PnL", "Fees", "Slippage", "Total Costs", "Avg Win", "Avg Loss",
                 "_Performance_", "Max Drawdown", "Payoff Ratio W/L", "Std Deviation", "Sharpe Ratio", "Sortino Ratio", "Budget % per trade", "Win Rate", "Expectancy",
                 "_Streaks_", "Avg Win Streak", "Avg Loss Streak", "Longest Win Streak", "Longest Lose Streak", "Win Streak Deviation", "Lose Streak Deviation");
 
@@ -196,8 +196,8 @@ public static class Printer
                     (metric.TotalClosedTrades, Yellow, null),
                     (metric.TotalOpenTrades, Yellow, null),
                     (metric.OpenTradesAmounts.Euro(), Yellow, null),
-                    (metric.BudgetWithoutOpenTrades.Euro(), GreenRed(metric.BudgetWithoutOpenTrades - spot.InitialBudget), null),
-                    (metric.BudgetWithOpenTrades.Euro(), GreenRed(metric.BudgetWithOpenTrades - spot.InitialBudget), null),
+                    (metric.FinalFullBudget.Euro(), GreenRed(metric.FinalFullBudget - spot.InitialBudget), null),
+                    (metric.FinalAvailableBudget.Euro(), GreenRed(metric.FinalAvailableBudget - spot.InitialBudget), null),
                     (metric.PnL.Euro(plusIfPositive: true), GreenRed(metric.PnL), null),
                     (metric.TradeFees.Euro(), Red, null),
                     (metric.SlippageCosts.Euro(), Red, null),
@@ -212,7 +212,7 @@ public static class Printer
                     (metric.SharpeRatio.Round(2).ToString("F2"), Yellow, metric.SharpeRatio.Grade),
                     (metric.SortinoRatio.Round(2).ToString("F2"), Yellow, metric.SortinoRatio.Grade),
                     (metric.AverageReturnPerTradeToInitialBudget.Percent(digits: 5, plusIfPositive: true), GreenRed(metric.AverageReturnPerTradeToInitialBudget), metric.AverageReturnPerTradeToInitialBudget.Grade),
-                    (metric.WinRate.Percent(digits: 2), Yellow, metric.WinRate.Grade),
+                    (metric.WinRate.Percent(digits: 2, isZeroToOne: true), Yellow, metric.WinRate.Grade),
                     (metric.Expectancy.Euro(plusIfPositive: true), GreenRed(metric.Expectancy), metric.Expectancy.Grade),
 
                     // Streaks
@@ -244,6 +244,12 @@ public static class Printer
 
         Write("Saving Runtime: ", White);
         WriteLine(sw.ElapsedMilliseconds.MillisecondsToFormattedTime(), Yellow);
+    }
+
+    public static void SavedOutputFileName(string fileName)
+    {
+        Write("Saved file: ", White);
+        WriteLine(Path.GetFileName(fileName), DarkYellow);
     }
 
     public static void TotalRuntime(Stopwatch sw)

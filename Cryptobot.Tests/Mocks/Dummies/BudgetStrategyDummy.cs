@@ -7,5 +7,5 @@ internal class BudgetStrategyDummy : BudgetStrategy
     public override string Name { get; protected set; } = "Budget Dummy";
     public override string NameOf { get; protected set; } = nameof(BudgetStrategyDummy);
 
-    public override double DefineTradeSize() => Spot.Budget * 0.1;
+    public override double DefineTradeSize() => Spot.AvailableBudget * 0.1;
 }

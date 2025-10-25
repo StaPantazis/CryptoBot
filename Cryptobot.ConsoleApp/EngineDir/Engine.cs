@@ -16,12 +16,15 @@ public class Engine<T>(CacheService cacheManager, params Spot[] spots) where T :
         {
             _indicatorManagers[spot.Id].CalculateRelevantIndicators(candles, currentCandleIndex);
 
-            if (spot.TradeStrategy.ShouldOpenTrade(_cacheManager, candles, currentCandleIndex, candleInterval, out var position))
-            {
-                spot.OpenTrade(candles, currentCandleIndex, position!.Value);
-            }
-
             spot.CheckCloseTrades(candles, currentCandleIndex, candleInterval);
+
+            if (spot.TradeStrategy.ShouldOpenTrade(_cacheManager, candles, currentCandleIndex, candleInterval, out var positions) && positions != null)
+            {
+                foreach (var pos in positions)
+                {
+                    spot.OpenTrade(candles, currentCandleIndex, pos);
+                }
+            }
         }
     }
 }

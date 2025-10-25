@@ -33,9 +33,7 @@ def choose_file(files):
 def main():
     base_dir = Path(__file__).resolve().parent
     output_root = base_dir.parent / "Cryptobot.ConsoleApp" / "Backtesting" / "Output"
-    plotSettings = PlotSettings(
-        plot_candles_graph=False, plot_linear_graph=False, plot_linear_time_graph=True
-    )
+    plotSettings = PlotSettings(plot_candles_graph=False, plot_linear_graph=False)
 
     while True:
         print("\n=== Cryptobot Viewer ===")

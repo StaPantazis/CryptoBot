@@ -17,19 +17,28 @@ public abstract class TradeStrategyBase : StrategyBase
     public double? TakeProfit<T>(List<T> candles, int currentCandleIndex, PositionSide position) where T : Candle
         => position is PositionSide.Long ? TakeProfitLong(candles, currentCandleIndex) : TakeProfitShort(candles, currentCandleIndex);
 
-    public virtual bool ShouldOpenTrade<T>(CacheService cacheManager, List<T> candles, int currentCandleIndex, CandleInterval candleInterval, out PositionSide? position) where T : Candle
+    public virtual bool ShouldOpenTrade<T>(CacheService cacheManager, List<T> candles, int currentCandleIndex, CandleInterval candleInterval, out PositionSide[]? positions) where T : Candle
     {
-        if (Spot.Budget < 10)
+        if (Spot.AvailableBudget < 10)
         {
-            position = null;
+            positions = null;
             return false;
         }
 
-        position = ShouldShort(cacheManager, candles, currentCandleIndex, candleInterval) ? PositionSide.Short
-                 : ShouldLong(cacheManager, candles, currentCandleIndex, candleInterval) ? PositionSide.Long
-                 : null;
+        var positionsList = new List<PositionSide>();
 
-        return position != null;
+        if (ShouldShort(cacheManager, candles, currentCandleIndex, candleInterval))
+        {
+            positionsList.Add(PositionSide.Short);
+        }
+
+        if (ShouldLong(cacheManager, candles, currentCandleIndex, candleInterval))
+        {
+            positionsList.Add(PositionSide.Long);
+        }
+
+        positions = positionsList.Any() ? positionsList.ToArray() : null;
+        return positionsList.Any();
     }
 
     public virtual bool ShouldCloseTrade<T>(CacheService cacheManager, List<T> candles, int currentCandleIndex, CandleInterval candleInterval, Trade trade) where T : Candle

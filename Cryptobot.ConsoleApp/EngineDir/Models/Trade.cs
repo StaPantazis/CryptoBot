@@ -18,19 +18,21 @@ public class Trade
     public required double TradeFees { get; set; }
     public required double SlippageCosts { get; set; }
     public required bool IsClosed { get; set; }
-    public required double BudgetBeforePlaced { get; set; }
-    public required double BudgetAfterEntry { get; set; }
+    public required double AvailableBudgetBeforePlaced { get; set; }
+    public required double AvailableBudgetAfterEntry { get; set; }
+    public required double FullBudgetOnEntry { get; set; }
 
     public DateTime? ExitTime { get; set; }
     public double? ExitPrice { get; set; }
     public string? ExitCandleId { get; set; }
     public double? PnL { get; set; }
-    public double? BudgetAfterExit { get; set; }
+    public double? AvailableBudgetAfterExit { get; set; }
+    public double? FullBudgetAfterExit { get; set; }
 
     public override string ToString()
     {
         return IsClosed
-            ? $"{(PnL > 0 ? "W | +" : "L | ")}{((double)PnL!).Round(2)}€ | Budget: {((double)BudgetAfterExit!).Round(2)}€"
-            : $"OPEN | Budget: {BudgetAfterEntry}€";
+            ? $"{(PnL > 0 ? "W | +" : "L | ")}{((double)PnL!).Round(2)}€ | Budget: {((double)AvailableBudgetAfterExit!).Round(2)}€"
+            : $"OPEN | Budget: {AvailableBudgetAfterEntry}€";
     }
 }
