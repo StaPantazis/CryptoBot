@@ -6,10 +6,6 @@ namespace Cryptobot.ConsoleApp.Binance;
 public static class BinanceHistory
 {
     private const string _futuresUrl = @"https://data.binance.vision/data/futures/um/daily/klines/BTCUSDT/1m/BTCUSDT-1m-[date].zip";
-    private static readonly string _resourcesDir = Path.Combine(
-        Directory.GetParent(Directory.GetCurrentDirectory())!.Parent!.Parent!.FullName,
-        "Cryptobot.Console",
-        "Resources");
 
     public static async Task DownloadHistory()
     {
@@ -54,7 +50,7 @@ public static class BinanceHistory
 
     public static void VerifyDataValidity()
     {
-        var filePaths = Directory.EnumerateFiles(_resourcesDir, "*.csv").ToArray();
+        var filePaths = Directory.EnumerateFiles(PathHelper.GetResourcesPath(), "*.csv").ToArray();
         var success = 0;
         var fails = new List<string>();
 
@@ -125,7 +121,7 @@ public static class BinanceHistory
 
         try
         {
-            ZipFile.ExtractToDirectory(tempZip, _resourcesDir);
+            ZipFile.ExtractToDirectory(tempZip, PathHelper.GetResourcesPath());
             File.Delete(tempZip);
 
             return true;
@@ -182,5 +178,5 @@ public static class BinanceHistory
             .ToArray();
     }
 
-    private static string ResourceFileName(string name) => @$"{_resourcesDir}\{name}".Replace(@"\\", @"\");
+    private static string ResourceFileName(string name) => @$"{PathHelper.GetResourcesPath()}\{name}".Replace(@"\\", @"\");
 }
