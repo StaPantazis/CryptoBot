@@ -6,7 +6,10 @@ namespace Cryptobot.ConsoleApp.Binance;
 public static class BinanceHistory
 {
     private const string _futuresUrl = @"https://data.binance.vision/data/futures/um/daily/klines/BTCUSDT/1m/BTCUSDT-1m-[date].zip";
-    private const string _resourcesDir = @"C:\Users\stath\Documents\Coding\GIT\Cryptobot\Cryptobot\Cryptobot.Console\Resources\";
+    private static readonly string _resourcesDir = Path.Combine(
+        Directory.GetParent(Directory.GetCurrentDirectory())!.Parent!.Parent!.FullName,
+        "Cryptobot.Console",
+        "Resources");
 
     public static async Task DownloadHistory()
     {
