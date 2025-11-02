@@ -6,36 +6,28 @@ public class PathHelper
 {
     public static string GetBacktestingOutputPath()
     {
-        var outputDir = @"Cryptobot.ConsoleApp\Backtesting\Output\Backtest";
-        var outputPath = Path.Combine(GetParentDir().FullName, outputDir);
-
+        var outputPath = Path.Combine(AppContext.BaseDirectory, "Backtesting\\Output\\Backtest");
         CreateDirectoryNonexistent(outputPath);
         return outputPath;
     }
 
     public static string GetTrendProfilingOutputPath()
     {
-        var outputDir = @"Cryptobot.ConsoleApp\Backtesting\Output\TrendProfiling";
-        var outputPath = Path.Combine(GetParentDir().FullName, outputDir);
-
+        var outputPath = Path.Combine(AppContext.BaseDirectory, "Backtesting\\Output\\TrendProfiling");
         CreateDirectoryNonexistent(outputPath);
         return outputPath;
     }
 
     public static string GetCachedIndicatorsOutputPath()
     {
-        var outputDir = @"Cryptobot.ConsoleApp\Resources\CachedIndicators";
-        var outputPath = Path.Combine(GetParentDir().FullName, outputDir);
-
+        var outputPath = Path.Combine(GetResourcesPath(), "CachedIndicators");
         CreateDirectoryNonexistent(outputPath);
         return outputPath;
     }
 
     public static string GetResourcesPath()
     {
-        var resourcesDir = @"Cryptobot.ConsoleApp\Resources";
-        var resourcesPath = Path.Combine(GetParentDir().FullName, resourcesDir);
-
+        var resourcesPath = Path.Combine(AppContext.BaseDirectory, "Resources");
         CreateDirectoryNonexistent(resourcesPath);
         return resourcesPath;
     }
@@ -73,18 +65,5 @@ public class PathHelper
         {
             Directory.CreateDirectory(dirPath);
         }
-    }
-
-    private static DirectoryInfo GetParentDir()
-    {
-        var current = Directory.GetCurrentDirectory();
-        var parentDir = Directory.GetParent(current);
-
-        while (parentDir!.Name != "Cryptobot")
-        {
-            parentDir = parentDir.Parent;
-        }
-
-        return parentDir;
     }
 }
