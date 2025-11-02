@@ -6,14 +6,14 @@ public class PathHelper
 {
     public static string GetBacktestingOutputPath()
     {
-        var outputPath = Path.Combine(AppContext.BaseDirectory, "Backtesting\\Output\\Backtest");
+        var outputPath = Path.Combine(GetBasePath(), "Backtesting\\Output\\Backtest");
         CreateDirectoryNonexistent(outputPath);
         return outputPath;
     }
 
     public static string GetTrendProfilingOutputPath()
     {
-        var outputPath = Path.Combine(AppContext.BaseDirectory, "Backtesting\\Output\\TrendProfiling");
+        var outputPath = Path.Combine(GetBasePath(), "Backtesting\\Output\\TrendProfiling");
         CreateDirectoryNonexistent(outputPath);
         return outputPath;
     }
@@ -27,7 +27,7 @@ public class PathHelper
 
     public static string GetResourcesPath()
     {
-        var resourcesPath = Path.Combine(AppContext.BaseDirectory, "Resources");
+        var resourcesPath = Path.Combine(GetBasePath(), "Resources");
         CreateDirectoryNonexistent(resourcesPath);
         return resourcesPath;
     }
@@ -58,6 +58,11 @@ public class PathHelper
 
     public static void CheckFixFilepathExtensions(ref string filepath, string extension)
         => filepath = filepath.Contains(extension) ? filepath : $"{filepath}.{extension}";
+
+    private static string GetBasePath()
+    {
+        return Path.Combine(AppDomain.CurrentDomain.BaseDirectory.Split("Cryptobot.ConsoleApp")[0], "Cryptobot.ConsoleApp");
+    }
 
     private static void CreateDirectoryNonexistent(string dirPath)
     {

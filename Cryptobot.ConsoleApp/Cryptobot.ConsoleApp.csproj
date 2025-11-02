@@ -27,13 +27,4 @@
 		<Folder Include="Resources\Perpetual Futures\BTC_USDT\1d\" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<None Update="Resources\**">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
-		<None Update="Backtesting\Output\**">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
-	</ItemGroup>
-
 </Project>
