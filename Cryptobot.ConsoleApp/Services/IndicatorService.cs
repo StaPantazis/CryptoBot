@@ -32,7 +32,7 @@ public class IndicatorService(CacheService? cacheManager, TradeStrategyBase? tra
                 case IndicatorType.MovingAverage:
                     candle.Indicators.MovingAverage = _cacheManager is null
                         ? TrendProfiler.GetMovingAverage(candles, currentCandleIndex)
-                        : _cacheManager.MacroTrendCache[candle.DayTicks].MA120d;
+                        : _cacheManager.MacroTrendCache[candle.DayKey].MovingAverage;
                     break;
                 case IndicatorType.MicroTrend:
                     candle.Indicators.MicroTrend = _microTrendProfiler!.ProfileComplex(candles, currentCandleIndex);

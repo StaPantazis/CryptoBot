@@ -25,7 +25,7 @@ public class TS_Simple_120_days_SMA_Long : TradeStrategyBase
         }
 
         var currentCandle = candles[currentCandleIndex];
-        return currentCandle.ClosePrice < cacheManager.MacroTrendCache[currentCandle.DayTicks].MA120d;
+        return currentCandle.ClosePrice < cacheManager.MacroTrendCache[currentCandle.DayKey].MovingAverage;
     }
 
     protected override bool ShouldLong<T>(CacheService cacheManager, List<T> candles, int currentCandleIndex, CandleInterval candleInterval)
@@ -36,6 +36,6 @@ public class TS_Simple_120_days_SMA_Long : TradeStrategyBase
         }
 
         var candle = candles[currentCandleIndex];
-        return candle.ClosePrice > cacheManager.MacroTrendCache[candle.DayTicks].MA120d;
+        return candle.ClosePrice > cacheManager.MacroTrendCache[candle.DayKey].MovingAverage;
     }
 }

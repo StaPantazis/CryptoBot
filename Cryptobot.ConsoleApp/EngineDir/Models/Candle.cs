@@ -1,18 +1,15 @@
-﻿namespace Cryptobot.ConsoleApp.EngineDir.Models;
+﻿using Cryptobot.ConsoleApp.Extensions;
+
+namespace Cryptobot.ConsoleApp.EngineDir.Models;
 
 public abstract class Candle
 {
     private long? _dayTicks;
+    private long? _fifteenMinuteKey;
 
     public string Id { get; protected set; } = Guid.NewGuid().ToString();
-    public long DayTicks
-    {
-        get
-        {
-            _dayTicks ??= OpenTime.Date.Ticks;
-            return _dayTicks.Value;
-        }
-    }
+    public long DayKey => _dayTicks ??= OpenTime.BuildDayKey();
+    public long FifteenMinuteKey => _fifteenMinuteKey ??= OpenTime.BuildFifteenMinuteKey();
     public DateTime OpenTime { get; set; }
     public DateTime CloseTime { get; set; }
     public double OpenPrice { get; set; }

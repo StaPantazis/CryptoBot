@@ -93,7 +93,7 @@ public class TrendProfiler(TrendConfiguration config)
                 : (double)currentCandle.Indicators.MovingAverage! >= (double)ma! ? Trend.Bull : Trend.Bear;
         }
 
-        return cacheManager.MacroTrendCache[currentCandle.DayTicks].Trend;
+        return cacheManager.MacroTrendCache[currentCandle.DayKey].Trend;
     }
 
     public static double? GetMovingAverage<T>(List<T> candles, int currentCandleIndex) where T : Candle
