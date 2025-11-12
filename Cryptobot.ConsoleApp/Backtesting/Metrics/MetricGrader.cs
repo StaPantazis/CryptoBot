@@ -100,12 +100,12 @@ public static class MetricGrader
 
     private static Grade GradeMaximumDrawdown<T>(GradedMetric<T> metric) => metric.Grade = metric.Value switch
     {
-        <= 5.0 => Grade.APlus,
-        <= 10.0 => Grade.A,
-        <= 15.0 => Grade.B,
-        <= 20.0 => Grade.C,
-        <= 30.0 => Grade.D,
-        <= 40.0 => Grade.E,
+        >= 90.0 => Grade.APlus,
+        >= 80.0 => Grade.A,
+        >= 70.0 => Grade.B,
+        >= 60.0 => Grade.C,
+        >= 50.0 => Grade.D,
+        >= 40.0 => Grade.E,
         _ => Grade.F
     };
 

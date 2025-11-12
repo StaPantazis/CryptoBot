@@ -208,7 +208,7 @@ public static class Printer
                     // Performance
                     (metric.MaximumDrawdown.Percent(2), Yellow, metric.MaximumDrawdown.Grade),
                     (metric.PayoffRatio.Round(2), Yellow, metric.PayoffRatio.Grade),
-                    (metric.StandardDeviation.Round(2), GreenRed(metric.StandardDeviation), metric.StandardDeviation.Grade),
+                    (metric.StandardDeviation.Round(2), Yellow, metric.StandardDeviation.Grade),
                     (metric.SharpeRatio.Round(2).ToString("F2"), Yellow, metric.SharpeRatio.Grade),
                     (metric.SortinoRatio.Round(2).ToString("F2"), Yellow, metric.SortinoRatio.Grade),
                     (metric.AverageReturnPerTradeToInitialBudget.Percent(digits: 5, plusIfPositive: true), GreenRed(metric.AverageReturnPerTradeToInitialBudget), metric.AverageReturnPerTradeToInitialBudget.Grade),
