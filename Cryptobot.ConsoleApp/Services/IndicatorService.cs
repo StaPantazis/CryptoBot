@@ -24,7 +24,11 @@ public class IndicatorService(CacheService? cacheManager, TradeStrategyBase? tra
         }
 
         var candle = candles[currentCandleIndex];
+        CalculateRelevantIndicators(candle, candles, currentCandleIndex);
+    }
 
+    public void CalculateRelevantIndicators<T>(T candle, List<T> candles, int currentCandleIndex) where T : Candle
+    {
         foreach (var indicator in _indicators)
         {
             switch (indicator)

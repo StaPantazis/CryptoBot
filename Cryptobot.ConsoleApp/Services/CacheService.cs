@@ -1,6 +1,5 @@
 ﻿using Cryptobot.ConsoleApp.Backtesting;
 using Cryptobot.ConsoleApp.Backtesting.OutputModels;
-using Cryptobot.ConsoleApp.Bybit;
 using Cryptobot.ConsoleApp.EngineDir;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Repositories;
@@ -12,13 +11,13 @@ namespace Cryptobot.ConsoleApp.Services;
 
 public class CacheService
 {
-    public Dictionary<long, CachedMacroTrend> MacroTrendCache { get; private set; } = [];
     public Dictionary<long, CachedSemiTrend> SemiTrendCache { get; private set; } = [];
+    public Dictionary<long, CachedMacroTrend> MacroTrendCache { get; private set; } = [];
 
     public async Task InitializeCache()
     {
-        await BybitHistory.Download(new BacktestingDetails(CandleInterval.Fifteen_Minutes));
-        await BybitHistory.Download(new BacktestingDetails(CandleInterval.One_Day));
+        //await BybitHistory.Download(new BacktestingDetails(CandleInterval.Fifteen_Minutes));
+        //await BybitHistory.Download(new BacktestingDetails(CandleInterval.One_Day));
         await ComputeMacroTrend();
         //await ComputeSemiTrend();
         await CandleValidatorService.ValidateStoredResources();
