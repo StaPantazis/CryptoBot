@@ -2,12 +2,22 @@
 
 public class BS_XPercent(double percent) : BudgetStrategy
 {
-    private readonly double _percent = Math.Min(percent, 99);
+    private const double _100percentConstant = 99.5;
 
-    public override string Name { get; protected set; } = $"Bet {Math.Min(percent, 99)}% of the budget";
-    public override string NameOf { get; protected set; } = $"BS_{Math.Min(percent, 99)}Percent";
+    private readonly double _percent = Math.Min(percent, _100percentConstant);
 
-    public override double DefineTradeSize() => Spot.AvailableBudget * _percent / 100;
+    public override string Name { get; protected set; } = $"Bet {Math.Min(percent, _100percentConstant)}% of the budget";
+    public override string NameOf { get; protected set; } = $"BS_{Math.Min(percent, _100percentConstant)}Percent";
+
+    public override double DefineTradeSize()
+    {
+        if (_percent == _100percentConstant && Spot.OpenTrades.Any())
+        {
+            return 0;
+        }
+
+        return Spot.AvailableBudget * _percent / 100;
+    }
 }
 
 public class BS_1Percent() : BS_XPercent(1) { }

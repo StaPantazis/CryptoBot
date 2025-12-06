@@ -22,6 +22,12 @@ public class TrendProfiler(TrendConfiguration config)
 
         // --- Slice & extract prices ---
         var slice = candles.Skip(start).Take(length).ToArray();
+
+        if (slice.Any(x => x.OpenTime > candles[currentCandleIndex].OpenTime))
+        {
+            throw new InvalidOperationException("Should never happen, this means we are grabbing candles from the future.");
+        }
+
         var closes = slice.Select(c => (double)c.ClosePrice).ToArray();
 
         // --- Price domain checks for log ---
@@ -127,8 +133,8 @@ public class TrendProfiler(TrendConfiguration config)
             return null;
         }
 
-        var start = Math.Max(0, currentCandleIndex - config.Window + 1);
-        var length = currentCandleIndex - start + 1;
+        var start = Math.Max(0, currentCandleIndex - config.Window);
+        var length = config.Window;
 
         if (length < 3)
         {

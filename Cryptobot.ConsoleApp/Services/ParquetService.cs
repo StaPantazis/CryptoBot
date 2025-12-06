@@ -197,7 +197,7 @@ public static class ParquetService
             }
         }
 
-        return candles;
+        return candles;//.OrderBy(x => x.OpenTime).ToList();
     }
 
     public static async Task<List<T>> LoadCachedTrend<T>(string filepath) where T : CachedTrend

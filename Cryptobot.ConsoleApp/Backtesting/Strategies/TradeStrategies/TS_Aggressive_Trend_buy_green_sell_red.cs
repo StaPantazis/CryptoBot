@@ -13,11 +13,11 @@ public class TS_Aggressive_Trend_buy_green_sell_red : TradeStrategyBase
     public override IndicatorType[] RelevantIndicators { get; protected set; } = [IndicatorType.MicroTrend];
     public override TrendConfiguration MicroTrendConfiguration => TrendConfiguration.Aggressive();
 
-    protected override double? StopLossLong<T>(List<T> candles, int currentCandleIndex) => 0.95;
-    protected override double? TakeProfitLong<T>(List<T> candles, int currentCandleIndex) => 1.05;
+    protected override double? StopLossLong<T>(List<T> candles, int currentCandleIndex) => 0.98;
+    protected override double? TakeProfitLong<T>(List<T> candles, int currentCandleIndex) => 1.02;
 
-    protected override double? StopLossShort<T>(List<T> candles, int currentCandleIndex) => 1.05;
-    protected override double? TakeProfitShort<T>(List<T> candles, int currentCandleIndex) => 0.95;
+    protected override double? StopLossShort<T>(List<T> candles, int currentCandleIndex) => 1.02;
+    protected override double? TakeProfitShort<T>(List<T> candles, int currentCandleIndex) => 0.98;
 
     protected override bool ShouldLong<T>(CacheService cacheManager, List<T> candles, int currentCandleIndex, CandleInterval candleInterval)
     {
@@ -26,7 +26,7 @@ public class TS_Aggressive_Trend_buy_green_sell_red : TradeStrategyBase
         var candle = candles[currentCandleIndex];
         _indicatorService.CalculateRelevantIndicators(candle, candles, currentCandleIndex);
 
-        return candle.Indicators.MicroTrend is Trend.Bull;
+        return candle.Indicators.MicroTrend is Trend.Bull or Trend.FullBull;
     }
 
     protected override bool ShouldShort<T>(CacheService cacheManager, List<T> candles, int currentCandleIndex, CandleInterval candleInterval)
@@ -36,6 +36,6 @@ public class TS_Aggressive_Trend_buy_green_sell_red : TradeStrategyBase
         var candle = candles[currentCandleIndex];
         _indicatorService.CalculateRelevantIndicators(candle, candles, currentCandleIndex);
 
-        return candle.Indicators.MicroTrend is Trend.Bear;
+        return candle.Indicators.MicroTrend is Trend.Bear or Trend.FullBear;
     }
 }

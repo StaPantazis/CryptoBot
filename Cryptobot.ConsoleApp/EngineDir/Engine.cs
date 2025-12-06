@@ -9,9 +9,15 @@ public class Engine<T>(CacheService cacheManager, params Spot[] spots) where T :
     private readonly CacheService _cacheManager = cacheManager;
     private readonly Spot[] _spots = spots;
     private readonly Dictionary<string, IndicatorService> _indicatorManagers = spots.ToDictionary(x => x.Id, x => new IndicatorService(cacheManager, x.TradeStrategy));
+    private readonly DateTime? _filterForDebugging = null; // DateTime.ParseExact("12/08/2025", "dd/MM/yyyy", default);
 
     public void TradeNewCandle(List<T> candles, int currentCandleIndex, CandleInterval candleInterval)
     {
+        if (StopForDebugging(candles, currentCandleIndex))
+        {
+            return;
+        }
+
         foreach (var spot in _spots)
         {
             _indicatorManagers[spot.Id].CalculateRelevantIndicators(candles, currentCandleIndex);
@@ -26,5 +32,20 @@ public class Engine<T>(CacheService cacheManager, params Spot[] spots) where T :
                 }
             }
         }
+    }
+
+    private bool StopForDebugging(List<T> candles, int currentCandleIndex)
+    {
+        if (_filterForDebugging != null)
+        {
+            var candle = candles[currentCandleIndex];
+
+            if (candle.CloseTime < _filterForDebugging)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -16,6 +16,7 @@ public class CacheService
 
     public async Task InitializeCache()
     {
+        //await BybitHistory.Download(new BacktestingDetails(CandleInterval.Five_Minutes));
         //await BybitHistory.Download(new BacktestingDetails(CandleInterval.Fifteen_Minutes));
         //await BybitHistory.Download(new BacktestingDetails(CandleInterval.One_Day));
         await ComputeMacroTrend();

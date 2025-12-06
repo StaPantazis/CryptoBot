@@ -9,7 +9,6 @@ namespace Cryptobot.ConsoleApp.EngineDir.Models;
 public class Spot
 {
     private readonly double _slippage_multiplier = 0;
-    private readonly List<Trade> _openTrades = [];
     private readonly List<Trade> _allTrades = [];
     private readonly CacheService _cacheManager;
 
@@ -20,6 +19,7 @@ public class Spot
     public double InitialBudget { get; private set; }
     public double FullBudget { get; private set; }
     public double AvailableBudget { get; private set; }
+    public List<Trade> OpenTrades { get; } = [];
     public IReadOnlyList<Trade> Trades => _allTrades;
 
     public Spot(User user, double budget, TradeStrategyBase tradeStrategy, BudgetStrategy budgetStrategy, string symbol, CacheService cacheManager)
@@ -92,22 +92,22 @@ public class Spot
             FullBudgetOnEntry = FullBudget,
         };
 
-        _openTrades.Add(newTrade);
+        OpenTrades.Add(newTrade);
         _allTrades.Add(newTrade);
     }
 
     public void CheckCloseTrades<T>(List<T> candles, int currentCandleIndex, CandleInterval candleInterval) where T : Candle
     {
-        if (_openTrades.Count == 0)
+        if (OpenTrades.Count == 0)
         {
             return;
         }
 
         var candle = candles[currentCandleIndex];
 
-        for (var i = _openTrades.Count - 1; i >= 0; i--)  // backwards so we can remove easily
+        for (var i = OpenTrades.Count - 1; i >= 0; i--)  // backwards so we can remove easily
         {
-            var trade = _openTrades[i];
+            var trade = OpenTrades[i];
 
             if (!TradeStrategy.ShouldCloseTrade(_cacheManager, candles, currentCandleIndex, candleInterval, trade))
             {
@@ -192,7 +192,7 @@ public class Spot
             trade.AvailableBudgetAfterExit = AvailableBudget;
             trade.FullBudgetAfterExit = FullBudget;
 
-            _openTrades.RemoveAt(i);
+            OpenTrades.RemoveAt(i);
         }
     }
 }
