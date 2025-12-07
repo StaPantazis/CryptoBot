@@ -2,6 +2,14 @@
 
 namespace Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies.Variations;
 
+/// <summary>
+/// Parameters: Low - High - High - Low
+/// </summary>
+/// <param name="StopLossLong">Low</param>
+/// <param name="TakeProfitLong">High</param>
+/// <param name="StopLossShort">High</param>
+/// <param name="TakeProfitShort">Low</param>
+/// <param name="MicroTrendConfig"></param>
 public record StrategyVariation(
     double? StopLossLong = null,
     double? TakeProfitLong = null,

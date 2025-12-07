@@ -5,8 +5,8 @@ using Cryptobot.ConsoleApp.Services;
 
 namespace Cryptobot.Tests.Mocks.Dummies;
 
-internal class TradeStrategyDummy(PositionSide position, CacheService cacheService, StrategyVariation? variation = null)
-        : TradeStrategyBase(cacheService, variation)
+internal class TradeStrategyDummy(PositionSide position, CacheService cache, StrategyVariation? variation = null)
+        : TradeStrategyBase(cache, variation)
 {
     private readonly PositionSide _position = position;
     public override string Name { get; protected set; } = "Trade Dummy";

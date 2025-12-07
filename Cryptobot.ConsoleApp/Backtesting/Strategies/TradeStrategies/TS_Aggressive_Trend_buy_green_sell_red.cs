@@ -5,7 +5,7 @@ using Cryptobot.ConsoleApp.Services;
 
 namespace Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
 
-public class TS_Aggressive_Trend_buy_green_sell_red(CacheService cacheService, StrategyVariation? variation = null) : TradeStrategyBase(cacheService, variation)
+public class TS_Aggressive_Trend_buy_green_sell_red(CacheService cache, StrategyVariation? variation = null) : TradeStrategyBase(cache, variation)
 {
     public override string Name { get; protected set; } = "Buy on green, sell on red";
     public override string NameOf { get; protected set; } = nameof(TS_Aggressive_Trend_buy_green_sell_red);

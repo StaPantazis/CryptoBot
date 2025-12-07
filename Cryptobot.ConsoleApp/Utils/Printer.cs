@@ -147,7 +147,7 @@ public static class Printer
 
     public static void BacktesterResult(Spot spot, Stopwatch sw)
     {
-        var totalMetrics = new BacktestMetrics(spot.Trades, spot, "Full");
+        var fullMetrics = spot.Metrics.Full;
 
         EraseLineContent();
         Write("Backtesting Runtime: ", White);
@@ -159,7 +159,7 @@ public static class Printer
         if (spot.Trades.Count != 0)
         {
             Write("Score: ", White);
-            WriteLine($"{totalMetrics.StrategyScore.Round(0)}/100", GradeColor(totalMetrics.StrategyGrade));
+            WriteLine($"{fullMetrics.StrategyScore.Round(0)}/100", GradeColor(fullMetrics.StrategyGrade));
 
             Write("Initial Budget: ", White);
             WriteLine(spot.InitialBudget.Euro(), Yellow);
@@ -169,17 +169,17 @@ public static class Printer
             WriteLine("No trades made for this strategy!", Red);
         }
 
-        if (totalMetrics.TotalTrades > 0)
+        if (fullMetrics.TotalTrades > 0)
         {
-            var longMetrics = new BacktestMetrics(spot.Trades.Where(x => x.PositionSide is PositionSide.Long).ToList(), spot, "Longs");
-            var shortMetrics = new BacktestMetrics(spot.Trades.Where(x => x.PositionSide is PositionSide.Short).ToList(), spot, "Shorts");
+            var longMetrics = spot.Metrics.Long;
+            var shortMetrics = spot.Metrics.Short;
 
             var table = new PrintTable(ignoreFirstColumnForAlignment: true,
                 "_Budgeting_", "Total Trades", "Closed Trades", "Open Trades", $"Open Trades {Constants.STRING_EURO}", "Final Full Budget", $"Final Available Budget", "Total PnL", "Fees", "Slippage", "Total Costs", "Avg Win", "Avg Loss",
                 "_Performance_", "Max Drawdown", "Payoff Ratio W/L", "Std Deviation", "Sharpe Ratio", "Sortino Ratio", "Budget % per trade", "Win Rate", "Expectancy",
                 "_Streaks_", "Avg Win Streak", "Avg Loss Streak", "Longest Win Streak", "Longest Lose Streak", "Win Streak Deviation", "Lose Streak Deviation");
 
-            var metrics = new List<BacktestMetrics> { totalMetrics, longMetrics, shortMetrics };
+            var metrics = new List<BacktestMetrics> { fullMetrics, longMetrics, shortMetrics };
 
             foreach (var metric in metrics)
             {

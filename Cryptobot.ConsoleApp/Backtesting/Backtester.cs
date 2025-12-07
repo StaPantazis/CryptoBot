@@ -11,9 +11,9 @@ using System.Diagnostics;
 
 namespace Cryptobot.ConsoleApp.Backtesting;
 
-public class Backtester(CacheService cacheService)
+public class Backtester(CacheService cache)
 {
-    private readonly CacheService _cacheService = cacheService;
+    private readonly CacheService _cache = cache;
 
     public async Task RunBacktest(BacktestingDetails details)
     {
@@ -21,6 +21,7 @@ public class Backtester(CacheService cacheService)
         swMain.Start();
 
         var candles = await GetCandlesWithPrint<BybitCandle>(details);
+        var spots = new List<(Spot spot, Stopwatch sw)>();
 
         foreach (var strategy in details.Strategies)
         {
@@ -29,24 +30,41 @@ public class Backtester(CacheService cacheService)
 
             var user = new User("Xatzias");
             var spot = new Spot(user, details.Budget, strategy.TradeStrategy, strategy.BudgetStrategy, details.Symbol);
+            spots.Add((spot, sw));
             Printer.BacktesterInitialization(spot);
 
             spot = Backtest(spot, candles, details.Interval);
+            spot.CalculateMetrics();
             sw.Stop();
 
+            if (details.Strategies.Length > 1)
+            {
+                Printer.Divider();
+            }
+        }
+
+        spots = spots.OrderByDescending(x => x.spot.Metrics.Full.PnL).ToList();
+
+        foreach (var (spot, sw) in spots)
+        {
             Printer.BacktesterResult(spot, sw);
 
-            var saveOutput = ShouldSaveLoop(swMain);
-
-            if (saveOutput)
+            if (details.Strategies.Length == 1)
             {
-                sw.Restart();
-                Printer.SavingOutputStart();
-                await SaveBacktestResult(candles, spot);
-                Printer.SavingOutputEnd(candles.Count, sw);
-            }
+                var saveOutput = ShouldSaveLoop(swMain);
 
-            Printer.Divider();
+                if (saveOutput)
+                {
+                    sw.Restart();
+                    Printer.SavingOutputStart();
+                    await SaveBacktestResult(candles, spot);
+                    Printer.SavingOutputEnd(candles.Count, sw);
+                }
+            }
+            else
+            {
+                Printer.Divider();
+            }
         }
 
         if (details.Strategies.Length > 1)
@@ -57,7 +75,7 @@ public class Backtester(CacheService cacheService)
 
     private Spot Backtest<T>(Spot spot, List<T> candles, CandleInterval candleInterval) where T : Candle
     {
-        var engine = new Engine<T>(_cacheService, spot);
+        var engine = new Engine<T>(_cache, spot);
         var totalCandles = candles.Count;
 
         for (var i = 0; i < totalCandles; i++)
@@ -79,7 +97,7 @@ public class Backtester(CacheService cacheService)
         var candles = await GetCandlesWithPrint<TrendCandle>(details);
 
         var trendProfiler = new TrendProfiler(trendConfiguration);
-        var indicatorManager = new IndicatorService(_cacheService, [IndicatorType.MovingAverage]);
+        var indicatorManager = new IndicatorService(_cache, [IndicatorType.MovingAverage]);
         var totalCandles = candles.Count;
 
         for (var i = 0; i < totalCandles; i++)
@@ -92,7 +110,7 @@ public class Backtester(CacheService cacheService)
             }
 
             var trend = profilerScope is IndicatorType.MacroTrend
-                ? TrendProfiler.ProfileByMovingAverage(_cacheService, candles, i)
+                ? TrendProfiler.ProfileByMovingAverage(_cache, candles, i)
                 : trendProfiler.ProfileComplex(candles, i);
 
             candles[i].Trend = trend;

@@ -1,3 +1,4 @@
+using Cryptobot.ConsoleApp.Backtesting.Metrics;
 using Cryptobot.ConsoleApp.Backtesting.Strategies;
 using Cryptobot.ConsoleApp.Backtesting.Strategies.BudgetStrategies;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
@@ -19,6 +20,7 @@ public class Spot
     public double AvailableBudget { get; private set; }
     public List<Trade> OpenTrades { get; } = [];
     public IReadOnlyList<Trade> Trades => _allTrades;
+    public MetricsBundle Metrics { get; private set; }
 
     public Spot(User user, double budget, TradeStrategyBase tradeStrategy, BudgetStrategy budgetStrategy, string symbol)
     {
@@ -191,4 +193,6 @@ public class Spot
             OpenTrades.RemoveAt(i);
         }
     }
+
+    public void CalculateMetrics() => Metrics = new(this);
 }

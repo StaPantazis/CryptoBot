@@ -12,6 +12,7 @@ public class StrategyBundle<TTradeStrategy, TBudgetStrategy> : StrategyBundleBas
     {
         TradeStrategy = (TTradeStrategy)Activator.CreateInstance(typeof(TTradeStrategy), cache, strategyVariation)!;
         BudgetStrategy = Activator.CreateInstance<TBudgetStrategy>()!;
+        IsVariationBundle = strategyVariation != null;
     }
 
     public StrategyBundle(TradeStrategyBase tradeStrategy)
@@ -44,4 +45,5 @@ public abstract class StrategyBundleBase
 {
     public TradeStrategyBase TradeStrategy { get; protected set; }
     public BudgetStrategy BudgetStrategy { get; protected set; }
+    public bool IsVariationBundle { get; protected set; } = false;
 }

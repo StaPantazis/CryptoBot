@@ -6,7 +6,7 @@ using Cryptobot.ConsoleApp.Utils;
 
 namespace Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
 
-public class TS_Simple_120_days_SMA_short(CacheService cacheService, StrategyVariation? variation = null) : TradeStrategyBase(cacheService, variation)
+public class TS_Simple_120_days_SMA_short(CacheService cache, StrategyVariation? variation = null) : TradeStrategyBase(cache, variation)
 {
     public override string Name { get; protected set; } = "Sell when lower than macro trend (SHORT)";
     public override string NameOf { get; protected set; } = nameof(TS_Simple_120_days_SMA_short);
