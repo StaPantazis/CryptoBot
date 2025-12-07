@@ -11,7 +11,7 @@ namespace Cryptobot.ConsoleApp;
 
 public static class Consoler
 {
-    public static async Task Run(CacheService cacheManager)
+    public static async Task Run(CacheService cacheService)
     {
         var backtestingDetails = new BacktestingDetails(
             Interval: CandleInterval.Fifteen_Minutes,
@@ -20,13 +20,13 @@ public static class Consoler
             Strategies: [
                 //new StrategyBundle<TS_Every100Candles_SL5_TP5, BS_1Percent>(),
                 //new StrategyBundle<TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3, BS_100Percent>(),
-                new StrategyBundle<TS_Aggressive_Trend_buy_green_sell_red, BS_100Percent>(),
+                new StrategyBundle<TS_Aggressive_Trend_buy_green_sell_red, BS_100Percent>(cacheService),
                 //new StrategyBundle<TS_Simple_120_days_SMA_short, BS_1Percent>(),
                 //new StrategyBundle<TS_Simple_120_days_SMA_Mix, BS_1Percent>(),
                 //new StrategyBundle<VariationSandboxFactory, BS_100Percent>(),
                 ]);
 
-        var backtester = new Backtester(cacheManager);
+        var backtester = new Backtester(cacheService);
         var choiceMade = false;
 
         while (true)
@@ -54,9 +54,8 @@ public static class Consoler
 
                         var scope = input switch
                         {
-                            "1" => IndicatorType.MicroTrend,
-                            "2" => IndicatorType.SemiTrend,
-                            "3" => IndicatorType.MacroTrend,
+                            "1" => IndicatorType.TrendProfileAI,
+                            "2" => IndicatorType.MacroTrend,
                             _ => (IndicatorType?)null
                         };
 

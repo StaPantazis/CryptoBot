@@ -4,11 +4,10 @@ using Cryptobot.ConsoleApp.Services;
 
 namespace Cryptobot.ConsoleApp.EngineDir;
 
-public class Engine<T>(CacheService cacheManager, params Spot[] spots) where T : Candle
+public class Engine<T>(CacheService cache, params Spot[] spots) where T : Candle
 {
-    private readonly CacheService _cacheManager = cacheManager;
     private readonly Spot[] _spots = spots;
-    private readonly Dictionary<string, IndicatorService> _indicatorManagers = spots.ToDictionary(x => x.Id, x => new IndicatorService(cacheManager, x.TradeStrategy));
+    private readonly Dictionary<string, IndicatorService> _indicatorManagers = spots.ToDictionary(x => x.Id, x => new IndicatorService(cache, x.TradeStrategy));
     private readonly DateTime? _filterForDebugging = null; // DateTime.ParseExact("12/08/2025", "dd/MM/yyyy", default);
 
     public void TradeNewCandle(List<T> candles, int currentCandleIndex, CandleInterval candleInterval)
@@ -24,7 +23,7 @@ public class Engine<T>(CacheService cacheManager, params Spot[] spots) where T :
 
             spot.CheckCloseTrades(candles, currentCandleIndex, candleInterval);
 
-            if (spot.TradeStrategy.ShouldOpenTrade(_cacheManager, candles, currentCandleIndex, candleInterval, out var positions) && positions != null)
+            if (spot.TradeStrategy.ShouldOpenTrade(candles, currentCandleIndex, candleInterval, out var positions) && positions != null)
             {
                 foreach (var pos in positions)
                 {

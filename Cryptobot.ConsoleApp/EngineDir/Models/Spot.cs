@@ -1,7 +1,6 @@
+using Cryptobot.ConsoleApp.Backtesting.Strategies;
 using Cryptobot.ConsoleApp.Backtesting.Strategies.BudgetStrategies;
-using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
-using Cryptobot.ConsoleApp.Services;
 using Cryptobot.ConsoleApp.Utils;
 
 namespace Cryptobot.ConsoleApp.EngineDir.Models;
@@ -10,7 +9,6 @@ public class Spot
 {
     private readonly double _slippage_multiplier = 0;
     private readonly List<Trade> _allTrades = [];
-    private readonly CacheService _cacheManager;
 
     public string Id { get; } = Guid.NewGuid().ToString();
     public User User { get; }
@@ -22,7 +20,7 @@ public class Spot
     public List<Trade> OpenTrades { get; } = [];
     public IReadOnlyList<Trade> Trades => _allTrades;
 
-    public Spot(User user, double budget, TradeStrategyBase tradeStrategy, BudgetStrategy budgetStrategy, string symbol, CacheService cacheManager)
+    public Spot(User user, double budget, TradeStrategyBase tradeStrategy, BudgetStrategy budgetStrategy, string symbol)
     {
         User = user;
         TradeStrategy = tradeStrategy;
@@ -40,8 +38,6 @@ public class Spot
             Constants.SYMBOL_BTCUSDT => Constants.SLIPPAGE_MULTIPLIER_BTC,
             _ => throw new NotImplementedException()
         };
-
-        _cacheManager = cacheManager;
     }
 
     public void OpenTrade<T>(List<T> candles, int currentCandleIndex, PositionSide position) where T : Candle
@@ -109,7 +105,7 @@ public class Spot
         {
             var trade = OpenTrades[i];
 
-            if (!TradeStrategy.ShouldCloseTrade(_cacheManager, candles, currentCandleIndex, candleInterval, trade))
+            if (!TradeStrategy.ShouldCloseTrade(candles, currentCandleIndex, candleInterval, trade))
             {
                 continue;
             }
@@ -132,7 +128,7 @@ public class Spot
                 {
                     exitPrice = trade.TakeProfit!.Value;
                 }
-                else if (TradeStrategy.ShouldExitLongTrade(_cacheManager, candles, currentCandleIndex, trade, candleInterval))
+                else if (TradeStrategy.ShouldExitLongTrade(candles, currentCandleIndex, trade, candleInterval))
                 {
                     rawExitPrice = candles[currentCandleIndex].ClosePrice;
                     exitPrice = rawExitPrice * (1 - _slippage_multiplier);
@@ -157,7 +153,7 @@ public class Spot
                 {
                     exitPrice = trade.TakeProfit!.Value;
                 }
-                else if (TradeStrategy.ShouldExitShortTrade(_cacheManager, candles, currentCandleIndex, trade, candleInterval))
+                else if (TradeStrategy.ShouldExitShortTrade(candles, currentCandleIndex, trade, candleInterval))
                 {
                     rawExitPrice = candles[currentCandleIndex].ClosePrice;
                     exitPrice = rawExitPrice * (1 + _slippage_multiplier);

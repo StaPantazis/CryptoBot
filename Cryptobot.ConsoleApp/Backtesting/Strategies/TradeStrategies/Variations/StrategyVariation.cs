@@ -1,29 +1,19 @@
 ﻿using Cryptobot.ConsoleApp.EngineDir.Models;
-using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 
 namespace Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies.Variations;
 
-public record StrategyVariation<T>(
-    Func<List<T>, int, CandleInterval, bool> ShouldLong,
-    Func<List<T>, int, CandleInterval, bool> ShouldShort,
-    int? MovingAverage,
-    double? StopLossLong,
-    double? TakeProfitLong,
-    double? StopLossShort,
-    double? TakeProfitShort,
-    IndicatorType[]? IndicatorTypes,
-    Trend[]? ApplicableTrends = null) where T : Candle
+public record StrategyVariation(
+    double? StopLossLong = null,
+    double? TakeProfitLong = null,
+    double? StopLossShort = null,
+    double? TakeProfitShort = null,
+    TrendConfiguration? MicroTrendConfig = null)
 {
     public string Name
     {
         get
         {
             var parts = new List<string>();
-
-            if (MovingAverage is { } ma)
-            {
-                parts.Add($"MA:{ma}");
-            }
 
             if (StopLossLong is { } slLong)
             {
@@ -43,16 +33,6 @@ public record StrategyVariation<T>(
             if (TakeProfitShort is { } tpShort)
             {
                 parts.Add($"TP_Short:{tpShort}");
-            }
-
-            if (IndicatorTypes is { Length: > 0 })
-            {
-                parts.Add($"Indicators:[{string.Join(", ", IndicatorTypes)}]");
-            }
-
-            if (ApplicableTrends is { Length: > 0 })
-            {
-                parts.Add($"Applicable Trends:[{string.Join(", ", ApplicableTrends)}]");
             }
 
             return string.Join(" | ", parts);

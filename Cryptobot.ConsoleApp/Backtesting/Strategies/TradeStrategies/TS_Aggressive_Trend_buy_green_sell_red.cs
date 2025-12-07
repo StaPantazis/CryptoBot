@@ -1,17 +1,16 @@
+using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies.Variations;
 using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Services;
 
 namespace Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
 
-public class TS_Aggressive_Trend_buy_green_sell_red : TradeStrategyBase
+public class TS_Aggressive_Trend_buy_green_sell_red(CacheService cacheService, StrategyVariation? variation = null) : TradeStrategyBase(cacheService, variation)
 {
-    private IndicatorService? _indicatorService = null;
-
     public override string Name { get; protected set; } = "Buy on green, sell on red";
     public override string NameOf { get; protected set; } = nameof(TS_Aggressive_Trend_buy_green_sell_red);
-    public override IndicatorType[] RelevantIndicators { get; protected set; } = [IndicatorType.MicroTrend];
-    public override TrendConfiguration MicroTrendConfiguration => TrendConfiguration.Aggressive();
+    public override IndicatorType[] RelevantIndicators { get; } = [IndicatorType.TrendProfileAI];
+    protected override TrendConfiguration MicroTrendConfigOverridable => TrendConfiguration.Aggressive();
 
     protected override double? StopLossLong<T>(List<T> candles, int currentCandleIndex) => 0.98;
     protected override double? TakeProfitLong<T>(List<T> candles, int currentCandleIndex) => 1.02;
@@ -19,23 +18,15 @@ public class TS_Aggressive_Trend_buy_green_sell_red : TradeStrategyBase
     protected override double? StopLossShort<T>(List<T> candles, int currentCandleIndex) => 1.02;
     protected override double? TakeProfitShort<T>(List<T> candles, int currentCandleIndex) => 0.98;
 
-    protected override bool ShouldLong<T>(CacheService cacheManager, List<T> candles, int currentCandleIndex, CandleInterval candleInterval)
+    protected override bool ShouldLong<T>(List<T> candles, int currentCandleIndex, CandleInterval candleInterval)
     {
-        _indicatorService ??= new IndicatorService(cacheManager, this);
-
         var candle = candles[currentCandleIndex];
-        _indicatorService.CalculateRelevantIndicators(candle, candles, currentCandleIndex);
-
         return candle.Indicators.MicroTrend is Trend.Bull or Trend.FullBull;
     }
 
-    protected override bool ShouldShort<T>(CacheService cacheManager, List<T> candles, int currentCandleIndex, CandleInterval candleInterval)
+    protected override bool ShouldShort<T>(List<T> candles, int currentCandleIndex, CandleInterval candleInterval)
     {
-        _indicatorService ??= new IndicatorService(cacheManager, this);
-
         var candle = candles[currentCandleIndex];
-        _indicatorService.CalculateRelevantIndicators(candle, candles, currentCandleIndex);
-
         return candle.Indicators.MicroTrend is Trend.Bear or Trend.FullBear;
     }
 }

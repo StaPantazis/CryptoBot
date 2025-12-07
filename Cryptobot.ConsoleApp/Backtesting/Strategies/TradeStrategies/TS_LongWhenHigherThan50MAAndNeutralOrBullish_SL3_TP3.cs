@@ -1,13 +1,14 @@
+using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies.Variations;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Services;
 
 namespace Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
 
-public class TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3 : TradeStrategyBase
+public class TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3(CacheService cacheService, StrategyVariation? variation = null) : TradeStrategyBase(cacheService, variation)
 {
     public override string Name { get; protected set; } = "Trade when price higher than last 50 MA and Neutral or Bullish | SL -3% | TP +3%";
     public override string NameOf { get; protected set; } = nameof(TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3);
-    public override IndicatorType[] RelevantIndicators { get; protected set; } = [IndicatorType.MovingAverage, IndicatorType.MicroTrend];
+    public override IndicatorType[] RelevantIndicators { get; } = [IndicatorType.MovingAverage, IndicatorType.TrendProfileAI];
 
     protected override double? StopLossLong<T>(List<T> candles, int currentCandleIndex) => 0.97;
     protected override double? TakeProfitLong<T>(List<T> candles, int currentCandleIndex) => 1.03;
@@ -15,7 +16,7 @@ public class TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3 : TradeStrateg
     protected override double? StopLossShort<T>(List<T> candles, int currentCandleIndex) => 1.08;
     protected override double? TakeProfitShort<T>(List<T> candles, int currentCandleIndex) => 0.93;
 
-    protected override bool ShouldLong<T>(CacheService cacheManager, List<T> candles, int currentCandleIndex, CandleInterval _)
+    protected override bool ShouldLong<T>(List<T> candles, int currentCandleIndex, CandleInterval _)
     {
         var nMABackCheck = 50;
         var candle = candles[currentCandleIndex];

@@ -122,7 +122,6 @@ public static class BybitHistory
         Printer.Finished();
     }
 
-
     private static async Task DownloadDailyCandles(BacktestingDetails details, HttpClient http, string resourcesPath, DateTime startDate, DateTime endDate)
     {
         var filename = Path.Combine(resourcesPath, $"{details.Symbol}-1D-ALL{Constants.PARQUET}");

@@ -4,8 +4,9 @@
 /// Configuration parameters for TrendProfiler.
 /// Adjust these knobs to fine-tune how trends are judged.
 /// </summary>
-public class TrendConfiguration(int window)
+public class TrendConfiguration(int window, string? name = null)
 {
+    private readonly string? _name = name;
     public const int _default_window = 30;
 
     /// <summary>
@@ -64,17 +65,17 @@ public class TrendConfiguration(int window)
     /// </summary>
     public int Window { get; set; } = window;
 
-    public override string ToString()
-        => $"Window_{Window}" +
-           $"-NeutralBand_{NeutralBand}" +
-           $"-MinR2ForTrend_{MinR2ForTrend}" +
-           $"-ThresholdBear_{ThresholdBear}" +
-           $"-ThresholdBull_{ThresholdBull}" +
-           $"-BreadthWeight_{BreadthWeight}";
+    public override string ToString() => _name ??
+        ($"Window_{Window}" +
+         $"-NeutralBand_{NeutralBand}" +
+         $"-MinR2ForTrend_{MinR2ForTrend}" +
+         $"-ThresholdBear_{ThresholdBear}" +
+         $"-ThresholdBull_{ThresholdBull}" +
+         $"-BreadthWeight_{BreadthWeight}");
 
     // --- Presets --- //
 
-    public static TrendConfiguration Balanced() => new(_default_window)
+    public static TrendConfiguration Balanced() => new(_default_window, "Balanced")
     {
         NeutralBand = 0.10,
         MinR2ForTrend = 0.20,
@@ -83,7 +84,7 @@ public class TrendConfiguration(int window)
         BreadthWeight = 0.30
     };
 
-    public static TrendConfiguration Conservative() => new(_default_window)
+    public static TrendConfiguration Conservative() => new(_default_window, "Conservative")
     {
         NeutralBand = 0.15,    // wider neutral zone
         MinR2ForTrend = 0.30,  // need stronger fit
@@ -92,7 +93,7 @@ public class TrendConfiguration(int window)
         BreadthWeight = 0.25   // rely more on slope/vol
     };
 
-    public static TrendConfiguration Aggressive() => new(_default_window)
+    public static TrendConfiguration Aggressive() => new(_default_window, "Aggressive")
     {
         NeutralBand = 0.05,    // narrow neutral zone
         MinR2ForTrend = 0.10,  // allow weak fits
@@ -101,13 +102,6 @@ public class TrendConfiguration(int window)
         BreadthWeight = 0.40   // breadth matters more
     };
 
-    public static TrendConfiguration Xatzias() => new(_default_window)
-    {
-        NeutralBand = 0.05,    // narrow neutral zone
-        MinR2ForTrend = 0.10,  // allow weak fits
-        ThresholdBear = 0.10,  // classify bear/bull easily
-        ThresholdBull = 0.40,  // easier to call "full" trends
-        BreadthWeight = 0.40   // breadth matters more
-    };
+    public static TrendConfiguration Default() => new(_default_window, "Default");
 }
 
