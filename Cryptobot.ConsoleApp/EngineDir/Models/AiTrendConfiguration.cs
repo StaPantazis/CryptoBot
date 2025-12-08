@@ -1,13 +1,24 @@
-﻿namespace Cryptobot.ConsoleApp.EngineDir.Models;
+﻿using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
+
+namespace Cryptobot.ConsoleApp.EngineDir.Models;
 
 /// <summary>
 /// Configuration parameters for TrendProfiler.
 /// Adjust these knobs to fine-tune how trends are judged.
 /// </summary>
-public class TrendConfiguration(int window, string? name = null)
+public class AiTrendConfiguration
 {
-    private readonly string? _name = name;
+    private readonly string? _name;
     public const int _default_window = 30;
+
+    private AiTrendConfiguration(AiTrendProfile trendProfilerProfile, int window, string? name = null)
+    {
+        Profile = trendProfilerProfile;
+        _name = name;
+        Window = window;
+    }
+
+    public AiTrendProfile Profile { get; }
 
     /// <summary>
     /// Neutral band around zero score.
@@ -63,7 +74,7 @@ public class TrendConfiguration(int window, string? name = null)
     /// <summary>
     /// How many candles back we are looking for the profiling.
     /// </summary>
-    public int Window { get; set; } = window;
+    public int Window { get; set; } = _default_window;
 
     public override string ToString() => _name ??
         ($"Window_{Window}" +
@@ -74,8 +85,20 @@ public class TrendConfiguration(int window, string? name = null)
          $"-BreadthWeight_{BreadthWeight}");
 
     // --- Presets --- //
+    public static AiTrendConfiguration Create(AiTrendProfile profile)
+    {
+        return profile switch
+        {
+            AiTrendProfile.Default => Default(),
+            AiTrendProfile.Balanced => Balanced(),
+            AiTrendProfile.Conservative => Conservative(),
+            AiTrendProfile.Aggressive => Aggressive(),
+            _ => throw new NotImplementedException(),
+        };
+    }
 
-    public static TrendConfiguration Balanced() => new(_default_window, "Balanced")
+    private static AiTrendConfiguration Default() => new(AiTrendProfile.Default, _default_window, "Default");
+    private static AiTrendConfiguration Balanced() => new(AiTrendProfile.Balanced, _default_window, "Balanced")
     {
         NeutralBand = 0.10,
         MinR2ForTrend = 0.20,
@@ -83,8 +106,7 @@ public class TrendConfiguration(int window, string? name = null)
         ThresholdBull = 0.55,
         BreadthWeight = 0.30
     };
-
-    public static TrendConfiguration Conservative() => new(_default_window, "Conservative")
+    private static AiTrendConfiguration Conservative() => new(AiTrendProfile.Conservative, _default_window, "Conservative")
     {
         NeutralBand = 0.15,    // wider neutral zone
         MinR2ForTrend = 0.30,  // need stronger fit
@@ -92,8 +114,7 @@ public class TrendConfiguration(int window, string? name = null)
         ThresholdBull = 0.65,  // very strict for "full" trends
         BreadthWeight = 0.25   // rely more on slope/vol
     };
-
-    public static TrendConfiguration Aggressive() => new(_default_window, "Aggressive")
+    private static AiTrendConfiguration Aggressive() => new(AiTrendProfile.Aggressive, _default_window, "Aggressive")
     {
         NeutralBand = 0.05,    // narrow neutral zone
         MinR2ForTrend = 0.10,  // allow weak fits
@@ -101,7 +122,5 @@ public class TrendConfiguration(int window, string? name = null)
         ThresholdBull = 0.40,  // easier to call "full" trends
         BreadthWeight = 0.40   // breadth matters more
     };
-
-    public static TrendConfiguration Default() => new(_default_window, "Default");
 }
 

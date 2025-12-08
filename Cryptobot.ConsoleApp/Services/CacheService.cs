@@ -1,7 +1,7 @@
 ﻿using Cryptobot.ConsoleApp.Backtesting;
 using Cryptobot.ConsoleApp.Backtesting.OutputModels;
 using Cryptobot.ConsoleApp.Bybit;
-using Cryptobot.ConsoleApp.EngineDir;
+using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Repositories;
 using Cryptobot.ConsoleApp.Resources.CachedIndicators;
@@ -12,56 +12,107 @@ namespace Cryptobot.ConsoleApp.Services;
 
 public class CacheService
 {
-    public Dictionary<long, CachedTrendProfileAI_Aggressive> SemiTrendCache { get; private set; } = [];
-    public Dictionary<long, CachedMacroTrend> MacroTrendCache { get; private set; } = [];
+    private readonly Dictionary<CandleInterval, Dictionary<long, CachedAiTrend>> _aiTrendPerInterval = [];
+
+    public Dictionary<long, CachedMovingAverageTrend> MovingAverageTrendCache { get; private set; } = [];
+    public Dictionary<long, CachedAiTrend> AiTrendCache { get; private set; } = [];
 
     public async Task InitializeCache()
     {
         await BybitHistory.Download(new BacktestingDetails(CandleInterval.Five_Minutes));
         await BybitHistory.Download(new BacktestingDetails(CandleInterval.Fifteen_Minutes));
         await BybitHistory.Download(new BacktestingDetails(CandleInterval.One_Day));
-        await ComputeMacroTrend();
-        //await ComputeSemiTrend();
+
+        //await ComputeMovingAverageTrend();
+        //await ComputeTrendProfilerAiTrends();
+
         await CandleValidatorService.ValidateStoredResources();
     }
 
-    private async Task ComputeMacroTrend()
+    public void SetBacktestInterval(BacktestingDetails details) => AiTrendCache = _aiTrendPerInterval[details.Interval];
+
+    private async Task ComputeMovingAverageTrend()
     {
-        var macroCachePath = Path.Combine(PathHelper.GetCachedIndicatorsOutputPath(), "MacroTrend.parquet");
-        var (shouldSave, data) = await ComputeTrend<CachedMacroTrend>(macroCachePath, CandleInterval.One_Day);
+        var movingAverageCachePath = Path.Combine(PathHelper.GetCachedIndicatorsOutputPath(), "MovingAverage.parquet");
+        var (shouldSave, cachedData) = await CheckFetchCompleteData(movingAverageCachePath, ParquetService.LoadMovingAverageTrend<CachedMovingAverageTrend>);
 
         if (shouldSave)
         {
-            await ParquetService.SaveMacroTrend(data, macroCachePath);
+            cachedData = await CalculateTrendCandles(
+                candleInterval: CandleInterval.One_Day,
+                cachedData: cachedData,
+                indicatorService: new IndicatorService(IndicatorType.MovingAverage),
+                getInstanceArgs: candle => [candle.OpenTime, candle.Indicators.MovingAverage!, candle.Indicators.MovingAverageTrend!]);
+
+            await ParquetService.SaveMovingAverageTrend(cachedData, movingAverageCachePath);
+            Printer.EmptyLine();
         }
 
-        MacroTrendCache = data.ToDictionary(x => x.Key, x => x);
+        MovingAverageTrendCache = cachedData.ToDictionary(x => x.Key, x => x);
     }
 
-    private async Task ComputeSemiTrend()
+    private async Task ComputeTrendProfilerAiTrends()
     {
-        var semiCachePath = Path.Combine(PathHelper.GetCachedIndicatorsOutputPath(), "SemiTrend.parquet");
-        var (shouldSave, data) = await ComputeTrend<CachedTrendProfileAI_Aggressive>(semiCachePath, CandleInterval.Fifteen_Minutes);
+        CandleInterval[] intervals = [CandleInterval.Five_Minutes, CandleInterval.Fifteen_Minutes];
+        var profiles = Enum.GetValues<AiTrendProfile>();
 
-        if (shouldSave)
+        foreach (var candleInterval in intervals)
         {
-            await ParquetService.SaveTrend(data, semiCachePath);
-        }
+            foreach (var profile in profiles)
+            {
+                var fileName = profile switch
+                {
+                    AiTrendProfile.Default => $"{nameof(CachedAiTrend_Default)}_{candleInterval}",
+                    AiTrendProfile.Balanced => $"{nameof(CachedAiTrend_Balanced)}_{candleInterval}",
+                    AiTrendProfile.Conservative => $"{nameof(CachedAiTrend_Conservative)}_{candleInterval}",
+                    AiTrendProfile.Aggressive => $"{nameof(CachedAiTrend_Aggressive)}_{candleInterval}",
+                    _ => throw new NotImplementedException(),
+                };
 
-        SemiTrendCache = data.ToDictionary(x => x.Key, x => x);
+                var aiTrendCachePath = Path.Combine(PathHelper.GetCachedIndicatorsOutputPath(), $"{fileName}.parquet");
+
+                Func<string, Task<List<CachedAiTrend>>> loader = profile switch
+                {
+                    AiTrendProfile.Default => path => ParquetService.LoadCachedAiTrend<CachedAiTrend_Default>(path).ContinueWith(t => t.Result.Cast<CachedAiTrend>().ToList()),
+                    AiTrendProfile.Balanced => path => ParquetService.LoadCachedAiTrend<CachedAiTrend_Balanced>(path).ContinueWith(t => t.Result.Cast<CachedAiTrend>().ToList()),
+                    AiTrendProfile.Conservative => path => ParquetService.LoadCachedAiTrend<CachedAiTrend_Conservative>(path).ContinueWith(t => t.Result.Cast<CachedAiTrend>().ToList()),
+                    AiTrendProfile.Aggressive => path => ParquetService.LoadCachedAiTrend<CachedAiTrend_Aggressive>(path).ContinueWith(t => t.Result.Cast<CachedAiTrend>().ToList()),
+                    _ => throw new NotImplementedException(),
+                };
+
+                var (shouldSave, cachedData) = await CheckFetchCompleteData(aiTrendCachePath, loader);
+
+                if (shouldSave)
+                {
+                    cachedData = await CalculateTrendCandles(
+                        candleInterval: candleInterval,
+                        cachedData: cachedData,
+                        indicatorService: new IndicatorService(AiTrendConfiguration.Create(profile), IndicatorType.AiTrend),
+                        getInstanceArgs: candle => [candle.OpenTime, candle.Indicators.AiTrend!.Value, candleInterval]);
+
+                    await ParquetService.SaveAiTrend(cachedData, aiTrendCachePath);
+                }
+
+                _aiTrendPerInterval[candleInterval] = cachedData.ToDictionary(x => x.Key, x => x);
+
+                Printer.EmptyLine();
+            }
+        }
     }
 
-    private static async Task<(bool shouldSave, List<T> data)> ComputeTrend<T>(string cachePath, CandleInterval candleInterval) where T : CachedTrend
+    private static async Task<(bool shouldSave, List<T> cachedData)> CheckFetchCompleteData<T>(string cachePath, Func<string, Task<List<T>>> loadData) where T : CachedTrend
     {
-        Printer.WriteLine($"Computing {typeof(T)} cache...", White);
+        Printer.WriteLine($"Computing {typeof(T).Name} cache...", White);
 
         List<T> cachedData = [];
 
         if (File.Exists(cachePath))
         {
-            cachedData = await ParquetService.LoadCachedTrend<T>(cachePath);
+            cachedData = await loadData(cachePath);
 
             var latestCachedTicks = cachedData.Max(x => x.Key);
+
+            // TODO :: This should work for the candle interval. Right now it works per day
             var today = DateTime.UtcNow.Date;
 
             if (latestCachedTicks >= today.Date.Ticks)
@@ -74,20 +125,26 @@ public class CacheService
         }
         else
         {
-            Printer.WriteLine($"Trend {typeof(T)} cache not found, computing from scratch...", Cyan);
+            Printer.WriteLine($"Trend {typeof(T).Name} cache not found, computing from scratch...", Cyan);
         }
 
+        return (true, []);
+    }
+
+    private static async Task<List<T>> CalculateTrendCandles<T>(CandleInterval candleInterval, List<T> cachedData, IndicatorService indicatorService, Func<TrendCandle, object[]> getInstanceArgs)
+        where T : CachedTrend
+    {
         var candles = await CandlesRepository.GetCandles<TrendCandle>(new BacktestingDetails(candleInterval));
-        var indicatorManager = new IndicatorService(null, [IndicatorType.MovingAverage]);
         var totalCandles = candles.Count;
         var result = cachedData.ToDictionary(x => x.Key, x => x) ?? [];
-        var remainingCandles = totalCandles - cachedData!.Count;
+        var remainingCandles = totalCandles - cachedData.Count;
 
         for (var i = 0; i < totalCandles; i++)
         {
             var candle = candles[i];
             var candleKey = candleInterval switch
             {
+                CandleInterval.Five_Minutes => candle.FiveMinuteKey,
                 CandleInterval.Fifteen_Minutes => candle.FifteenMinuteKey,
                 CandleInterval.One_Day => candle.DayKey,
                 _ => throw new NotImplementedException()
@@ -100,11 +157,10 @@ public class CacheService
 
             Printer.CalculatingCandles(i, remainingCandles);
 
-            indicatorManager.CalculateRelevantIndicators(candles, i);
-            var trend = TrendProfiler.ProfileByMovingAverage(null, candles, i);
-            result[candleKey] = (T)Activator.CreateInstance(typeof(T), candle.OpenTime, candle.Indicators.MovingAverage, trend)!;
+            indicatorService.CalculateRelevantIndicators(candles, i);
+            result[candleKey] = (T)Activator.CreateInstance(typeof(T), candle.OpenTime, candle.Indicators.AiTrend!.Value, candleInterval)!;
         }
 
-        return (true, result.Values.OrderBy(x => x.Key).ToList());
+        return result.Values.OrderBy(x => x.Key).ToList();
     }
 }

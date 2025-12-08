@@ -1,7 +1,7 @@
 using Cryptobot.ConsoleApp.Backtesting;
+using Cryptobot.ConsoleApp.Backtesting.Strategies;
 using Cryptobot.ConsoleApp.Backtesting.Strategies.BudgetStrategies;
 using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
-using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies.Variations;
 using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Services;
@@ -14,13 +14,16 @@ public static class Consoler
     public static async Task Run(CacheService cache)
     {
         var backtestingDetails = new BacktestingDetails(
-            Interval: CandleInterval.Five_Minutes,
+            Interval: CandleInterval.Fifteen_Minutes,
             Symbol: Constants.SYMBOL_BTCUSDT,
             MarketCategory: Constants.MARKET_PERPETUAL_FUTURES,
-            Strategies: TradeStrategyVariationFactory.Sandbox<TS_Aggressive_Trend_buy_green_sell_red, BS_100Percent>(cache));
-        //Strategies: [
-        //new StrategyBundle<TS_Aggressive_Trend_buy_green_sell_red, BS_100Percent>(cache),
-        //]);
+            //Strategies: TradeStrategyVariationFactory.Sandbox<TS_Aggressive_Trend_buy_green_sell_red, BS_100Percent>(cache));
+            Strategies:
+            [
+                new StrategyBundle<TS_Aggressive_Trend_buy_green_sell_red, BS_100Percent>(cache),
+            ]);
+
+        //cache.SetBacktestInterval(backtestingDetails);
 
         var backtester = new Backtester(cache);
         var choiceMade = false;
@@ -44,23 +47,50 @@ public static class Consoler
                     while (true)
                     {
                         Printer.TrendProfilerScope();
-
                         input = Console.ReadLine();
                         Printer.EmptyLine();
 
                         var scope = input switch
                         {
-                            "1" => IndicatorType.TrendProfileAI,
-                            "2" => IndicatorType.MacroTrend,
+                            "1" => IndicatorType.MovingAverage,
+                            "2" => IndicatorType.AiTrend,
                             _ => (IndicatorType?)null
                         };
 
                         if (scope != null)
                         {
-                            //var profilerConfig = new TrendConfiguration(window: TrendConfiguration._default_window);
-                            var profilerConfig = TrendConfiguration.Aggressive();
+                            AiTrendConfiguration? aiTrendConfig = null;
 
-                            await backtester.RunTrendProfiler(backtestingDetails, profilerConfig, (IndicatorType)scope);
+                            if (scope == IndicatorType.MovingAverage)
+                            {
+                                while (true)
+                                {
+                                    Printer.AiTrendProfileSelection();
+                                    input = Console.ReadLine();
+                                    Printer.EmptyLine();
+
+                                    var aiTrend = input switch
+                                    {
+                                        "1" => AiTrendProfile.Default,
+                                        "2" => AiTrendProfile.Balanced,
+                                        "3" => AiTrendProfile.Conservative,
+                                        "4" => AiTrendProfile.Aggressive,
+                                        _ => (AiTrendProfile?)null
+                                    };
+
+                                    if (aiTrend != null)
+                                    {
+                                        aiTrendConfig = AiTrendConfiguration.Create((AiTrendProfile)aiTrend);
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        Printer.InvalidChoice();
+                                    }
+                                }
+                            }
+
+                            await Backtester.RunTrendProfiler(backtestingDetails, aiTrendConfig, (IndicatorType)scope);
                             Printer.PressKeyToContinue();
 
                             break;

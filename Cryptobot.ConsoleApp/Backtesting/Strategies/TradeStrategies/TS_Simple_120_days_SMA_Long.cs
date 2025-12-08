@@ -10,7 +10,7 @@ public class TS_Simple_120_days_SMA_Long(CacheService cache, StrategyVariation? 
 {
     protected override string NameOverridable { get; set; } = "Sell when higher (LONG)";
     public override string NameOf { get; protected set; } = nameof(TS_Simple_120_days_SMA_short);
-    public override IndicatorType[] RelevantIndicators { get; } = [IndicatorType.MovingAverage, IndicatorType.MacroTrend];
+    public override IndicatorType[] RelevantIndicators { get; } = [IndicatorType.MovingAverage];
 
     protected override double? StopLossLong<T>(List<T> candles, int currentCandleIndex) => null;
     protected override double? TakeProfitLong<T>(List<T> candles, int currentCandleIndex) => null;
@@ -26,7 +26,7 @@ public class TS_Simple_120_days_SMA_Long(CacheService cache, StrategyVariation? 
         }
 
         var currentCandle = candles[currentCandleIndex];
-        return currentCandle.ClosePrice < Cache.MacroTrendCache[currentCandle.DayKey].MovingAverage;
+        return currentCandle.ClosePrice < Cache.MovingAverageTrendCache[currentCandle.DayKey].MovingAverage;
     }
 
     protected override bool ShouldLong<T>(List<T> candles, int currentCandleIndex, CandleInterval candleInterval)
@@ -37,6 +37,6 @@ public class TS_Simple_120_days_SMA_Long(CacheService cache, StrategyVariation? 
         }
 
         var candle = candles[currentCandleIndex];
-        return candle.ClosePrice > Cache.MacroTrendCache[candle.DayKey].MovingAverage;
+        return candle.ClosePrice > Cache.MovingAverageTrendCache[candle.DayKey].MovingAverage;
     }
 }

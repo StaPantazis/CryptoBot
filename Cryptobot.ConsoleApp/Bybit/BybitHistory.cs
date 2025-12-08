@@ -47,7 +47,6 @@ public static class BybitHistory
         if (startDate >= endDate)
         {
             Printer.AlreadyDownloaded();
-            Printer.EmptyLine();
             return;
         }
 
@@ -144,7 +143,6 @@ public static class BybitHistory
         if (missingDates.Count == 0)
         {
             Printer.AlreadyDownloaded();
-            Printer.EmptyLine();
             return;
         }
 

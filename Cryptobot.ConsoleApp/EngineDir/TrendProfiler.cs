@@ -4,14 +4,29 @@ using Cryptobot.ConsoleApp.Services;
 
 namespace Cryptobot.ConsoleApp.EngineDir;
 
-public class TrendProfiler(TrendConfiguration config)
+public static class TrendProfiler
 {
     private const int _movingAverageWindow = 120;
-    private readonly TrendConfiguration _config = EnsureValid(config);
 
-    public Trend ProfileComplex<T>(List<T> candles, int currentCandleIndex) where T : Candle
+    public static Trend ProfileByMovingAverage<T>(CacheService? cache, List<T> candles, int currentCandleIndex, T? currentCandle = null) where T : Candle
     {
-        var positions = GetWindowPositions(candles, currentCandleIndex);
+        currentCandle ??= candles[currentCandleIndex];
+
+        if (cache == null)
+        {
+            var ma = GetMovingAverage(candles, currentCandleIndex);
+
+            return ma is null
+                ? Trend.Neutral
+                : (double)currentCandle.Indicators.MovingAverage! >= (double)ma! ? Trend.Bull : Trend.Bear;
+        }
+
+        return cache.MovingAverageTrendCache[currentCandle.DayKey].Trend;
+    }
+
+    public static Trend ProfileAiTrend<T>(List<T> candles, int currentCandleIndex, AiTrendConfiguration config) where T : Candle
+    {
+        var positions = GetWindowPositions(candles, currentCandleIndex, config);
 
         if (positions == null)
         {
@@ -38,13 +53,13 @@ public class TrendProfiler(TrendConfiguration config)
 
         // log-prices & regression axis
         var y = closes.Select(x => Math.Log(x)).ToArray();
-        var x = Enumerable.Range(0, _config.Window).Select(i => (double)i).ToArray();
+        var x = Enumerable.Range(0, config.Window).Select(i => (double)i).ToArray();
 
         var (slope, r2) = LinearRegressionSlopeR2(x, y);
 
         // log-returns
-        var rets = new double[_config.Window - 1];
-        for (var i = 1; i < _config.Window; i++)
+        var rets = new double[config.Window - 1];
+        for (var i = 1; i < config.Window; i++)
         {
             rets[i - 1] = y[i] - y[i - 1];
         }
@@ -61,45 +76,29 @@ public class TrendProfiler(TrendConfiguration config)
 
         // Drift-to-noise + breadth blend
         var t = slope / vol;
-        var raw = ((1.0 - _config.BreadthWeight) * t) + (_config.BreadthWeight * breadth);
+        var raw = ((1.0 - config.BreadthWeight) * t) + (config.BreadthWeight * breadth);
         var strength = 0.5 + (0.5 * Math.Sqrt(Math.Max(0, r2))); // [0.5..1]
         var score = Math.Tanh(raw * strength);
 
         // --- Labeling gates (consistent & symmetric) ---
-        if (Math.Abs(score) < _config.NeutralBand || r2 < _config.MinR2ForTrend)
+        if (Math.Abs(score) < config.NeutralBand || r2 < config.MinR2ForTrend)
         {
             return Trend.Neutral;
         }
-        else if (score >= _config.ThresholdBull)
+        else if (score >= config.ThresholdBull)
         {
             return Trend.FullBull;
         }
-        else if (score >= _config.ThresholdBear)
+        else if (score >= config.ThresholdBear)
         {
             return Trend.Bull;
         }
-        else if (score <= -_config.ThresholdBull)
+        else if (score <= -config.ThresholdBull)
         {
             return Trend.FullBear;
         }
 
-        return score <= -_config.ThresholdBear ? Trend.Bear : Trend.Neutral;
-    }
-
-    public static Trend ProfileByMovingAverage<T>(CacheService? cache, List<T> candles, int currentCandleIndex, T? currentCandle = null) where T : Candle
-    {
-        currentCandle ??= candles[currentCandleIndex];
-
-        if (cache == null)
-        {
-            var ma = GetMovingAverage(candles, currentCandleIndex);
-
-            return ma is null
-                ? Trend.Neutral
-                : (double)currentCandle.Indicators.MovingAverage! >= (double)ma! ? Trend.Bull : Trend.Bear;
-        }
-
-        return cache.MacroTrendCache[currentCandle.DayKey].Trend;
+        return score <= -config.ThresholdBear ? Trend.Bear : Trend.Neutral;
     }
 
     public static double? GetMovingAverage<T>(List<T> candles, int currentCandleIndex) where T : Candle
@@ -118,7 +117,7 @@ public class TrendProfiler(TrendConfiguration config)
         return slice.Average(c => c.ClosePrice);
     }
 
-    private (int start, int length)? GetWindowPositions<T>(List<T> candles, int currentCandleIndex) where T : Candle
+    private static (int start, int length)? GetWindowPositions<T>(List<T> candles, int currentCandleIndex, AiTrendConfiguration config) where T : Candle
     {
         if (candles == null || config.Window < 3 || candles.Count < config.Window)
         {
@@ -219,7 +218,7 @@ public class TrendProfiler(TrendConfiguration config)
         return total == 0 ? 0 : (up - down) / (double)total;
     }
 
-    private static TrendConfiguration EnsureValid(TrendConfiguration c)
+    private static AiTrendConfiguration EnsureValid(AiTrendConfiguration c)
     {
         // clamp all to [0,1]; enforce ordering for thresholds
         var neutralBand = Clamp01(c.NeutralBand);

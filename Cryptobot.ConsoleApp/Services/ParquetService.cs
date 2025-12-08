@@ -132,12 +132,12 @@ public static class ParquetService
         await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[7], candles.Select(x => x.Volume).ToArray()));
     }
 
-    public static async Task SaveMacroTrend(IEnumerable<CachedMacroTrend> data, string filepath)
+    public static async Task SaveMovingAverageTrend(IEnumerable<CachedMovingAverageTrend> data, string filepath)
     {
         var schema = new ParquetSchema(
-            new DataField<DateTime>(nameof(CachedMacroTrend.OpenDateTime)),
-            new DataField<double?>(nameof(CachedMacroTrend.MovingAverage)),
-            new DataField<int>(nameof(CachedMacroTrend.Trend)));
+            new DataField<DateTime>(nameof(CachedMovingAverageTrend.OpenDateTime)),
+            new DataField<double?>(nameof(CachedMovingAverageTrend.MovingAverage)),
+            new DataField<int>(nameof(CachedMovingAverageTrend.Trend)));
 
         using var stream = File.Create(filepath);
         using var writer = await ParquetWriter.CreateAsync(schema, stream);
@@ -148,18 +148,18 @@ public static class ParquetService
         await rg.WriteColumnAsync(new DataColumn((DataField<int>)schema[2], data.Select(x => (int)x.Trend).ToArray()));
     }
 
-    public static async Task SaveTrend(IEnumerable<CachedTrend> data, string filepath)
+    public static async Task SaveAiTrend(IEnumerable<CachedAiTrend> data, string filepath)
     {
         var schema = new ParquetSchema(
-            new DataField<DateTime>(nameof(CachedTrend.OpenDateTime)),
-            new DataField<int>(nameof(CachedTrend.Trend)));
+            new DataField<DateTime>(nameof(CachedAiTrend.OpenDateTime)),
+            new DataField<int>(nameof(CachedAiTrend.Trend)));
 
         using var stream = File.Create(filepath);
         using var writer = await ParquetWriter.CreateAsync(schema, stream);
         using var rg = writer.CreateRowGroup();
 
         await rg.WriteColumnAsync(new DataColumn((DataField<DateTime>)schema[0], data.Select(x => x.OpenDateTime).ToArray()));
-        await rg.WriteColumnAsync(new DataColumn((DataField<int>)schema[2], data.Select(x => (int)x.Trend).ToArray()));
+        await rg.WriteColumnAsync(new DataColumn((DataField<int>)schema[1], data.Select(x => (int)x.Trend).ToArray()));
     }
 
     // READ
@@ -214,7 +214,7 @@ public static class ParquetService
         return candles;//.OrderBy(x => x.OpenTime).ToList();
     }
 
-    public static async Task<List<T>> LoadCachedTrend<T>(string filepath) where T : CachedTrend
+    public static async Task<List<T>> LoadMovingAverageTrend<T>(string filepath) where T : CachedTrend
     {
         using var stream = File.OpenRead(filepath);
         using var reader = await ParquetReader.CreateAsync(stream);
@@ -233,6 +233,28 @@ public static class ParquetService
         for (var i = 0; i < openDateTimes.Length; i++)
         {
             list.Add((T)Activator.CreateInstance(typeof(T), openDateTimes[i], movingAverages[i], (Trend)trends[i])!);
+        }
+
+        return list;
+    }
+
+    public static async Task<List<T>> LoadCachedAiTrend<T>(string filepath) where T : CachedAiTrend
+    {
+        using var stream = File.OpenRead(filepath);
+        using var reader = await ParquetReader.CreateAsync(stream);
+        using var rg = reader.OpenRowGroupReader(0);
+
+        var openDateTimeColumn = await rg.ReadColumnAsync((DataField)reader.Schema[0]);
+        var trendColumn = await rg.ReadColumnAsync((DataField)reader.Schema[1]);
+
+        var openDateTimes = ((IEnumerable<DateTime>)openDateTimeColumn.Data).ToArray();
+        var trends = ((IEnumerable<int>)trendColumn.Data).ToArray();
+
+        var list = new List<T>(openDateTimes.Length);
+
+        for (var i = 0; i < openDateTimes.Length; i++)
+        {
+            list.Add((T)Activator.CreateInstance(typeof(T), openDateTimes[i], (Trend)trends[i])!);
         }
 
         return list;

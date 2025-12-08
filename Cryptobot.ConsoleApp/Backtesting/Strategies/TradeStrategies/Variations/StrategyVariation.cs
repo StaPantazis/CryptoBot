@@ -9,13 +9,13 @@ namespace Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies.Variations
 /// <param name="TakeProfitLong">High</param>
 /// <param name="StopLossShort">High</param>
 /// <param name="TakeProfitShort">Low</param>
-/// <param name="MicroTrendConfig"></param>
+/// <param name="AiTrendConfig"></param>
 public record StrategyVariation(
     double? StopLossLong = null,
     double? TakeProfitLong = null,
     double? StopLossShort = null,
     double? TakeProfitShort = null,
-    TrendConfiguration? MicroTrendConfig = null)
+    AiTrendConfiguration? AiTrendConfig = null)
 {
     public string Name
     {
@@ -43,9 +43,9 @@ public record StrategyVariation(
                 parts.Add($"TP_Short:{TakeProfitShort}");
             }
 
-            if (MicroTrendConfig != null)
+            if (AiTrendConfig != null)
             {
-                parts.Add($"Trend Config:{MicroTrendConfig}");
+                parts.Add($"AI Trend Config:{AiTrendConfig}");
             }
 
             return string.Join(" | ", parts);

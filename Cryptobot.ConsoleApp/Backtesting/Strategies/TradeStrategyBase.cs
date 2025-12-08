@@ -22,8 +22,8 @@ public abstract class TradeStrategyBase(CacheService cache, StrategyVariation? v
     protected CacheService Cache { get; } = cache;
     protected IndicatorService IndicatorService => field ??= new IndicatorService(Cache, RelevantIndicators);
 
-    protected virtual TrendConfiguration MicroTrendConfigOverridable { get; } = new(window: 30);
-    public TrendConfiguration MicroTrendConfig => field ??= variation?.MicroTrendConfig ?? MicroTrendConfigOverridable;
+    protected virtual AiTrendConfiguration AiTrendConfigOverridable { get; } = AiTrendConfiguration.Create(AiTrendProfile.Default);
+    public AiTrendConfiguration AiTrendConfig => field ??= variation?.AiTrendConfig ?? AiTrendConfigOverridable;
 
     public virtual IndicatorType[] RelevantIndicators { get; } = [];
 

@@ -1,5 +1,6 @@
 ﻿using Cryptobot.ConsoleApp.Backtesting.Strategies.BudgetStrategies;
 using Cryptobot.ConsoleApp.EngineDir.Models;
+using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Extensions;
 using Cryptobot.ConsoleApp.Services;
 
@@ -23,7 +24,7 @@ public static class TradeStrategyVariationFactory
                                 TakeProfitLong: takeProfitLong,
                                 StopLossShort: stopLossShort,
                                 TakeProfitShort: takeProfitShort,
-                                MicroTrendConfig: trendConfig)))))));
+                                AiTrendConfig: trendConfig)))))));
 
         var bundle = variations
             .Select(x => new StrategyBundle<TBudgetStrategy>(
@@ -38,6 +39,9 @@ public static class TradeStrategyVariationFactory
     private static double?[] ArrayLoops(params double?[]? nums) => nums is null || !nums.Any() ? [null] : nums;
     private static double[] Low1To6Percent() => ArrayLoops(0.94, 0.95, 0.96, 0.97, 0.98, 0.99).Cast<double>().ToArray();
     private static double[] High1To6Percent() => ArrayLoops(1.01, 1.02, 1.03, 1.04, 1.05, 1.06).Cast<double>().ToArray();
-    private static TrendConfiguration[] AllTrendStrategies()
-        => [TrendConfiguration.Default(), TrendConfiguration.Balanced(), TrendConfiguration.Conservative(), TrendConfiguration.Aggressive()];
+    private static AiTrendConfiguration[] AllTrendStrategies()
+        => [AiTrendConfiguration.Create(AiTrendProfile.Default),
+            AiTrendConfiguration.Create(AiTrendProfile.Balanced),
+            AiTrendConfiguration.Create(AiTrendProfile.Conservative),
+            AiTrendConfiguration.Create(AiTrendProfile.Aggressive)];
 }

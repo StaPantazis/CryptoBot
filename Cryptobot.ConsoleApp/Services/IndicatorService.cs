@@ -5,15 +5,34 @@ using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 
 namespace Cryptobot.ConsoleApp.Services;
 
-public class IndicatorService(CacheService? cache, TradeStrategyBase? tradeStrategy)
+public class IndicatorService
 {
-    private readonly CacheService? _cache = cache;
-    private readonly IndicatorType[] _indicators = tradeStrategy?.RelevantIndicators ?? [];
-    private readonly TrendProfiler? _microTrendProfiler = tradeStrategy?.MicroTrendConfig != null ? new(tradeStrategy.MicroTrendConfig) : null;
+    private readonly CacheService? _cache = null;
+    private readonly IndicatorType[] _indicators = [];
+    private readonly AiTrendConfiguration? _aiTrendConfig = null;
 
-    public IndicatorService(CacheService? cache, IndicatorType[] indicators) : this(cache, (TradeStrategyBase?)null)
+    public IndicatorService(params IndicatorType[] indicators)
     {
-        _indicators = indicators ?? throw new ArgumentNullException();
+        _indicators = indicators;
+    }
+
+    public IndicatorService(AiTrendConfiguration? aiTrendConfig, params IndicatorType[] indicators)
+    {
+        _aiTrendConfig = aiTrendConfig;
+        _indicators = indicators;
+    }
+
+    public IndicatorService(CacheService cache, IndicatorType[] indicators)
+    {
+        _cache = cache;
+        _indicators = indicators;
+    }
+
+    public IndicatorService(CacheService cache, TradeStrategyBase tradeStrategy)
+    {
+        _cache = cache;
+        _aiTrendConfig = tradeStrategy.AiTrendConfig;
+        _indicators = tradeStrategy.RelevantIndicators ?? [];
     }
 
     public void CalculateRelevantIndicators<T>(List<T> candles, int currentCandleIndex) where T : Candle
@@ -36,13 +55,15 @@ public class IndicatorService(CacheService? cache, TradeStrategyBase? tradeStrat
                 case IndicatorType.MovingAverage:
                     candle.Indicators.MovingAverage = _cache is null
                         ? TrendProfiler.GetMovingAverage(candles, currentCandleIndex)
-                        : _cache.MacroTrendCache[candle.DayKey].MovingAverage;
+                        : _cache.MovingAverageTrendCache[candle.DayKey].MovingAverage;
+
+                    candle.Indicators.MovingAverageTrend = _cache is null
+                        ? TrendProfiler.ProfileByMovingAverage(_cache, candles, currentCandleIndex, candle)
+                        : _cache.MovingAverageTrendCache[candle.DayKey].Trend;
+
                     break;
-                case IndicatorType.TrendProfileAI:
-                    candle.Indicators.MicroTrend = _microTrendProfiler!.ProfileComplex(candles, currentCandleIndex);
-                    break;
-                case IndicatorType.MacroTrend:
-                    candle.Indicators.MacroTrend = TrendProfiler.ProfileByMovingAverage(_cache, candles, currentCandleIndex, candle);
+                case IndicatorType.AiTrend:
+                    candle.Indicators.AiTrend = TrendProfiler.ProfileAiTrend(candles, currentCandleIndex, _aiTrendConfig!);
                     break;
                 default:
                     break;

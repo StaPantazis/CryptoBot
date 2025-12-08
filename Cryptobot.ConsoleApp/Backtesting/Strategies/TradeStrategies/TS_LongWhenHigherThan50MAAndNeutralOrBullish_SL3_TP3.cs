@@ -8,7 +8,7 @@ public class TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3(CacheService c
 {
     protected override string NameOverridable { get; set; } = "Trade when price higher than last 50 MA and Neutral or Bullish | SL -3% | TP +3%";
     public override string NameOf { get; protected set; } = nameof(TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3);
-    public override IndicatorType[] RelevantIndicators { get; } = [IndicatorType.MovingAverage, IndicatorType.TrendProfileAI];
+    public override IndicatorType[] RelevantIndicators { get; } = [IndicatorType.MovingAverage, IndicatorType.AiTrend];
 
     protected override double? StopLossLong<T>(List<T> candles, int currentCandleIndex) => 0.97;
     protected override double? TakeProfitLong<T>(List<T> candles, int currentCandleIndex) => 1.03;
@@ -27,6 +27,6 @@ public class TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3(CacheService c
         }
 
         var lastN = candles.Skip(currentCandleIndex - nMABackCheck).Take(nMABackCheck).Select(x => x.Indicators.MovingAverage).ToArray();
-        return lastN.All(x => x < candle.ClosePrice) && (candle.Indicators.MicroTrend is Trend.Neutral or Trend.Bull);
+        return lastN.All(x => x < candle.ClosePrice) && (candle.Indicators.AiTrend is Trend.Neutral or Trend.Bull);
     }
 }

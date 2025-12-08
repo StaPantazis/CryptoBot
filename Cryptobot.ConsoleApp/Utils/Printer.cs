@@ -35,9 +35,21 @@ public static class Printer
     {
         EmptyLine();
         WriteLine("Which scope do you want:", Cyan);
-        WriteLine("  1) Micro (3 days)", Yellow);
-        WriteLine("  2) Semi (3 weeks)", Yellow);
-        WriteLine("  3) Macro (4 months)", Yellow);
+        WriteLine("  1) Moving Average", Yellow);
+        WriteLine("  2) AI Trend", Yellow);
+    }
+
+    public static void AiTrendProfileSelection()
+    {
+        EmptyLine();
+        WriteLine("Which AI Trend profile do you want:", Cyan);
+
+        var profiles = Enum.GetValues<AiTrendProfile>().ToArray();
+
+        for (var i = 0; i < profiles.Length; i++)
+        {
+            WriteLine($"  {i + 1}) {profiles[i]}", Yellow);
+        }
     }
 
     public static void PressKeyToContinue()
@@ -132,7 +144,7 @@ public static class Printer
         {
             candleCount = 1;
         }
-        else if (candleCount % 1000 != 0)
+        else if (candleCount % 1000 != 0 && candleCount != totalCandles)
         {
             return;
         }
