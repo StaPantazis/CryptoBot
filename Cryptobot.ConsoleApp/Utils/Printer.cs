@@ -123,19 +123,16 @@ public static class Printer
     {
         WriteLine("__BACKTESTING__", Cyan);
 
-        Write($"{(index != null ? $"{index}/{totalStrategies}] " : "")}Trading Strategy: ", White);
-        WriteLine(spot.TradeStrategy.Name, Yellow);
+        BacktesterStrategyName(spot, index, totalStrategies);
 
         Write("Budgeting Strategy: ", White);
         WriteLine(spot.BudgetStrategy.Name, Yellow);
     }
 
-    public static void VariationsResult(int totalVariations)
+    public static void BacktesterStrategyName(Spot spot, int? index, int? totalStrategies)
     {
-        EmptyLine();
-        Divider();
-        WriteLine($"__RESULT: {totalVariations} VARIATIONS BACKTESTED__", Cyan);
-        EmptyLine();
+        Write($"{(index != null ? $"{index}/{totalStrategies}] " : "")}Trading Strategy: ", White);
+        WriteLine(spot.TradeStrategy.Name, Yellow);
     }
 
     public static void CalculatingCandles(int candleCount, int totalCandles)
@@ -152,7 +149,7 @@ public static class Printer
         Write($"\rCalculating {candleCount}/{totalCandles}...", Yellow);
     }
 
-    public static void BacktesterResult(Spot spot, Stopwatch sw)
+    public static void BacktesterResult(Spot spot, Stopwatch sw, string sectionName)
     {
         var fullMetrics = spot.Metrics.Full;
 
@@ -181,7 +178,7 @@ public static class Printer
             var longMetrics = spot.Metrics.Long;
             var shortMetrics = spot.Metrics.Short;
 
-            var table = new PrintTable(ignoreFirstColumnForAlignment: true,
+            var table = new PrintTable(sectionName: sectionName, ignoreFirstColumnForAlignment: true,
                 "_Budgeting_", "Total Trades", "Closed Trades", "Open Trades", $"Open Trades {Constants.STRING_EURO}", "Final Full Budget", $"Final Available Budget", "Total PnL", "Fees", "Slippage", "Total Costs", "Avg Win", "Avg Loss",
                 "_Performance_", "Max Drawdown", "Payoff Ratio W/L", "Std Deviation", "Sharpe Ratio", "Sortino Ratio", "Budget % per trade", "Win Rate", "Expectancy",
                 "_Streaks_", "Avg Win Streak", "Avg Loss Streak", "Longest Win Streak", "Longest Lose Streak", "Win Streak Deviation", "Lose Streak Deviation");
@@ -355,10 +352,12 @@ public static class Printer
         private readonly bool _ignoreFirstColumnForAlignment;
         private readonly List<PrintColumn> Columns = [];
 
-        public PrintTable(bool ignoreFirstColumnForAlignment, params string[] firstColumn)
+        public PrintTable(string sectionName, bool ignoreFirstColumnForAlignment, params string[] firstColumn)
         {
             _ignoreFirstColumnForAlignment = ignoreFirstColumnForAlignment;
-            var rows = new List<PrintCell>() { PrintCell.Empty };
+            var rows = new List<PrintCell>() {
+                string.IsNullOrEmpty(sectionName) ? PrintCell.Empty : new PrintCell(sectionName, White)
+            };
 
             foreach (var row in firstColumn)
             {

@@ -17,13 +17,14 @@ public static class Consoler
             Interval: CandleInterval.Fifteen_Minutes,
             Symbol: Constants.SYMBOL_BTCUSDT,
             MarketCategory: Constants.MARKET_PERPETUAL_FUTURES,
-            //Strategies: TradeStrategyVariationFactory.Sandbox<TS_Aggressive_Trend_buy_green_sell_red, BS_100Percent>(cache));
-            Strategies:
-            [
-                new StrategyBundle<TS_Aggressive_Trend_buy_green_sell_red, BS_100Percent>(cache),
-            ]);
+        //Strategies: TradeStrategyVariationFactory.Sandbox<TS_Aggressive_Trend_buy_green_sell_red, BS_100Percent>(cache));
+        Strategies:
+        [
+            new StrategyBundle<TS_Aggressive_Trend_buy_green_sell_red, BS_100Percent>(cache),
+            new StrategyBundle<TS_Simple_120_days_SMA_Long, BS_100Percent>(cache),
+        ]);
 
-        //cache.SetBacktestInterval(backtestingDetails);
+        cache.SetBacktestInterval(backtestingDetails);
 
         var backtester = new Backtester(cache);
         var choiceMade = false;

@@ -1,4 +1,5 @@
-﻿using Cryptobot.ConsoleApp.Extensions;
+﻿using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
+using Cryptobot.ConsoleApp.Extensions;
 
 namespace Cryptobot.ConsoleApp.EngineDir.Models;
 
@@ -9,9 +10,9 @@ public abstract class Candle
     private long? _dayTicks;
 
     public string Id { get; protected set; } = Guid.NewGuid().ToString();
-    public long DayKey => _dayTicks ??= OpenTime.BuildDayKey();
-    public long FiveMinuteKey => _fiveMinuteKey ??= OpenTime.BuildFiveMinuteKey();
     public long FifteenMinuteKey => _fifteenMinuteKey ??= OpenTime.BuildFifteenMinuteKey();
+    public long FiveMinuteKey => _fiveMinuteKey ??= OpenTime.BuildFiveMinuteKey();
+    public long DayKey => _dayTicks ??= OpenTime.BuildDayKey();
     public DateTime OpenTime { get; set; }
     public DateTime CloseTime { get; set; }
     public double OpenPrice { get; set; }
@@ -29,6 +30,16 @@ public abstract class Candle
     public Indicators Indicators { get; } = new();
 
     public double PriceDif => Math.Round(ClosePrice - OpenPrice, 2);
+    public long GetTimeframeKeyByCandleInterval(CandleInterval candleInterval)
+    {
+        return candleInterval switch
+        {
+            CandleInterval.Five_Minutes => FiveMinuteKey,
+            CandleInterval.Fifteen_Minutes => FifteenMinuteKey,
+            CandleInterval.One_Day => DayKey,
+            _ => throw new NotImplementedException(),
+        };
+    }
 
     public override string ToString() => $"{OpenTime:dd/MM/yyyy HH:mm}| {Math.Round(OpenPrice, 2)} / {Math.Round(ClosePrice, 2)}  ({PriceDif})";
 }

@@ -2,6 +2,7 @@
 
 public enum CandleInterval
 {
+    Unset = 0,
     One_Minute = 1,
     Three_Minutes = 3,
     Five_Minutes = 5,

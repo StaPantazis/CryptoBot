@@ -17,6 +17,7 @@ public class CacheService
 
     public Dictionary<long, CachedMovingAverageTrend> MovingAverageTrendCache { get; private set; } = [];
     public Dictionary<long, CachedAiTrend> AiTrendCache { get; private set; } = [];
+    public CandleInterval BacktestCandleInterval { get; private set; } = CandleInterval.Unset;
 
     public async Task InitializeCache()
     {
@@ -30,7 +31,11 @@ public class CacheService
         await CandleValidatorService.ValidateStoredResources();
     }
 
-    public void SetBacktestInterval(BacktestingDetails details) => AiTrendCache = _aiTrendPerInterval[details.Interval];
+    public void SetBacktestInterval(BacktestingDetails details)
+    {
+        AiTrendCache = _aiTrendPerInterval[details.Interval];
+        BacktestCandleInterval = details.Interval;
+    }
 
     private async Task ComputeMovingAverageTrend()
     {
@@ -132,13 +137,7 @@ public class CacheService
         for (var i = 0; i < totalCandles; i++)
         {
             var candle = candles[i];
-            var candleKey = candleInterval switch
-            {
-                CandleInterval.Five_Minutes => candle.FiveMinuteKey,
-                CandleInterval.Fifteen_Minutes => candle.FifteenMinuteKey,
-                CandleInterval.One_Day => candle.DayKey,
-                _ => throw new NotImplementedException()
-            };
+            var candleKey = candle.GetTimeframeKeyByCandleInterval(candleInterval);
 
             if (result.ContainsKey(candleKey))
             {

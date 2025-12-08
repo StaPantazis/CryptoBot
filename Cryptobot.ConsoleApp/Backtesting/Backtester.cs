@@ -47,28 +47,40 @@ public class Backtester(CacheService cache)
             }
         }
 
-        spots = spots.OrderByDescending(x => x.spot.Metrics.Full.PnL).ToList();
+        var totalBestStrategies = Math.Min(5, spots.Count);
 
-        foreach (var (spot, sw) in spots)
+        if (details.Strategies[0].IsVariationBundle || spots.Count > 50)
         {
-            Printer.BacktesterResult(spot, sw);
+            var bestOverallSpots = spots
+                .OrderByDescending(x => x.spot.Metrics.Full.PnL)
+                .Take(totalBestStrategies)
+                .ToList();
 
-            if (details.Strategies.Length == 1)
-            {
-                var saveOutput = ShouldSaveLoop(swMain);
+            var bestLongSpots = spots
+                .OrderByDescending(x => x.spot.Metrics.Long.PnL)
+                .Take(totalBestStrategies)
+                .ToList();
 
-                if (saveOutput)
-                {
-                    sw.Restart();
-                    Printer.SavingOutputStart();
-                    await SaveBacktestResult(candles, spot);
-                    Printer.SavingOutputEnd(candles.Count, sw);
-                }
-            }
-            else
-            {
-                Printer.Divider();
-            }
+            var bestShortSpots = spots
+                .OrderByDescending(x => x.spot.Metrics.Short.PnL)
+                .Take(totalBestStrategies)
+                .ToList();
+
+            Console.WriteLine("__OVERALL__");
+            await PrintResult(bestOverallSpots, candles, totalStrategies, swMain, "Overall");
+            Console.WriteLine();
+            Console.WriteLine("__LONG__");
+            await PrintResult(bestLongSpots, candles, totalStrategies, swMain, "Long");
+            Console.WriteLine();
+            Console.WriteLine("__SHORT__");
+            await PrintResult(bestShortSpots, candles, totalStrategies, swMain, "Short");
+        }
+        else
+        {
+            await PrintResult(spots, candles, totalStrategies, swMain);
+            //await PrintResult(spots, candles, totalStrategies, swMain, "Overall");
+            //await PrintResult(spots, candles, totalStrategies, swMain, "Long");
+            //await PrintResult(spots, candles, totalStrategies, swMain, "Short");
         }
 
         if (details.Strategies.Length > 1)
@@ -128,6 +140,33 @@ public class Backtester(CacheService cache)
 
         Printer.EmptyLine();
         Printer.TotalRuntime(swMain);
+    }
+
+    private static async Task PrintResult(List<(Spot spot, Stopwatch sw)> spots, List<BybitCandle> candles, int totalStrategies, Stopwatch swMain, string sectionName = "")
+    {
+        for (var i = 0; i < spots.Count; i++)
+        {
+            var (spot, sw) = spots[i];
+            Printer.BacktesterStrategyName(spot, totalStrategies > 1 ? i + 1 : null, totalStrategies > 1 ? totalStrategies : null);
+            Printer.BacktesterResult(spot, sw, sectionName);
+
+            if (totalStrategies == 1)
+            {
+                var saveOutput = ShouldSaveLoop(swMain);
+
+                if (saveOutput)
+                {
+                    sw.Restart();
+                    Printer.SavingOutputStart();
+                    await SaveBacktestResult(candles, spot);
+                    Printer.SavingOutputEnd(candles.Count, sw);
+                }
+            }
+            else
+            {
+                Printer.Divider();
+            }
+        }
     }
 
     private static bool ShouldSaveLoop(Stopwatch sw)
