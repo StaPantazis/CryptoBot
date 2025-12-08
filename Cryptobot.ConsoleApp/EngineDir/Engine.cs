@@ -8,7 +8,7 @@ public class Engine<T>(CacheService cache, params Spot[] spots) where T : Candle
 {
     private readonly Spot[] _spots = spots;
     private readonly Dictionary<string, IndicatorService> _indicatorServicesPerSpot = spots.ToDictionary(x => x.Id, x => new IndicatorService(cache, x.TradeStrategy));
-    private readonly DateTime? _filterForDebugging = DateTime.ParseExact("12/08/2025", "dd/MM/yyyy", default);
+    private readonly DateTime? _filterForDebugging = null;// DateTime.ParseExact("12/08/2025", "dd/MM/yyyy", default);
 
     public void TradeNewCandle(List<T> candles, int currentCandleIndex, CandleInterval candleInterval)
     {

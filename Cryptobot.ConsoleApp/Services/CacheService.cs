@@ -5,6 +5,7 @@ using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Repositories;
 using Cryptobot.ConsoleApp.Resources.CachedIndicators;
+using Cryptobot.ConsoleApp.Resources.CachedIndicators.Models;
 using Cryptobot.ConsoleApp.Utils;
 using static Cryptobot.ConsoleApp.Utils.ConsoleColors;
 
@@ -23,8 +24,8 @@ public class CacheService
         await BybitHistory.Download(new BacktestingDetails(CandleInterval.Fifteen_Minutes));
         await BybitHistory.Download(new BacktestingDetails(CandleInterval.One_Day));
 
-        //await ComputeMovingAverageTrend();
-        //await ComputeTrendProfilerAiTrends();
+        await ComputeMovingAverageTrend();
+        await ComputeTrendProfilerAiTrends();
 
         await CandleValidatorService.ValidateStoredResources();
     }
@@ -42,7 +43,7 @@ public class CacheService
                 candleInterval: CandleInterval.One_Day,
                 cachedData: cachedData,
                 indicatorService: new IndicatorService(IndicatorType.MovingAverage),
-                getInstanceArgs: candle => [candle.OpenTime, candle.Indicators.MovingAverage!, candle.Indicators.MovingAverageTrend!]);
+                getInstanceArgs: candle => [candle.OpenTime, candle.Indicators.MovingAverage, candle.Indicators.MovingAverageTrend]);
 
             await ParquetService.SaveMovingAverageTrend(cachedData, movingAverageCachePath);
             Printer.EmptyLine();
@@ -60,23 +61,14 @@ public class CacheService
         {
             foreach (var profile in profiles)
             {
-                var fileName = profile switch
-                {
-                    AiTrendProfile.Default => $"{nameof(CachedAiTrend_Default)}_{candleInterval}",
-                    AiTrendProfile.Balanced => $"{nameof(CachedAiTrend_Balanced)}_{candleInterval}",
-                    AiTrendProfile.Conservative => $"{nameof(CachedAiTrend_Conservative)}_{candleInterval}",
-                    AiTrendProfile.Aggressive => $"{nameof(CachedAiTrend_Aggressive)}_{candleInterval}",
-                    _ => throw new NotImplementedException(),
-                };
-
-                var aiTrendCachePath = Path.Combine(PathHelper.GetCachedIndicatorsOutputPath(), $"{fileName}.parquet");
+                var aiTrendCachePath = Path.Combine(PathHelper.GetCachedIndicatorsOutputPath(), CachedAiTrend.CachedFileName(profile, candleInterval));
 
                 Func<string, Task<List<CachedAiTrend>>> loader = profile switch
                 {
-                    AiTrendProfile.Default => path => ParquetService.LoadCachedAiTrend<CachedAiTrend_Default>(path).ContinueWith(t => t.Result.Cast<CachedAiTrend>().ToList()),
-                    AiTrendProfile.Balanced => path => ParquetService.LoadCachedAiTrend<CachedAiTrend_Balanced>(path).ContinueWith(t => t.Result.Cast<CachedAiTrend>().ToList()),
-                    AiTrendProfile.Conservative => path => ParquetService.LoadCachedAiTrend<CachedAiTrend_Conservative>(path).ContinueWith(t => t.Result.Cast<CachedAiTrend>().ToList()),
-                    AiTrendProfile.Aggressive => path => ParquetService.LoadCachedAiTrend<CachedAiTrend_Aggressive>(path).ContinueWith(t => t.Result.Cast<CachedAiTrend>().ToList()),
+                    AiTrendProfile.Default => path => ParquetService.LoadCachedAiTrend<CachedAiTrend_Default>(path).ContinueWith(x => x.Result.Cast<CachedAiTrend>().ToList()),
+                    AiTrendProfile.Balanced => path => ParquetService.LoadCachedAiTrend<CachedAiTrend_Balanced>(path).ContinueWith(x => x.Result.Cast<CachedAiTrend>().ToList()),
+                    AiTrendProfile.Conservative => path => ParquetService.LoadCachedAiTrend<CachedAiTrend_Conservative>(path).ContinueWith(x => x.Result.Cast<CachedAiTrend>().ToList()),
+                    AiTrendProfile.Aggressive => path => ParquetService.LoadCachedAiTrend<CachedAiTrend_Aggressive>(path).ContinueWith(x => x.Result.Cast<CachedAiTrend>().ToList()),
                     _ => throw new NotImplementedException(),
                 };
 
@@ -94,8 +86,6 @@ public class CacheService
                 }
 
                 _aiTrendPerInterval[candleInterval] = cachedData.ToDictionary(x => x.Key, x => x);
-
-                Printer.EmptyLine();
             }
         }
     }
@@ -110,10 +100,10 @@ public class CacheService
         {
             cachedData = await loadData(cachePath);
 
-            var latestCachedTicks = cachedData.Max(x => x.Key);
+            var latestCachedTicks = cachedData.Max(x => x.OpenDateTime.Date.Ticks);
 
             // TODO :: This should work for the candle interval. Right now it works per day
-            var today = DateTime.UtcNow.Date;
+            var today = DateTime.UtcNow.Date.AddDays(-1);
 
             if (latestCachedTicks >= today.Date.Ticks)
             {
@@ -131,7 +121,7 @@ public class CacheService
         return (true, []);
     }
 
-    private static async Task<List<T>> CalculateTrendCandles<T>(CandleInterval candleInterval, List<T> cachedData, IndicatorService indicatorService, Func<TrendCandle, object[]> getInstanceArgs)
+    private static async Task<List<T>> CalculateTrendCandles<T>(CandleInterval candleInterval, List<T> cachedData, IndicatorService indicatorService, Func<TrendCandle, object?[]> getInstanceArgs)
         where T : CachedTrend
     {
         var candles = await CandlesRepository.GetCandles<TrendCandle>(new BacktestingDetails(candleInterval));
@@ -158,7 +148,7 @@ public class CacheService
             Printer.CalculatingCandles(i, remainingCandles);
 
             indicatorService.CalculateRelevantIndicators(candles, i);
-            result[candleKey] = (T)Activator.CreateInstance(typeof(T), candle.OpenTime, candle.Indicators.AiTrend!.Value, candleInterval)!;
+            result[candleKey] = (T)Activator.CreateInstance(typeof(T), getInstanceArgs(candle))!;
         }
 
         return result.Values.OrderBy(x => x.Key).ToList();

@@ -2,6 +2,7 @@
 using Cryptobot.ConsoleApp.Bybit.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Resources.CachedIndicators;
+using Cryptobot.ConsoleApp.Resources.CachedIndicators.Models;
 using Cryptobot.ConsoleApp.Utils;
 using Parquet;
 using Parquet.Data;
@@ -251,10 +252,11 @@ public static class ParquetService
         var trends = ((IEnumerable<int>)trendColumn.Data).ToArray();
 
         var list = new List<T>(openDateTimes.Length);
+        var candleInterval = CachedAiTrend.GetCandleIntervalFromFileName(Path.GetFileName(filepath));
 
         for (var i = 0; i < openDateTimes.Length; i++)
         {
-            list.Add((T)Activator.CreateInstance(typeof(T), openDateTimes[i], (Trend)trends[i])!);
+            list.Add((T)Activator.CreateInstance(typeof(T), openDateTimes[i], (Trend)trends[i], candleInterval)!);
         }
 
         return list;

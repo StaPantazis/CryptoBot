@@ -119,11 +119,11 @@ public static class Printer
         EmptyLine();
     }
 
-    public static void BacktesterInitialization(Spot spot, int? index = null)
+    public static void BacktesterInitialization(Spot spot, int? index, int? totalStrategies)
     {
         WriteLine("__BACKTESTING__", Cyan);
 
-        Write($"{(index != null ? $"{index}] " : "")}Trading Strategy: ", White);
+        Write($"{(index != null ? $"{index}/{totalStrategies}] " : "")}Trading Strategy: ", White);
         WriteLine(spot.TradeStrategy.Name, Yellow);
 
         Write("Budgeting Strategy: ", White);

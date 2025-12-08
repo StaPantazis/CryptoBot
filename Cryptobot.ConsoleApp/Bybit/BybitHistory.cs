@@ -135,7 +135,7 @@ public static class BybitHistory
         var existingDates = allCandles.Select(c => c.OpenTime.Date).ToHashSet();
 
         var missingDates = Enumerable
-            .Range(0, (endDate - startDate).Days + 1)
+            .Range(0, (endDate - startDate).Days)
             .Select(offset => startDate.AddDays(offset))
             .Where(date => !existingDates.Contains(date))
             .ToList();
