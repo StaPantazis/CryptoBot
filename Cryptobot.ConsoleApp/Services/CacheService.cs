@@ -12,12 +12,12 @@ namespace Cryptobot.ConsoleApp.Services;
 
 public class CacheService
 {
-    public Dictionary<long, CachedSemiTrend> SemiTrendCache { get; private set; } = [];
+    public Dictionary<long, CachedTrendProfileAI_Aggressive> SemiTrendCache { get; private set; } = [];
     public Dictionary<long, CachedMacroTrend> MacroTrendCache { get; private set; } = [];
 
     public async Task InitializeCache()
     {
-        //await BybitHistory.Download(new BacktestingDetails(CandleInterval.Five_Minutes));
+        await BybitHistory.Download(new BacktestingDetails(CandleInterval.Five_Minutes));
         await BybitHistory.Download(new BacktestingDetails(CandleInterval.Fifteen_Minutes));
         await BybitHistory.Download(new BacktestingDetails(CandleInterval.One_Day));
         await ComputeMacroTrend();
@@ -32,7 +32,7 @@ public class CacheService
 
         if (shouldSave)
         {
-            await ParquetService.SaveTrend(data, macroCachePath);
+            await ParquetService.SaveMacroTrend(data, macroCachePath);
         }
 
         MacroTrendCache = data.ToDictionary(x => x.Key, x => x);
@@ -41,7 +41,7 @@ public class CacheService
     private async Task ComputeSemiTrend()
     {
         var semiCachePath = Path.Combine(PathHelper.GetCachedIndicatorsOutputPath(), "SemiTrend.parquet");
-        var (shouldSave, data) = await ComputeTrend<CachedSemiTrend>(semiCachePath, CandleInterval.Fifteen_Minutes);
+        var (shouldSave, data) = await ComputeTrend<CachedTrendProfileAI_Aggressive>(semiCachePath, CandleInterval.Fifteen_Minutes);
 
         if (shouldSave)
         {

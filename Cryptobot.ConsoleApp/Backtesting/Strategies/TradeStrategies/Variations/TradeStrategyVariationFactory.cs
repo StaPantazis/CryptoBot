@@ -1,5 +1,6 @@
 ﻿using Cryptobot.ConsoleApp.Backtesting.Strategies.BudgetStrategies;
 using Cryptobot.ConsoleApp.EngineDir.Models;
+using Cryptobot.ConsoleApp.Extensions;
 using Cryptobot.ConsoleApp.Services;
 
 namespace Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies.Variations;
@@ -12,20 +13,17 @@ public static class TradeStrategyVariationFactory
     {
         var variations = new List<StrategyVariation>();
 
-        //Low1To6Percent().ForEachDo(stopLossLong
-        //    => High1To6Percent().ForEachDo(takeProfitLong
-        //        => High1To6Percent().ForEachDo(stopLossShort
-        //            => Low1To6Percent().ForEachDo(takeProfitShort
-        //                => AllTrendStrategies().ForEachDo(trendConfig
-        //                    => variations.Add(new(
-        //                        StopLossLong: stopLossLong,
-        //                        TakeProfitLong: takeProfitLong,
-        //                        StopLossShort: stopLossShort,
-        //                        TakeProfitShort: takeProfitShort,
-        //                        MicroTrendConfig: trendConfig)))))));
-
-        variations.Add(new StrategyVariation(0.98, 1.02, 1.02, 0.98, TrendConfiguration.Aggressive()));
-        variations.Add(new StrategyVariation(0.97, 1.03, 1.03, 0.97, TrendConfiguration.Aggressive()));
+        Low1To6Percent().ForEachDo(stopLossLong
+            => High1To6Percent().ForEachDo(takeProfitLong
+                => High1To6Percent().ForEachDo(stopLossShort
+                    => Low1To6Percent().ForEachDo(takeProfitShort
+                        => AllTrendStrategies().ForEachDo(trendConfig
+                            => variations.Add(new(
+                                StopLossLong: stopLossLong,
+                                TakeProfitLong: takeProfitLong,
+                                StopLossShort: stopLossShort,
+                                TakeProfitShort: takeProfitShort,
+                                MicroTrendConfig: trendConfig)))))));
 
         var bundle = variations
             .Select(x => new StrategyBundle<TBudgetStrategy>(

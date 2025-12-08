@@ -6,7 +6,7 @@ namespace Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
 
 public class TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3(CacheService cache, StrategyVariation? variation = null) : TradeStrategyBase(cache, variation)
 {
-    public override string Name { get; protected set; } = "Trade when price higher than last 50 MA and Neutral or Bullish | SL -3% | TP +3%";
+    protected override string NameOverridable { get; set; } = "Trade when price higher than last 50 MA and Neutral or Bullish | SL -3% | TP +3%";
     public override string NameOf { get; protected set; } = nameof(TS_LongWhenHigherThan50MAAndNeutralOrBullish_SL3_TP3);
     public override IndicatorType[] RelevantIndicators { get; } = [IndicatorType.MovingAverage, IndicatorType.TrendProfileAI];
 

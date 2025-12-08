@@ -132,12 +132,12 @@ public static class ParquetService
         await groupWriter.WriteColumnAsync(new DataColumn((DataField<double>)schema[7], candles.Select(x => x.Volume).ToArray()));
     }
 
-    public static async Task SaveTrend(IEnumerable<CachedTrend> data, string filepath)
+    public static async Task SaveMacroTrend(IEnumerable<CachedMacroTrend> data, string filepath)
     {
         var schema = new ParquetSchema(
-            new DataField<DateTime>(nameof(CachedTrend.OpenDateTime)),
-            new DataField<double?>(nameof(CachedTrend.MovingAverage)),
-            new DataField<int>(nameof(CachedTrend.Trend)));
+            new DataField<DateTime>(nameof(CachedMacroTrend.OpenDateTime)),
+            new DataField<double?>(nameof(CachedMacroTrend.MovingAverage)),
+            new DataField<int>(nameof(CachedMacroTrend.Trend)));
 
         using var stream = File.Create(filepath);
         using var writer = await ParquetWriter.CreateAsync(schema, stream);
@@ -145,6 +145,20 @@ public static class ParquetService
 
         await rg.WriteColumnAsync(new DataColumn((DataField<DateTime>)schema[0], data.Select(x => x.OpenDateTime).ToArray()));
         await rg.WriteColumnAsync(new DataColumn((DataField<double?>)schema[1], data.Select(x => x.MovingAverage).ToArray()));
+        await rg.WriteColumnAsync(new DataColumn((DataField<int>)schema[2], data.Select(x => (int)x.Trend).ToArray()));
+    }
+
+    public static async Task SaveTrend(IEnumerable<CachedTrend> data, string filepath)
+    {
+        var schema = new ParquetSchema(
+            new DataField<DateTime>(nameof(CachedTrend.OpenDateTime)),
+            new DataField<int>(nameof(CachedTrend.Trend)));
+
+        using var stream = File.Create(filepath);
+        using var writer = await ParquetWriter.CreateAsync(schema, stream);
+        using var rg = writer.CreateRowGroup();
+
+        await rg.WriteColumnAsync(new DataColumn((DataField<DateTime>)schema[0], data.Select(x => x.OpenDateTime).ToArray()));
         await rg.WriteColumnAsync(new DataColumn((DataField<int>)schema[2], data.Select(x => (int)x.Trend).ToArray()));
     }
 

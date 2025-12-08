@@ -16,6 +16,9 @@ public abstract class TradeStrategyBase(CacheService cache, StrategyVariation? v
     private readonly double? _takeProfitLong = variation?.TakeProfitLong;
     private readonly double? _takeProfitShort = variation?.TakeProfitShort;
 
+    protected abstract string NameOverridable { get; set; }
+    public override string Name => $"{NameOverridable}{(variation is null ? "" : $"_Variation:_{variation.Name}")}";
+
     protected CacheService Cache { get; } = cache;
     protected IndicatorService IndicatorService => field ??= new IndicatorService(Cache, RelevantIndicators);
 

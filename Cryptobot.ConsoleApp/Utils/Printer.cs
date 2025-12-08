@@ -107,20 +107,15 @@ public static class Printer
         EmptyLine();
     }
 
-    public static void BacktesterInitialization(Spot spot)
+    public static void BacktesterInitialization(Spot spot, int? index = null)
     {
         WriteLine("__BACKTESTING__", Cyan);
 
-        BacktesterStrategyName(spot);
+        Write($"{(index != null ? $"{index}] " : "")}Trading Strategy: ", White);
+        WriteLine(spot.TradeStrategy.Name, Yellow);
 
         Write("Budgeting Strategy: ", White);
         WriteLine(spot.BudgetStrategy.Name, Yellow);
-    }
-
-    public static void BacktesterStrategyName(Spot spot, int? index = null)
-    {
-        Write($"{(index != null ? $"{index}] " : "")}Trading Strategy: ", White);
-        WriteLine(spot.TradeStrategy.Name, Yellow);
     }
 
     public static void VariationsResult(int totalVariations)
@@ -276,6 +271,8 @@ public static class Printer
 
         EmptyLine();
     }
+
+    public static void FullStrategyPnL(Spot spot) => GreenRed(spot.Metrics.Full.PnL);
 
     // General
     public static void Done(string? prefix = null) => WriteLine($"{prefix ?? string.Empty}Done!", Green);

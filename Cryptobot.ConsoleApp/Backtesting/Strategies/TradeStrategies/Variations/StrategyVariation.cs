@@ -23,24 +23,29 @@ public record StrategyVariation(
         {
             var parts = new List<string>();
 
-            if (StopLossLong is { } slLong)
+            if (StopLossLong != null)
             {
-                parts.Add($"SL_Long:{slLong}");
+                parts.Add($"SL_Long:{StopLossLong}");
             }
 
-            if (TakeProfitLong is { } tpLong)
+            if (TakeProfitLong != null)
             {
-                parts.Add($"TP_Long:{tpLong}");
+                parts.Add($"TP_Long:{TakeProfitLong}");
             }
 
-            if (StopLossShort is { } slShort)
+            if (StopLossShort != null)
             {
-                parts.Add($"SL_Short:{slShort}");
+                parts.Add($"SL_Short:{StopLossShort}");
             }
 
-            if (TakeProfitShort is { } tpShort)
+            if (TakeProfitShort != null)
             {
-                parts.Add($"TP_Short:{tpShort}");
+                parts.Add($"TP_Short:{TakeProfitShort}");
+            }
+
+            if (MicroTrendConfig != null)
+            {
+                parts.Add($"Trend Config:{MicroTrendConfig}");
             }
 
             return string.Join(" | ", parts);

@@ -23,15 +23,16 @@ public class Backtester(CacheService cache)
         var candles = await GetCandlesWithPrint<BybitCandle>(details);
         var spots = new List<(Spot spot, Stopwatch sw)>();
 
-        foreach (var strategy in details.Strategies)
+        for (var i = 0; i < details.Strategies.Length; i++)
         {
+            var strategy = details.Strategies[i];
             var sw = new Stopwatch();
             sw.Start();
 
             var user = new User("Xatzias");
             var spot = new Spot(user, details.Budget, strategy.TradeStrategy, strategy.BudgetStrategy, details.Symbol);
             spots.Add((spot, sw));
-            Printer.BacktesterInitialization(spot);
+            Printer.BacktesterInitialization(spot, i + 1);
 
             spot = Backtest(spot, candles, details.Interval);
             spot.CalculateMetrics();
@@ -39,6 +40,7 @@ public class Backtester(CacheService cache)
 
             if (details.Strategies.Length > 1)
             {
+                Printer.FullStrategyPnL(spot);
                 Printer.Divider();
             }
         }

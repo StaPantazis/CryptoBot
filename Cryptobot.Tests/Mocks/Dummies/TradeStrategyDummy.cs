@@ -5,11 +5,10 @@ using Cryptobot.ConsoleApp.Services;
 
 namespace Cryptobot.Tests.Mocks.Dummies;
 
-internal class TradeStrategyDummy(PositionSide position, CacheService cache, StrategyVariation? variation = null)
-        : TradeStrategyBase(cache, variation)
+internal class TradeStrategyDummy(PositionSide position, CacheService cache, StrategyVariation? variation = null) : TradeStrategyBase(cache, variation)
 {
     private readonly PositionSide _position = position;
-    public override string Name { get; protected set; } = "Trade Dummy";
+    protected override string NameOverridable { get; set; } = "Trade Dummy";
     public override string NameOf { get; protected set; } = nameof(TradeStrategyDummy);
 
     protected override double? StopLossLong<T>(List<T> candles, int currentCandleIndex) => 1.05;
