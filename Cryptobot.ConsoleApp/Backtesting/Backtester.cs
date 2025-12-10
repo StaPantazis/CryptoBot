@@ -8,7 +8,6 @@ using Cryptobot.ConsoleApp.Repositories;
 using Cryptobot.ConsoleApp.Services;
 using Cryptobot.ConsoleApp.Utils;
 using System.Diagnostics;
-using System.Text;
 
 namespace Cryptobot.ConsoleApp.Backtesting;
 
@@ -32,7 +31,7 @@ public class Backtester(CacheService cache)
             sw.Start();
 
             var user = new User("Xatzias");
-            var spot = new Spot(user, details.Budget, strategy.TradeStrategy, strategy.BudgetStrategy, details.Symbol);
+            var spot = new Spot(user, details.Budget, strategy.TradeStrategy, strategy.BudgetStrategy, new FeesSettings());
             spots.Add((spot, sw));
             Printer.BacktesterInitialization(spot, totalStrategies > 1 ? i + 1 : null, totalStrategies > 1 ? totalStrategies : null);
 
@@ -56,31 +55,27 @@ public class Backtester(CacheService cache)
                 .Take(totalBestStrategies)
                 .ToList();
 
+            await PrintResult(bestOverallSpots, candles, totalStrategies, swMain, "Overall");
+            Printer.EmptyLine();
+
             var bestLongSpots = spots
                 .OrderByDescending(x => x.spot.Metrics.Long.PnL)
                 .Take(totalBestStrategies)
                 .ToList();
+
+            await PrintResult(bestLongSpots, candles, totalStrategies, swMain, "Long");
+            Printer.EmptyLine();
 
             var bestShortSpots = spots
                 .OrderByDescending(x => x.spot.Metrics.Short.PnL)
                 .Take(totalBestStrategies)
                 .ToList();
 
-            Console.WriteLine("__OVERALL__");
-            await PrintResult(bestOverallSpots, candles, totalStrategies, swMain, "Overall");
-            Console.WriteLine();
-            Console.WriteLine("__LONG__");
-            await PrintResult(bestLongSpots, candles, totalStrategies, swMain, "Long");
-            Console.WriteLine();
-            Console.WriteLine("__SHORT__");
             await PrintResult(bestShortSpots, candles, totalStrategies, swMain, "Short");
         }
         else
         {
             await PrintResult(spots, candles, totalStrategies, swMain);
-            //await PrintResult(spots, candles, totalStrategies, swMain, "Overall");
-            //await PrintResult(spots, candles, totalStrategies, swMain, "Long");
-            //await PrintResult(spots, candles, totalStrategies, swMain, "Short");
         }
 
         if (details.Strategies.Length > 1)
@@ -118,7 +113,7 @@ public class Backtester(CacheService cache)
         for (var i = 0; i < totalCandles; i++)
         {
             Printer.CalculatingCandles(i, totalCandles);
-            indicatorService.CalculateRelevantIndicators(candles, i);
+            indicatorService.CalculateRelevantIndicators(candles[i], candles, i);
         }
 
         Printer.ProfilerRunEnded(candles, swMain);
@@ -126,9 +121,9 @@ public class Backtester(CacheService cache)
         var sw = new Stopwatch();
         sw.Start();
 
-        var saveOutput = ShouldSaveLoop(swMain);
+        var (shouldSave, _, _) = ShouldSaveLoop(swMain);
 
-        if (saveOutput)
+        if (shouldSave)
         {
             Printer.SavingOutputStart();
 
@@ -152,14 +147,25 @@ public class Backtester(CacheService cache)
 
             if (totalStrategies == 1)
             {
-                var saveOutput = ShouldSaveLoop(swMain);
+                var (shouldSave, isGraph, isCsv) = ShouldSaveLoop(swMain);
 
-                if (saveOutput)
+                if (shouldSave)
                 {
                     sw.Restart();
-                    Printer.SavingOutputStart();
-                    await SaveBacktestResult(candles, spot);
-                    Printer.SavingOutputEnd(candles.Count, sw);
+
+                    if (isCsv)
+                    {
+                        Printer.ExportingCsvStart();
+                        CsvService.ExportTrades(spot.Trades);
+                        Printer.Done();
+                    }
+
+                    if (isGraph)
+                    {
+                        Printer.SavingOutputStart();
+                        await SaveBacktestResult(candles, spot);
+                        Printer.SavingOutputEnd(candles.Count, sw);
+                    }
                 }
             }
             else
@@ -169,26 +175,28 @@ public class Backtester(CacheService cache)
         }
     }
 
-    private static bool ShouldSaveLoop(Stopwatch sw)
+    private static (bool shouldSave, bool isGraph, bool isCsv) ShouldSaveLoop(Stopwatch sw)
     {
         sw.Stop();
-        bool saveOutput;
+        bool saveOutput, isCsv, isGraph;
 
         while (true)
         {
             Printer.ShouldSaveQuestion();
-            var shouldSave = Console.ReadLine();
+            var answer = Console.ReadLine();
 
-            if ((shouldSave?.ToLower() ?? "") is "y" or "n")
+            if ((answer?.ToLower() ?? "") is "y" or "n" or "csv" or "both")
             {
-                saveOutput = shouldSave!.Equals("y", StringComparison.CurrentCultureIgnoreCase);
+                saveOutput = answer!.Equals("y", StringComparison.CurrentCultureIgnoreCase);
+                isGraph = answer.Equals("y", StringComparison.CurrentCultureIgnoreCase) || answer.Equals("graph", StringComparison.CurrentCultureIgnoreCase);
+                isCsv = answer.Equals("csv", StringComparison.CurrentCultureIgnoreCase);
                 break;
             }
         }
 
         sw.Start();
 
-        return saveOutput;
+        return (saveOutput, isGraph, isCsv);
     }
 
     private static async Task<List<T>> GetCandlesWithPrint<T>(BacktestingDetails details) where T : BybitCandle, new()
@@ -233,56 +241,4 @@ public class Backtester(CacheService cache)
     }
 
     private static string DateNow() => $"{DateTime.Now:yyyy-MM-dd HH_mm}__";
-
-    private static void QuickExportToCSV(IReadOnlyList<Trade> trades)
-    {
-        var sb = new StringBuilder();
-
-        // Header
-        sb.AppendLine(string.Join(",",
-            nameof(Trade.PositionSide),
-            nameof(Trade.EntryTime),
-            nameof(Trade.ExitTime),
-            nameof(Trade.EntryPrice),
-            nameof(Trade.ExitPrice),
-            nameof(Trade.PnL),
-            nameof(Trade.StopLoss),
-            nameof(Trade.TakeProfit),
-            nameof(Trade.Quantity),
-            nameof(Trade.TradeSize),
-            nameof(Trade.TradeFees),
-            nameof(Trade.SlippageCosts),
-            nameof(Trade.AvailableBudgetBeforePlaced),
-            nameof(Trade.AvailableBudgetAfterEntry),
-            nameof(Trade.AvailableBudgetAfterExit),
-            nameof(Trade.FullBudgetOnEntry),
-            nameof(Trade.FullBudgetAfterExit)
-        ));
-
-        // Rows
-        foreach (var t in trades)
-        {
-            sb.AppendLine(string.Join(",",
-                t.PositionSide,
-                t.EntryTime.ToString("dd/MM/yyyy HH:mm"),
-                t.ExitTime?.ToString("dd/MM/yyyy HH:mm") ?? "",
-                t.EntryPrice,
-                t.ExitPrice,
-                t.PnL,
-                t.StopLoss,
-                t.TakeProfit,
-                t.Quantity,
-                t.TradeSize,
-                t.TradeFees,
-                t.SlippageCosts,
-                t.AvailableBudgetBeforePlaced,
-                t.AvailableBudgetAfterEntry,
-                t.AvailableBudgetAfterExit,
-                t.FullBudgetOnEntry,
-                t.FullBudgetAfterExit
-            ));
-        }
-
-        File.WriteAllText(@"C:\Users\stath\Downloads\trades.xlsx", sb.ToString());
-    }
 }

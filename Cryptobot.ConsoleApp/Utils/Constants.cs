@@ -14,7 +14,7 @@ public static class Constants
 
     public const string SYMBOL_BTCUSDT = "BTCUSDT";
 
-    public const double TRADE_FEE = 0.00055;
+    public const double TRADE_FEE_MULTIPLIER = 0.00055;
     public const double SLIPPAGE_MULTIPLIER_BTC = 0.0001;
     public const double SLIPPAGE_MULTIPLIER_ALTS = 0.001;
 

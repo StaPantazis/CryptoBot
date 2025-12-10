@@ -2,13 +2,12 @@ using Cryptobot.ConsoleApp.Backtesting.Metrics;
 using Cryptobot.ConsoleApp.Backtesting.Strategies;
 using Cryptobot.ConsoleApp.Backtesting.Strategies.BudgetStrategies;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
-using Cryptobot.ConsoleApp.Utils;
 
 namespace Cryptobot.ConsoleApp.EngineDir.Models;
 
 public class Spot
 {
-    private readonly double _slippage_multiplier = 0;
+    private readonly FeesSettings _fees;
     private readonly List<Trade> _allTrades = [];
 
     public string Id { get; } = Guid.NewGuid().ToString();
@@ -22,7 +21,7 @@ public class Spot
     public IReadOnlyList<Trade> Trades => _allTrades;
     public MetricsBundle Metrics { get; private set; }
 
-    public Spot(User user, double budget, TradeStrategyBase tradeStrategy, BudgetStrategy budgetStrategy, string symbol)
+    public Spot(User user, double budget, TradeStrategyBase tradeStrategy, BudgetStrategy budgetStrategy, FeesSettings fees)
     {
         User = user;
         TradeStrategy = tradeStrategy;
@@ -35,11 +34,7 @@ public class Spot
         FullBudget = budget;
         AvailableBudget = budget;
 
-        _slippage_multiplier = symbol switch
-        {
-            Constants.SYMBOL_BTCUSDT => Constants.SLIPPAGE_MULTIPLIER_BTC,
-            _ => throw new NotImplementedException()
-        };
+        _fees = fees;
     }
 
     public void OpenTrade<T>(List<T> candles, int currentCandleIndex, PositionSide position) where T : Candle
@@ -47,20 +42,20 @@ public class Spot
         var candle = candles[currentCandleIndex];
         var tradeSize = BudgetStrategy.DefineTradeSize();
 
-        if (tradeSize <= 0 || tradeSize + (tradeSize * Constants.TRADE_FEE) > AvailableBudget)
+        if (tradeSize <= 0 || tradeSize + (tradeSize * _fees.TradeFeeMultiplier) > AvailableBudget)
         {
             return;
         }
 
         var rawEntryPrice = candle.OpenPrice;
-        var slippagePerUnit = rawEntryPrice * _slippage_multiplier;
+        var slippagePerUnit = rawEntryPrice * _fees.SlippageMultiplier;
 
         var entryPrice = position == PositionSide.Long
                 ? rawEntryPrice + slippagePerUnit  // pay up when buying
                 : rawEntryPrice - slippagePerUnit; // sell a bit worse when shorting
 
         var quantity = tradeSize / entryPrice;
-        var entryFees = tradeSize * Constants.TRADE_FEE;
+        var entryFees = tradeSize * _fees.TradeFeeMultiplier;
         var entrySlippage = Math.Abs(entryPrice - rawEntryPrice) * quantity;
 
         var availableBudgetBeforePlaced = AvailableBudget;
@@ -123,7 +118,7 @@ public class Spot
                 if (candle.LowPrice <= trade.StopLoss)
                 {
                     rawExitPrice = trade.StopLoss!.Value;
-                    exitPrice = rawExitPrice * (1 - _slippage_multiplier);
+                    exitPrice = rawExitPrice * (1 - _fees.SlippageMultiplier);
                     exitSlip = Math.Abs(exitPrice - rawExitPrice) * trade.Quantity;
                 }
                 else if (candle.HighPrice >= trade.TakeProfit)
@@ -133,7 +128,7 @@ public class Spot
                 else if (TradeStrategy.ShouldExitLongTrade(candles, currentCandleIndex, trade, candleInterval))
                 {
                     rawExitPrice = candles[currentCandleIndex].ClosePrice;
-                    exitPrice = rawExitPrice * (1 - _slippage_multiplier);
+                    exitPrice = rawExitPrice * (1 - _fees.SlippageMultiplier);
                     exitSlip = Math.Abs(exitPrice - rawExitPrice) * trade.Quantity;
                 }
                 else
@@ -148,7 +143,7 @@ public class Spot
                 if (candle.HighPrice >= trade.StopLoss)
                 {
                     rawExitPrice = trade.StopLoss!.Value;
-                    exitPrice = rawExitPrice * (1 + _slippage_multiplier);
+                    exitPrice = rawExitPrice * (1 + _fees.SlippageMultiplier);
                     exitSlip = Math.Abs(exitPrice - rawExitPrice) * trade.Quantity;
                 }
                 else if (candle.LowPrice <= trade.TakeProfit)
@@ -158,7 +153,7 @@ public class Spot
                 else if (TradeStrategy.ShouldExitShortTrade(candles, currentCandleIndex, trade, candleInterval))
                 {
                     rawExitPrice = candles[currentCandleIndex].ClosePrice;
-                    exitPrice = rawExitPrice * (1 + _slippage_multiplier);
+                    exitPrice = rawExitPrice * (1 + _fees.SlippageMultiplier);
                     exitSlip = Math.Abs(exitPrice - rawExitPrice) * trade.Quantity;
                 }
                 else
@@ -178,7 +173,7 @@ public class Spot
 
             var entryFees = trade.TradeFees;
             var exitNotional = exitPrice * trade.Quantity;
-            var exitFees = exitNotional * Constants.TRADE_FEE;
+            var exitFees = exitNotional * _fees.TradeFeeMultiplier;
 
             trade.TradeFees += exitFees;
             trade.PnL = trade.PnL.Value - trade.TradeFees;
@@ -191,7 +186,11 @@ public class Spot
             trade.FullBudgetAfterExit = FullBudget;
 
             OpenTrades.RemoveAt(i);
+
+            return;
         }
+
+        return;
     }
 
     public void CalculateMetrics() => Metrics = new(this);

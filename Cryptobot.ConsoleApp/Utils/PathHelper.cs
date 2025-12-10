@@ -11,6 +11,13 @@ public class PathHelper
         return outputPath;
     }
 
+    public static string GetCsvOutputPath()
+    {
+        var outputPath = Path.Combine(GetBasePath(), "Backtesting\\Output\\Csv");
+        CreateDirectoryNonexistent(outputPath);
+        return outputPath;
+    }
+
     public static string GetTrendProfilingOutputPath()
     {
         var outputPath = Path.Combine(GetBasePath(), "Backtesting\\Output\\TrendProfiling");

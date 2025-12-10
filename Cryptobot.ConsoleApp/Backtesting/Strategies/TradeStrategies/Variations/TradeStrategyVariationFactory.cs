@@ -33,6 +33,8 @@ public static class TradeStrategyVariationFactory
                     args: [cache, x])!))
             .ToArray();
 
+        bundle.ForEachDo(x => x.IsVariationBundle = true);
+
         return bundle;
     }
 

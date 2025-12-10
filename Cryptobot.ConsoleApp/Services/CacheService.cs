@@ -4,7 +4,6 @@ using Cryptobot.ConsoleApp.Bybit;
 using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Repositories;
-using Cryptobot.ConsoleApp.Resources.CachedIndicators;
 using Cryptobot.ConsoleApp.Resources.CachedIndicators.Models;
 using Cryptobot.ConsoleApp.Utils;
 using static Cryptobot.ConsoleApp.Utils.ConsoleColors;
@@ -146,7 +145,7 @@ public class CacheService
 
             Printer.CalculatingCandles(i, remainingCandles);
 
-            indicatorService.CalculateRelevantIndicators(candles, i);
+            indicatorService.CalculateRelevantIndicators(candle, candles, i);
             result[candleKey] = (T)Activator.CreateInstance(typeof(T), getInstanceArgs(candle))!;
         }
 

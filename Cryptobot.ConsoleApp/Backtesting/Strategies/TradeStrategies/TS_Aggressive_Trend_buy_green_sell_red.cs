@@ -26,6 +26,7 @@ public class TS_Aggressive_Trend_buy_green_sell_red(CacheService cache, Strategy
 
     protected override bool ShouldShort<T>(List<T> candles, int currentCandleIndex, CandleInterval candleInterval)
     {
+        return false;
         var candle = candles[currentCandleIndex];
         return candle.Indicators.AiTrend is Trend.Bear or Trend.FullBear;
     }

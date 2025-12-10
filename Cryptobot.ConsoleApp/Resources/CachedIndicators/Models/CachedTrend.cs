@@ -1,7 +1,7 @@
 ﻿using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Extensions;
 
-namespace Cryptobot.ConsoleApp.Resources.CachedIndicators;
+namespace Cryptobot.ConsoleApp.Resources.CachedIndicators.Models;
 
 public abstract class CachedTrend(DateTime openDateTime, Trend trend)
 {

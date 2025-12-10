@@ -45,5 +45,5 @@ public abstract class StrategyBundleBase
 {
     public TradeStrategyBase TradeStrategy { get; protected set; }
     public BudgetStrategy BudgetStrategy { get; protected set; }
-    public bool IsVariationBundle { get; protected set; } = false;
+    public bool IsVariationBundle { get; set; } = false;
 }

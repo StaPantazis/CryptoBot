@@ -35,19 +35,13 @@ public class IndicatorService
         _indicators = tradeStrategy.RelevantIndicators ?? [];
     }
 
-    public void CalculateRelevantIndicators<T>(List<T> candles, int currentCandleIndex) where T : Candle
+    public void CalculateRelevantIndicators<T>(T candle, List<T> candles, int currentCandleIndex) where T : Candle
     {
         if (_indicators.Length == 0)
         {
             return;
         }
 
-        var candle = candles[currentCandleIndex];
-        CalculateRelevantIndicators(candle, candles, currentCandleIndex);
-    }
-
-    public void CalculateRelevantIndicators<T>(T candle, List<T> candles, int currentCandleIndex) where T : Candle
-    {
         foreach (var indicator in _indicators)
         {
             switch (indicator)

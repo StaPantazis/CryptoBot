@@ -6,20 +6,23 @@ namespace Cryptobot.ConsoleApp.EngineDir;
 
 public class Engine<T>(CacheService cache, params Spot[] spots) where T : Candle
 {
+
     private readonly Spot[] _spots = spots;
     private readonly Dictionary<string, IndicatorService> _indicatorServicesPerSpot = spots.ToDictionary(x => x.Id, x => new IndicatorService(cache, x.TradeStrategy));
     private readonly DateTime? _filterForDebugging = null;// DateTime.ParseExact("12/08/2025", "dd/MM/yyyy", default);
 
     public void TradeNewCandle(List<T> candles, int currentCandleIndex, CandleInterval candleInterval)
     {
-        if (StopForDebugging(candles, currentCandleIndex))
+        if (StopForDebugging(candles, currentCandleIndex) || currentCandleIndex == 0)
         {
             return;
         }
 
+        var currentCandle = candles[currentCandleIndex];
+
         foreach (var spot in _spots)
         {
-            _indicatorServicesPerSpot[spot.Id].CalculateRelevantIndicators(candles, currentCandleIndex);
+            _indicatorServicesPerSpot[spot.Id].CalculateRelevantIndicators(currentCandle, candles, currentCandleIndex);
 
             spot.CheckCloseTrades(candles, currentCandleIndex, candleInterval);
 

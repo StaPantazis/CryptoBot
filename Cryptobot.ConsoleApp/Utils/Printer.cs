@@ -236,7 +236,8 @@ public static class Printer
     public static void ShouldSaveQuestion()
     {
         EmptyLine();
-        Write("Do you want to save this backtest? Y/N  ", Cyan);
+        Write("Do you want to save this backtest? Y/N ", Cyan);
+        Write("('csv' or 'both')", Yellow);
     }
 
     public static void SavingOutputStart() => WriteLine("\n__STORING__", Cyan);
@@ -249,6 +250,8 @@ public static class Printer
         Write("Saving Runtime: ", White);
         WriteLine(sw.ElapsedMilliseconds.MillisecondsToFormattedTime(), Yellow);
     }
+
+    public static void ExportingCsvStart() => Write("\nExporting csv... ", Cyan);
 
     public static void SavedOutputFileName(string fileName)
     {

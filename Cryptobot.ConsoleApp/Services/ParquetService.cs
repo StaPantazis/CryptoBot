@@ -1,7 +1,6 @@
 ﻿using Cryptobot.ConsoleApp.Backtesting.OutputModels;
 using Cryptobot.ConsoleApp.Bybit.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
-using Cryptobot.ConsoleApp.Resources.CachedIndicators;
 using Cryptobot.ConsoleApp.Resources.CachedIndicators.Models;
 using Cryptobot.ConsoleApp.Utils;
 using Parquet;

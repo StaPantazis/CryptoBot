@@ -21,7 +21,7 @@ public static class Consoler
         Strategies:
         [
             new StrategyBundle<TS_Aggressive_Trend_buy_green_sell_red, BS_100Percent>(cache),
-            new StrategyBundle<TS_Simple_120_days_SMA_Long, BS_100Percent>(cache),
+            //new StrategyBundle<TS_Aggressive_Trend_buy_green_sell_red, BS_Steady100_OnlyOneTrade>(cache),
         ]);
 
         cache.SetBacktestInterval(backtestingDetails);
