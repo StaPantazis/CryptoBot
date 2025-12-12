@@ -12,9 +12,7 @@ public class Engine<T>(CacheService cache, params Spot[] spots) where T : Candle
 
     public void TradeLive(CandleSlice<T> slice)
     {
-        var liveCandle = slice.LiveCandle;
-
-        if (StopForDebugging(liveCandle))
+        if (StopForDebugging(slice.LiveCandle))
         {
             return;
         }

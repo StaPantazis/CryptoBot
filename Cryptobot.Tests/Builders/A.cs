@@ -10,14 +10,16 @@ public static class A
 {
     private const double _budget = 100;
 
-    public static Candle Candle(double open, double high, double low, double close, string? id = null) => new TestCandle(id)
+    public static Candle Candle(int id) => Candle(open: null, high: null, low: null, close: null, id: id);
+    public static Candle Candle(double? open = null, double? high = null, double? low = null, double? close = null, int? id = null) => new TestCandle(id.ToString())
     {
         OpenTime = DateTime.UtcNow,
-        OpenPrice = open,
-        HighPrice = high,
-        LowPrice = low,
-        ClosePrice = close,
+        OpenPrice = open ?? 100,
+        HighPrice = high ?? 100,
+        LowPrice = low ?? 100,
+        ClosePrice = close ?? 100,
     };
+    public static List<Candle> Candles(int defaultCandlesCount) => Candles(Enumerable.Range(1, defaultCandlesCount).Select(i => Candle(id: i)).ToArray());
     public static List<Candle> Candles(params Candle[] candles) => candles.ToList();
     public static CandleSlice<Candle> Slice(int? size) => new(size ?? 1);
     public static CandleSlice<Candle> Slice(params Candle[] candles) => new(candles.ToList());
