@@ -1,5 +1,6 @@
 ﻿using Cryptobot.ConsoleApp.Backtesting.Strategies.BudgetStrategies;
 using Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies.Variations;
+using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Services;
 
 namespace Cryptobot.ConsoleApp.Backtesting.Strategies;
@@ -8,9 +9,9 @@ public class StrategyBundle<TTradeStrategy, TBudgetStrategy> : StrategyBundleBas
     where TTradeStrategy : TradeStrategyBase
     where TBudgetStrategy : BudgetStrategy
 {
-    public StrategyBundle(CacheService cache, StrategyVariation? strategyVariation = null)
+    public StrategyBundle(CacheService cache, CandleInterval tradingCandleInterval, StrategyVariation? strategyVariation = null)
     {
-        TradeStrategy = (TTradeStrategy)Activator.CreateInstance(typeof(TTradeStrategy), cache, strategyVariation)!;
+        TradeStrategy = (TTradeStrategy)Activator.CreateInstance(typeof(TTradeStrategy), cache, tradingCandleInterval, strategyVariation)!;
         BudgetStrategy = Activator.CreateInstance<TBudgetStrategy>()!;
         IsVariationBundle = strategyVariation != null;
     }

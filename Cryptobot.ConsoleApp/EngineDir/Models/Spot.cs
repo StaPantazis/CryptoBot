@@ -37,9 +37,8 @@ public class Spot
         _fees = fees;
     }
 
-    public void OpenTrade<T>(List<T> candles, int currentCandleIndex, PositionSide position) where T : Candle
+    public void OpenTrade<T>(CandleSlice<T> slice, PositionSide position) where T : Candle
     {
-        var candle = candles[currentCandleIndex];
         var tradeSize = BudgetStrategy.DefineTradeSize();
 
         if (tradeSize <= 0 || tradeSize + (tradeSize * _fees.TradeFeeMultiplier) > AvailableBudget)
@@ -47,7 +46,7 @@ public class Spot
             return;
         }
 
-        var rawEntryPrice = candle.OpenPrice;
+        var rawEntryPrice = slice.LiveCandle.OpenPrice;
         var slippagePerUnit = rawEntryPrice * _fees.SlippageMultiplier;
 
         var entryPrice = position == PositionSide.Long
@@ -61,8 +60,8 @@ public class Spot
         var availableBudgetBeforePlaced = AvailableBudget;
         AvailableBudget = AvailableBudget - tradeSize - entryFees;
 
-        var stopLossMultiplier = TradeStrategy.StopLoss(candles, currentCandleIndex, position);
-        var takeProfitMultiplier = TradeStrategy.TakeProfit(candles, currentCandleIndex, position);
+        var stopLossMultiplier = TradeStrategy.StopLoss(slice, position);
+        var takeProfitMultiplier = TradeStrategy.TakeProfit(slice, position);
 
         var stopLoss = entryPrice * stopLossMultiplier;
         var takeProfit = entryPrice * takeProfitMultiplier;
@@ -70,9 +69,9 @@ public class Spot
         var newTrade = new Trade
         {
             PositionSide = position,
-            EntryTime = candle.OpenTime,
+            EntryTime = slice.LiveCandle.OpenTime,
             EntryPrice = entryPrice,
-            EntryCandleId = candle.Id,
+            EntryCandleId = slice.LiveCandle.Id,
             StopLoss = stopLoss,
             TakeProfit = takeProfit,
             Quantity = quantity,
@@ -89,45 +88,43 @@ public class Spot
         _allTrades.Add(newTrade);
     }
 
-    public void CheckCloseTrades<T>(List<T> candles, int currentCandleIndex, CandleInterval candleInterval) where T : Candle
+    public void CheckCloseTrades<T>(CandleSlice<T> slice) where T : Candle
     {
         if (OpenTrades.Count == 0)
         {
             return;
         }
 
-        var candle = candles[currentCandleIndex];
-
         for (var i = OpenTrades.Count - 1; i >= 0; i--)  // backwards so we can remove easily
         {
             var trade = OpenTrades[i];
 
-            if (!TradeStrategy.ShouldCloseTrade(candles, currentCandleIndex, candleInterval, trade))
+            if (!TradeStrategy.ShouldCloseTrade(slice, trade))
             {
                 continue;
             }
 
             trade.IsClosed = true;
-            trade.ExitTime = candle.OpenTime;
-            trade.ExitCandleId = candle.Id;
+            trade.ExitTime = slice.LiveCandle.OpenTime;
+            trade.ExitCandleId = slice.LiveCandle.Id;
 
             double rawExitPrice, exitPrice, exitSlip = 0;
 
             if (trade.PositionSide is PositionSide.Long)
             {
-                if (candle.LowPrice <= trade.StopLoss)
+                if (slice.LastCandle.LowPrice <= trade.StopLoss)
                 {
                     rawExitPrice = trade.StopLoss!.Value;
                     exitPrice = rawExitPrice * (1 - _fees.SlippageMultiplier);
                     exitSlip = Math.Abs(exitPrice - rawExitPrice) * trade.Quantity;
                 }
-                else if (candle.HighPrice >= trade.TakeProfit)
+                else if (slice.LastCandle.HighPrice >= trade.TakeProfit)
                 {
                     exitPrice = trade.TakeProfit!.Value;
                 }
-                else if (TradeStrategy.ShouldExitLongTrade(candles, currentCandleIndex, trade, candleInterval))
+                else if (TradeStrategy.ShouldExitLongTrade(slice, trade))
                 {
-                    rawExitPrice = candles[currentCandleIndex].ClosePrice;
+                    rawExitPrice = slice.LiveCandle.OpenPrice;
                     exitPrice = rawExitPrice * (1 - _fees.SlippageMultiplier);
                     exitSlip = Math.Abs(exitPrice - rawExitPrice) * trade.Quantity;
                 }
@@ -140,19 +137,19 @@ public class Spot
             }
             else if (trade.PositionSide is PositionSide.Short)
             {
-                if (candle.HighPrice >= trade.StopLoss)
+                if (slice.LastCandle.HighPrice >= trade.StopLoss)
                 {
                     rawExitPrice = trade.StopLoss!.Value;
                     exitPrice = rawExitPrice * (1 + _fees.SlippageMultiplier);
                     exitSlip = Math.Abs(exitPrice - rawExitPrice) * trade.Quantity;
                 }
-                else if (candle.LowPrice <= trade.TakeProfit)
+                else if (slice.LastCandle.LowPrice <= trade.TakeProfit)
                 {
                     exitPrice = trade.TakeProfit!.Value;
                 }
-                else if (TradeStrategy.ShouldExitShortTrade(candles, currentCandleIndex, trade, candleInterval))
+                else if (TradeStrategy.ShouldExitShortTrade(slice, trade))
                 {
-                    rawExitPrice = candles[currentCandleIndex].ClosePrice;
+                    rawExitPrice = slice.LiveCandle.OpenPrice;
                     exitPrice = rawExitPrice * (1 + _fees.SlippageMultiplier);
                     exitSlip = Math.Abs(exitPrice - rawExitPrice) * trade.Quantity;
                 }

@@ -1,4 +1,5 @@
 ﻿using Cryptobot.ConsoleApp.Backtesting.OutputModels;
+using Cryptobot.ConsoleApp.Backtesting.Strategies;
 using Cryptobot.ConsoleApp.Bybit.Models;
 using Cryptobot.ConsoleApp.EngineDir;
 using Cryptobot.ConsoleApp.EngineDir.Models;
@@ -35,7 +36,7 @@ public class Backtester(CacheService cache)
             spots.Add((spot, sw));
             Printer.BacktesterInitialization(spot, totalStrategies > 1 ? i + 1 : null, totalStrategies > 1 ? totalStrategies : null);
 
-            spot = Backtest(spot, candles, details.Interval);
+            spot = Backtest(spot, candles, strategy.TradeStrategy);
             spot.CalculateMetrics();
             sw.Stop();
 
@@ -84,15 +85,15 @@ public class Backtester(CacheService cache)
         }
     }
 
-    private Spot Backtest<T>(Spot spot, List<T> candles, CandleInterval candleInterval) where T : Candle
+    private Spot Backtest<T>(Spot spot, List<T> candles, TradeStrategyBase tradeStrategy) where T : Candle
     {
         var engine = new Engine<T>(_cache, spot);
-        var totalCandles = candles.Count;
+        var slice = new CandleSlice<T>(tradeStrategy.SliceSize);
 
-        for (var i = 0; i < totalCandles; i++)
+        foreach (var (_, i) in candles.AsSeederWithSlice(slice))
         {
-            Printer.CalculatingCandles(i, totalCandles);
-            engine.TradeNewCandle(candles, i, candleInterval);
+            Printer.CalculatingCandles(i, candles.Count);
+            engine.TradeLive(slice);
         }
 
         return spot;
@@ -106,14 +107,13 @@ public class Backtester(CacheService cache)
         Printer.ProfilerInitialization();
 
         var candles = await GetCandlesWithPrint<TrendCandle>(details);
-
         var indicatorService = new IndicatorService(aiTrendConfig, indicatorType);
-        var totalCandles = candles.Count;
+        var slice = new CandleSlice<TrendCandle>(indicatorService.SliceSizeBasedOnIndicators);
 
-        for (var i = 0; i < totalCandles; i++)
+        foreach (var (_, i) in candles.AsSeederWithSlice(slice))
         {
-            Printer.CalculatingCandles(i, totalCandles);
-            indicatorService.CalculateRelevantIndicators(candles[i], candles, i);
+            Printer.CalculatingCandles(i, candles.Count);
+            indicatorService.CalculateRelevantIndicators(slice);
         }
 
         Printer.ProfilerRunEnded(candles, swMain);

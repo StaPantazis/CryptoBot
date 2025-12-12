@@ -19,6 +19,8 @@ public static class A
         ClosePrice = close,
     };
     public static List<Candle> Candles(params Candle[] candles) => candles.ToList();
+    public static CandleSlice<Candle> Slice(int? size) => new(size ?? 1);
+    public static CandleSlice<Candle> Slice(params Candle[] candles) => new(candles.ToList());
     public static TradeStrategyBuilder TradeStrategy() => new();
     public static CacheService Cache() => new();
     public static Spot Spot(TradeStrategyBase tradeStrategy, BudgetStrategy budgetStrategy, FeesSettings? feesSettings = null)

@@ -6,37 +6,37 @@ using Cryptobot.ConsoleApp.Utils;
 
 namespace Cryptobot.ConsoleApp.Backtesting.Strategies.TradeStrategies;
 
-public class TS_Simple_120_days_SMA_Long(CacheService cache, StrategyVariation? variation = null) : TradeStrategyBase(cache, variation)
+public class TS_Simple_120_days_SMA_Long(CacheService cache, CandleInterval tradingCandleInterval, StrategyVariation? variation = null)
+    : TradeStrategyBase(cache, tradingCandleInterval, variation)
 {
     protected override string NameOverridable { get; set; } = "Sell when higher (LONG)";
-    public override string NameOf { get; protected set; } = nameof(TS_Simple_120_days_SMA_short);
+    public override string NameOf { get; protected set; } = nameof(TS_Simple_120_days_SMA_Long);
     public override IndicatorType[] RelevantIndicators { get; } = [IndicatorType.MovingAverage];
 
-    protected override double? StopLossLong<T>(List<T> candles, int currentCandleIndex) => null;
-    protected override double? TakeProfitLong<T>(List<T> candles, int currentCandleIndex) => null;
+    protected override double? StopLossLong<T>(CandleSlice<T> slice) => null;
+    protected override double? StopLossShort<T>(CandleSlice<T> slice) => null;
+    protected override double? TakeProfitLong<T>(CandleSlice<T> slice) => null;
+    protected override double? TakeProfitShort<T>(CandleSlice<T> slice) => null;
 
-    protected override double? StopLossShort<T>(List<T> candles, int currentCandleIndex) => null;
-    protected override double? TakeProfitShort<T>(List<T> candles, int currentCandleIndex) => null;
-
-    public override bool ShouldExitLongTrade<T>(List<T> candles, int currentCandleIndex, Trade trade, CandleInterval candleInterval)
+    public override bool ShouldExitLongTrade<T>(CandleSlice<T> slice, Trade trade)
     {
-        if (currentCandleIndex < Constants.CandleCountToIgnoreBeforeTrade[candleInterval])
+        if (slice.LiveCandle.DayKey < Constants.DAY_KEY_120_DAYS_AFTER_MARCH_26)
         {
             return false;
         }
 
-        var currentCandle = candles[currentCandleIndex];
-        return currentCandle.ClosePrice < Cache.MovingAverageTrendCache[currentCandle.DayKey].MovingAverage;
+        var lastCandle = slice.LastCandle;
+        return lastCandle.OpenPrice > lastCandle.Indicators.MovingAverage && lastCandle.LowPrice < lastCandle.Indicators.MovingAverage;
     }
 
-    protected override bool ShouldLong<T>(List<T> candles, int currentCandleIndex, CandleInterval candleInterval)
+    protected override bool ShouldLong<T>(CandleSlice<T> slice)
     {
-        if (currentCandleIndex < Constants.CandleCountToIgnoreBeforeTrade[candleInterval])
+        if (slice.LiveCandle.DayKey < Constants.DAY_KEY_120_DAYS_AFTER_MARCH_26)
         {
             return false;
         }
 
-        var candle = candles[currentCandleIndex];
-        return candle.ClosePrice > Cache.MovingAverageTrendCache[candle.DayKey].MovingAverage;
+        var lastCandle = slice.LastCandle;
+        return lastCandle.OpenPrice < lastCandle.Indicators.MovingAverage && lastCandle.HighPrice > lastCandle.Indicators.MovingAverage;
     }
 }

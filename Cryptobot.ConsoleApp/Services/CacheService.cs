@@ -3,6 +3,7 @@ using Cryptobot.ConsoleApp.Backtesting.OutputModels;
 using Cryptobot.ConsoleApp.Bybit;
 using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
+using Cryptobot.ConsoleApp.Extensions;
 using Cryptobot.ConsoleApp.Repositories;
 using Cryptobot.ConsoleApp.Resources.CachedIndicators.Models;
 using Cryptobot.ConsoleApp.Utils;
@@ -129,13 +130,12 @@ public class CacheService
         where T : CachedTrend
     {
         var candles = await CandlesRepository.GetCandles<TrendCandle>(new BacktestingDetails(candleInterval));
-        var totalCandles = candles.Count;
         var result = cachedData.ToDictionary(x => x.Key, x => x) ?? [];
-        var remainingCandles = totalCandles - cachedData.Count;
+        var remainingCandles = candles.Count - cachedData.Count;
+        var slice = new CandleSlice<TrendCandle>(candles.Count);
 
-        for (var i = 0; i < totalCandles; i++)
+        foreach (var (candle, i) in candles.AsSeederWithSlice(slice))
         {
-            var candle = candles[i];
             var candleKey = candle.GetTimeframeKeyByCandleInterval(candleInterval);
 
             if (result.ContainsKey(candleKey))
@@ -145,7 +145,7 @@ public class CacheService
 
             Printer.CalculatingCandles(i, remainingCandles);
 
-            indicatorService.CalculateRelevantIndicators(candle, candles, i);
+            indicatorService.CalculateRelevantIndicators(slice);
             result[candleKey] = (T)Activator.CreateInstance(typeof(T), getInstanceArgs(candle))!;
         }
 

@@ -4,13 +4,28 @@ using Cryptobot.ConsoleApp.Utils;
 
 namespace Cryptobot.ConsoleApp.Backtesting;
 
-public record BacktestingDetails(
-    CandleInterval Interval,
-    string Symbol = Constants.SYMBOL_BTCUSDT,
-    string MarketCategory = Constants.MARKET_PERPETUAL_FUTURES,
-    double Budget = 10000,
-    params StrategyBundleBase[] Strategies)
+public class BacktestingDetails
 {
+    public CandleInterval Interval { get; }
+    public string Symbol { get; }
+    public string MarketCategory { get; }
+    public double Budget { get; }
+    public StrategyBundleBase[] Strategies { get; }
+
+    public BacktestingDetails(
+        CandleInterval interval,
+        string symbol = Constants.SYMBOL_BTCUSDT,
+        string marketCategory = Constants.MARKET_PERPETUAL_FUTURES,
+        double budget = 10000,
+        params StrategyBundleBase[] strategies)
+    {
+        Interval = interval;
+        Symbol = symbol;
+        MarketCategory = marketCategory;
+        Budget = budget;
+        Strategies = strategies;
+    }
+
     public string SymbolDescribed => Symbol switch
     {
         Constants.SYMBOL_BTCUSDT => "BTC_USDT",

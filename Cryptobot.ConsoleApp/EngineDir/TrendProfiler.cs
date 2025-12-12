@@ -1,49 +1,41 @@
 ﻿using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
 using Cryptobot.ConsoleApp.Services;
+using Cryptobot.ConsoleApp.Utils;
 
 namespace Cryptobot.ConsoleApp.EngineDir;
 
 public static class TrendProfiler
 {
-    private const int _movingAverageWindow = 120;
-
-    public static Trend ProfileByMovingAverage<T>(CacheService? cache, List<T> candles, int currentCandleIndex, T? currentCandle = null) where T : Candle
+    public static Trend ProfileByMovingAverage<T>(CacheService? cache, CandleSlice<T> slice) where T : Candle
     {
-        currentCandle ??= candles[currentCandleIndex];
-
         if (cache == null)
         {
-            var ma = GetMovingAverage(candles, currentCandleIndex);
+            var ma = GetMovingAverage(slice);
 
             return ma is null
                 ? Trend.Neutral
-                : (double)currentCandle.Indicators.MovingAverage! >= (double)ma! ? Trend.Bull : Trend.Bear;
+                : (double)slice.LiveCandle.Indicators.MovingAverage! >= (double)ma! ? Trend.Bull : Trend.Bear;
         }
 
-        return cache.MovingAverageTrendCache[currentCandle.DayKey].Trend;
+        return cache.MovingAverageTrendCache[slice.LiveCandle.DayKey].Trend;
     }
 
-    public static Trend ProfileAiTrend<T>(List<T> candles, int currentCandleIndex, AiTrendConfiguration config) where T : Candle
+    public static Trend ProfileAiTrend<T>(CandleSlice<T> slice, AiTrendConfiguration config) where T : Candle
     {
-        var positions = GetWindowPositions(candles, currentCandleIndex, config);
+        var candles = slice.Candles;
 
-        if (positions == null)
+        if (candles.Count < config.Window)
         {
             return Trend.Neutral;
         }
-
-        (var start, var length) = positions.Value;
-
-        // --- Slice & extract prices ---
-        var slice = candles.Skip(start).Take(length).ToArray();
-
-        if (slice.Any(x => x.OpenTime > candles[currentCandleIndex].OpenTime))
+        else if (candles.Count > config.Window)
         {
-            throw new InvalidOperationException("Should never happen, this means we are grabbing candles from the future.");
+            // Case of Moving Average strategy along with AI Trend
+            slice = slice.GetSlice(config.Window);
         }
 
-        var closes = slice.Select(c => (double)c.ClosePrice).ToArray();
+        var closes = candles.Select(c => (double)c.ClosePrice).ToArray();
 
         // --- Price domain checks for log ---
         if (Array.Exists(closes, p => p <= 0 || double.IsNaN(p) || double.IsInfinity(p)))
@@ -101,46 +93,18 @@ public static class TrendProfiler
         return score <= -config.ThresholdBear ? Trend.Bear : Trend.Neutral;
     }
 
-    public static double? GetMovingAverage<T>(List<T> candles, int currentCandleIndex) where T : Candle
+    public static double? GetMovingAverage<T>(CandleSlice<T> slice) where T : Candle
     {
-        if (candles == null || candles.Count == 0)
+        if (slice.Candles.Count is 0 or < Constants.MOVING_AVERAGE_WINDOW)
         {
             return null;
         }
-        else if (currentCandleIndex < _movingAverageWindow - 1)
+        else if (slice.Candles.Count != Constants.MOVING_AVERAGE_WINDOW)
         {
-            return null;
+            throw new ArgumentException("Slice candle count should match its usage");
         }
 
-        // Select last 'window' candles ending at the current index
-        var slice = candles.Skip(currentCandleIndex - _movingAverageWindow + 1).Take(_movingAverageWindow);
-        return slice.Average(c => c.ClosePrice);
-    }
-
-    private static (int start, int length)? GetWindowPositions<T>(List<T> candles, int currentCandleIndex, AiTrendConfiguration config) where T : Candle
-    {
-        if (candles == null || config.Window < 3 || candles.Count < config.Window)
-        {
-            return null;
-        }
-        else if (currentCandleIndex < 0 || currentCandleIndex >= candles.Count)
-        {
-            throw new ArgumentOutOfRangeException(nameof(currentCandleIndex));
-        }
-        else if (config.Window < 3 || currentCandleIndex + 1 < config.Window)
-        {
-            return null;
-        }
-
-        var start = Math.Max(0, currentCandleIndex - config.Window);
-        var length = config.Window;
-
-        if (length < 3)
-        {
-            return null;
-        }
-
-        return (start, length);
+        return slice.Candles.Average(c => c.ClosePrice);
     }
 
     private static double Clamp01(double v) => v < 0 ? 0 : (v > 1 ? 1 : v);

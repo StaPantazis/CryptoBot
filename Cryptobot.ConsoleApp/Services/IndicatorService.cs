@@ -2,6 +2,7 @@
 using Cryptobot.ConsoleApp.EngineDir;
 using Cryptobot.ConsoleApp.EngineDir.Models;
 using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
+using Cryptobot.ConsoleApp.Utils;
 
 namespace Cryptobot.ConsoleApp.Services;
 
@@ -35,31 +36,37 @@ public class IndicatorService
         _indicators = tradeStrategy.RelevantIndicators ?? [];
     }
 
-    public void CalculateRelevantIndicators<T>(T candle, List<T> candles, int currentCandleIndex) where T : Candle
+    public int SliceSizeBasedOnIndicators => _indicators.Contains(IndicatorType.MovingAverage)
+        ? Constants.MOVING_AVERAGE_WINDOW
+        : (_aiTrendConfig?.Window ?? 0);
+
+    public void CalculateRelevantIndicators<T>(CandleSlice<T> slice) where T : Candle
     {
         if (_indicators.Length == 0)
         {
             return;
         }
 
+        var liveCandle = slice.LiveCandle;
+
         foreach (var indicator in _indicators)
         {
             switch (indicator)
             {
                 case IndicatorType.MovingAverage:
-                    candle.Indicators.MovingAverage = _cache is null
-                        ? TrendProfiler.GetMovingAverage(candles, currentCandleIndex)
-                        : _cache.MovingAverageTrendCache[candle.DayKey].MovingAverage;
+                    liveCandle.Indicators.MovingAverage = _cache is null
+                        ? TrendProfiler.GetMovingAverage(slice)
+                        : _cache.MovingAverageTrendCache[liveCandle.DayKey].MovingAverage;
 
-                    candle.Indicators.MovingAverageTrend = _cache is null
-                        ? TrendProfiler.ProfileByMovingAverage(_cache, candles, currentCandleIndex, candle)
-                        : _cache.MovingAverageTrendCache[candle.DayKey].Trend;
+                    liveCandle.Indicators.MovingAverageTrend = _cache is null
+                        ? TrendProfiler.ProfileByMovingAverage(_cache, slice)
+                        : _cache.MovingAverageTrendCache[liveCandle.DayKey].Trend;
 
                     break;
                 case IndicatorType.AiTrend:
-                    candle.Indicators.AiTrend = _cache is null
-                        ? TrendProfiler.ProfileAiTrend(candles, currentCandleIndex, _aiTrendConfig!)
-                        : _cache.AiTrendCache[candle.GetTimeframeKeyByCandleInterval(_cache.BacktestCandleInterval)].Trend;
+                    liveCandle.Indicators.AiTrend = _cache is null
+                        ? TrendProfiler.ProfileAiTrend(slice, _aiTrendConfig!)
+                        : _cache.AiTrendCache[liveCandle.GetTimeframeKeyByCandleInterval(_cache.BacktestCandleInterval)].Trend;
                     break;
                 default:
                     break;

@@ -1,6 +1,4 @@
-﻿using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
-
-namespace Cryptobot.ConsoleApp.Utils;
+﻿namespace Cryptobot.ConsoleApp.Utils;
 
 public static class Constants
 {
@@ -24,13 +22,12 @@ public static class Constants
     public const int FIFTEEN_MINUTE_CANDLES_120_DAYS = 11520;
     public const int ONE_DAY_CANDLES_120_DAYS = 120;
 
-    public static readonly Dictionary<CandleInterval, int> CandleCountToIgnoreBeforeTrade = new() {
-        { CandleInterval.One_Minute, ONE_MINUTE_CANDLES_120_DAYS },
-        { CandleInterval.Three_Minutes, THREE_MINUTE_CANDLES_120_DAYS },
-        { CandleInterval.Five_Minutes, FIVE_MINUTE_CANDLES_120_DAYS },
-        { CandleInterval.Fifteen_Minutes, FIFTEEN_MINUTE_CANDLES_120_DAYS },
-        { CandleInterval.One_Day, ONE_DAY_CANDLES_120_DAYS },
-    };
+    public const int MOVING_AVERAGE_WINDOW = 120;
+
+    /// <summary>
+    /// We use this in Backtesting to avoid trading on the first 120 days to have a full MA overview
+    /// </summary>
+    public const long DAY_KEY_120_DAYS_AFTER_MARCH_26 = 0;
 
     // STORING
     public const string PARQUET = ".parquet";

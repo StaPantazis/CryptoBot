@@ -81,7 +81,7 @@ public class TradeStrategyBuilder : BaseBuilder<TradeStrategyBase, TradeStrategy
             AiTrendConfig = null,
         };
 
-        return new TestTradeStrategy(_long, _short, _stopLossLong == null
+        return new TestTradeStrategy(_long, _short, variation: _stopLossLong == null
             ? defaultVariation
             : new StrategyVariation()
             {

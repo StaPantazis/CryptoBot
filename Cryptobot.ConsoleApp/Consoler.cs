@@ -13,16 +13,17 @@ public static class Consoler
 {
     public static async Task Run(CacheService cache)
     {
+        var interval = CandleInterval.Fifteen_Minutes;
+
         var backtestingDetails = new BacktestingDetails(
-            Interval: CandleInterval.Fifteen_Minutes,
-            Symbol: Constants.SYMBOL_BTCUSDT,
-            MarketCategory: Constants.MARKET_PERPETUAL_FUTURES,
-        //Strategies: TradeStrategyVariationFactory.Sandbox<TS_Aggressive_Trend_buy_green_sell_red, BS_100Percent>(cache));
-        Strategies:
-        [
-            new StrategyBundle<TS_Aggressive_Trend_buy_green_sell_red, BS_100Percent>(cache),
-            //new StrategyBundle<TS_Aggressive_Trend_buy_green_sell_red, BS_Steady100_OnlyOneTrade>(cache),
-        ]);
+            interval: interval,
+            symbol: Constants.SYMBOL_BTCUSDT,
+            marketCategory: Constants.MARKET_PERPETUAL_FUTURES,
+            //Strategies: TradeStrategyVariationFactory.Sandbox<TS_Aggressive_Trend_buy_green_sell_red, BS_100Percent>(cache));
+            strategies:
+            [
+                new StrategyBundle<TS_Aggressive_Trend_buy_green_sell_red, BS_100Percent>(cache, interval),
+            ]);
 
         cache.SetBacktestInterval(backtestingDetails);
 

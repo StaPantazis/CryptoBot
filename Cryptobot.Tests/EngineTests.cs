@@ -1,7 +1,7 @@
 ﻿using Cryptobot.ConsoleApp.Backtesting.Strategies.BudgetStrategies;
 using Cryptobot.ConsoleApp.EngineDir;
 using Cryptobot.ConsoleApp.EngineDir.Models;
-using Cryptobot.ConsoleApp.EngineDir.Models.Enums;
+using Cryptobot.ConsoleApp.Extensions;
 using Cryptobot.Tests.Builders;
 
 namespace Cryptobot.Tests;
@@ -22,9 +22,11 @@ public class EngineTests
             A.Candle(110, 110, 110, 110, "4"),
             A.Candle(110, 110, 110, 110, "5"));
 
-        for (var i = 0; i < candles.Count; i++)
+        var slice = A.Slice();
+
+        foreach (var (_, _) in candles.AsSeederWithSlice(slice))
         {
-            engine.TradeNewCandle(candles, i, CandleInterval.Fifteen_Minutes);
+            engine.TradeLive(slice);
         }
 
         //spot.Trades.Should().HaveCount();
